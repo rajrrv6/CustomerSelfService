@@ -1,0 +1,182 @@
+'use client';
+
+import React from 'react';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
+import {
+  Sparkles,
+  Bot,
+  Brain,
+  ShieldCheck,
+  Radio,
+  FileText,
+  Mail,
+  Users,
+  Shield,
+  HelpCircle,
+  Play,
+  TrendingUp,
+  Award,
+  Calendar,
+  Layers,
+  Database,
+  Lock,
+  Phone,
+  BarChart2,
+  GitBranch
+} from 'lucide-react';
+import { UserRole } from '@/types';
+
+interface SidebarItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+export function Sidebar({
+  activeScreen,
+  setActiveScreen
+}: {
+  activeScreen: string;
+  setActiveScreen: (screenId: string) => void;
+}) {
+  const { role, lang } = useApp();
+  const t = translations[lang];
+
+  // Helper to compile sidebar options based on role
+  const getSidebarItems = (currentRole: UserRole): SidebarItem[] => {
+    switch (currentRole) {
+      case 'super_admin':
+        return [
+          { id: 'llm_registry', label: t.llmRegistry, icon: <Brain className="w-4 h-4" /> },
+          { id: 'asr_tts_registry', label: t.asrTtsRegistry, icon: <Radio className="w-4 h-4" /> },
+          { id: 'channels', label: t.omnichannel, icon: <Layers className="w-4 h-4" /> },
+          { id: 'cost_benchmarks', label: t.costBenchmarks, icon: <BarChart2 className="w-4 h-4" /> },
+          { id: 'cross_tenant_analytics', label: t.crossTenantAnalytics, icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'vector_db', label: t.vectorDbStatus, icon: <Database className="w-4 h-4" /> },
+          { id: 'sip_trunk', label: t.sipTrunkConfig, icon: <Phone className="w-4 h-4" /> }
+        ];
+
+      case 'client_admin':
+        return [
+          { id: 'bots', label: t.botManagement, icon: <Bot className="w-4 h-4" /> },
+          { id: 'intents', label: t.intentManagement, icon: <HelpCircle className="w-4 h-4" /> },
+          { id: 'dialog_flow', label: t.dialogBuilder, icon: <GitBranch className="w-4 h-4" /> },
+          { id: 'knowledge_base', label: t.knowledgeBase, icon: <Brain className="w-4 h-4" /> },
+          { id: 'guardrails', label: t.safetyGuardrails, icon: <ShieldCheck className="w-4 h-4" /> },
+          { id: 'channels', label: t.omnichannel, icon: <Layers className="w-4 h-4" /> },
+          { id: 'agents', label: 'Queues & Agents', icon: <Users className="w-4 h-4" /> },
+          { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
+          { id: 'sla', label: 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
+          { id: 'surveys', label: t.analytics, icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'deployments', label: 'Pipelines & A/B', icon: <Play className="w-4 h-4" /> },
+          { id: 'integrations', label: t.integrations, icon: <Database className="w-4 h-4" /> }
+        ];
+
+      case 'operations_manager':
+        return [
+          { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
+          { id: 'agents', label: 'Queues & Roster', icon: <Users className="w-4 h-4" /> },
+          { id: 'sla', label: 'SLA Tracking', icon: <Lock className="w-4 h-4" /> },
+          { id: 'surveys', label: 'CSAT Config', icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'integrations', label: 'CRM integration', icon: <Database className="w-4 h-4" /> }
+        ];
+
+      case 'qa_manager':
+        return [
+          { id: 'qa_queue', label: 'QA Review Queue', icon: <Award className="w-4 h-4" /> },
+          { id: 'coaching', label: 'Agent Coaching', icon: <Users className="w-4 h-4" /> },
+          { id: 'inbox', label: 'Conversation Logs', icon: <Mail className="w-4 h-4" /> },
+          { id: 'surveys', label: 'Voice of Customer', icon: <TrendingUp className="w-4 h-4" /> }
+        ];
+
+      case 'support_agent':
+        return [
+          { id: 'agent_dashboard', label: t.dashboard, icon: <BarChart2 className="w-4 h-4" /> },
+          { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
+          { id: 'tickets', label: t.tickets, icon: <FileText className="w-4 h-4" /> }
+        ];
+
+      case 'supervisor':
+        return [
+          { id: 'inbox', label: 'Live Monitoring', icon: <Mail className="w-4 h-4" /> },
+          { id: 'supervisor_monitor', label: 'Agent Whisper', icon: <Shield className="w-4 h-4" /> },
+          { id: 'workforce', label: 'Shift Scheduling', icon: <Calendar className="w-4 h-4" /> },
+          { id: 'sla', label: 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> }
+        ];
+
+      case 'customer':
+        return [
+          { id: 'customer_home', label: 'Helpdesk Home', icon: <HelpCircle className="w-4 h-4" /> },
+          { id: 'customer_kb', label: 'Knowledge Base', icon: <Brain className="w-4 h-4" /> },
+          { id: 'customer_ticket_submit', label: 'Submit Ticket', icon: <FileText className="w-4 h-4" /> },
+          { id: 'customer_my_tickets', label: 'My Tickets', icon: <Layers className="w-4 h-4" /> }
+        ];
+
+      case 'viewer':
+        return [
+          { id: 'surveys', label: 'CSAT Analytics', icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'sla', label: 'SLA Status', icon: <Lock className="w-4 h-4" /> }
+        ];
+
+      default:
+        return [];
+    }
+  };
+
+  const menuItems = getSidebarItems(role);
+
+  return (
+    <aside className="w-64 bg-[#0b0f19] dark:bg-[#03050a] text-slate-300 flex flex-col justify-between shrink-0 h-screen sticky top-0 transition-colors">
+      {/* Top Section */}
+      <div className="flex flex-col flex-1">
+        {/* Brand Header */}
+        <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800/80">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="font-bold text-sm text-white tracking-tight leading-none">AI-Native mPaaS</h2>
+            <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest mt-1 block">
+              Omnichannel CX
+            </span>
+          </div>
+        </div>
+
+        {/* Sidebar Nav */}
+        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
+          <div className="px-3 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            {role.replace('_', ' ')} Options
+          </div>
+          {menuItems.map((item) => {
+            const isActive = activeScreen === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveScreen(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                    : 'hover:bg-slate-800/50 hover:text-slate-100 text-slate-400'
+                }`}
+              >
+                <span className={`${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'}`}>
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Footer Section */}
+      <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 text-[10px] text-slate-500 text-center font-semibold">
+        <div className="flex items-center justify-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 glow-active" />
+          <span>Tenant: MP-CORE-PROD</span>
+        </div>
+      </div>
+    </aside>
+  );
+}
