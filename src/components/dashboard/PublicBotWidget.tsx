@@ -1,0 +1,203 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Bot, Sparkles, Send, RefreshCw, KeyRound, CheckCircle } from 'lucide-react';
+
+export function PublicBotWidget() {
+  const [messages, setMessages] = useState([
+    { sender: 'bot', text: 'مرحباً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك اليوم؟\n\nHi! I am Farah. How can I help you today?', time: '14:30' }
+  ]);
+  const [composer, setComposer] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // OTP State
+  const [otpStep, setOtpStep] = useState<'none' | 'order' | 'code' | 'verified'>('none');
+  const [orderNumber, setOrderNumber] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+
+  const handleSend = (text: string) => {
+    if (!text) return;
+    const newMsg = { sender: 'user', text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+    setMessages(prev => [...prev, newMsg]);
+    setComposer('');
+    setLoading(true);
+
+    setTimeout(() => {
+      let reply = 'I have queried our RAG knowledge database, but I could not find a clear match. Let me transfer you to a live support representative.';
+      const lower = text.toLowerCase();
+      
+      if (lower.includes('price') || lower.includes('cost') || lower.includes('pricing') || lower.includes('سعر')) {
+        reply = 'The standard SaaS package is $49/month, and the Enterprise package is $99/month. We offer standard volume discounts.';
+      } else if (lower.includes('refund') || lower.includes('return') || lower.includes('استرجاع')) {
+        reply = 'Under our Return Policy (ks-1), refunds are allowed within 30 days of purchase. Please supply your Order ID to initiate the refund process.';
+      } else if (lower.includes('hi') || lower.includes('hello') || lower.includes('مرحبا')) {
+        reply = 'Hello! I am Farah AI, your self-service assistant. Would you like to check order status or ask a product question?';
+      }
+
+      setMessages(prev => [...prev, { sender: 'bot', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      setLoading(false);
+    }, 1000);
+  };
+
+  const handleOtpLookup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otpStep === 'order') {
+      if (!orderNumber.startsWith('ORD-')) {
+        alert('Please enter a valid order number starting with ORD- (e.g. ORD-99881)');
+        return;
+      }
+      setLoading(true);
+      setTimeout(() => {
+        setOtpStep('code');
+        setMessages(prev => [...prev, 
+          { sender: 'user', text: `Lookup Order: ${orderNumber}`, time: '14:31' },
+          { sender: 'bot', text: 'We found order ' + orderNumber + '. For security, we sent a 4-digit code to your registered email. Please enter the verification code below.', time: '14:31' }
+        ]);
+        setLoading(false);
+      }, 1000);
+    } else if (otpStep === 'code') {
+      if (otpCode !== '1234') {
+        alert('Incorrect code. Use code 1234 to verify.');
+        return;
+      }
+      setLoading(true);
+      setTimeout(() => {
+        setOtpStep('verified');
+        setMessages(prev => [...prev, 
+          { sender: 'user', text: `Verify Code: ${otpCode}`, time: '14:32' },
+          { sender: 'bot', text: `Verification successful!\n\nOrder Status: SHIPPED\nCarrier: SAP Logistic Trunk Express\nEst. Delivery: May 22, 2026\n\nLet me know if you need to schedule a voice callback or change delivery times.`, time: '14:32' }
+        ]);
+        setLoading(false);
+      }, 1000);
+    }
+  };
+
+  return (
+    <div className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl flex flex-col justify-between h-[520px] text-xs font-semibold">
+      {/* Widget Header */}
+      <div className="bg-blue-600 px-5 py-4 text-white flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white">
+            <Bot className="w-4.5 h-4.5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-xs">Farah AI Support</h3>
+            <span className="text-[9px] opacity-75 font-semibold">Omnichannel Bot widget</span>
+          </div>
+        </div>
+        <Sparkles className="w-4.5 h-4.5 text-blue-200 glow-active" />
+      </div>
+
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-3.5 bg-slate-50/50 dark:bg-slate-950/20">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
+              msg.sender === 'user'
+                ? 'bg-blue-600 text-white rounded-br-none'
+                : 'bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/50 text-slate-800 dark:text-slate-200 rounded-bl-none shadow-sm'
+            }`}>
+              <p className="whitespace-pre-line">{msg.text}</p>
+            </div>
+          </div>
+        ))}
+
+        {loading && (
+          <div className="flex justify-start">
+            <div className="bg-white dark:bg-slate-850 border border-slate-250 dark:border-slate-800 rounded-2xl px-3 py-2 flex items-center gap-1.5 font-bold text-blue-500 font-mono text-[10px]">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span>Typing...</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* OTP tracking form overlay if active */}
+      {otpStep !== 'none' && otpStep !== 'verified' && (
+        <form onSubmit={handleOtpLookup} className="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 p-4 space-y-3 shrink-0">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-blue-500 font-mono">
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>Verify Order Tracking</span>
+          </div>
+
+          {otpStep === 'order' ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                required
+                placeholder="Order Number (e.g. ORD-99881)"
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none"
+              />
+              <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">
+                Next
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                required
+                maxLength={4}
+                placeholder="Enter 4-digit code (use 1234)"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none font-mono"
+              />
+              <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">
+                Verify
+              </button>
+            </div>
+          )}
+        </form>
+      )}
+
+      {/* Quick shortcuts buttons */}
+      {otpStep === 'none' && (
+        <div className="px-5 py-2 flex gap-1.5 overflow-x-auto bg-slate-50 dark:bg-slate-950/40 shrink-0 border-t border-slate-200/50 dark:border-slate-850">
+          <button
+            onClick={() => setOtpStep('order')}
+            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px]"
+          >
+            Order Tracking
+          </button>
+          <button
+            onClick={() => handleSend('What is the price of standard subscription?')}
+            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px]"
+          >
+            Check SaaS Pricing
+          </button>
+          <button
+            onClick={() => handleSend('What is the return policy?')}
+            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px]"
+          >
+            Refund Policies
+          </button>
+        </div>
+      )}
+
+      {/* Composer Input */}
+      {otpStep === 'none' && (
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800/80 flex gap-2 bg-white dark:bg-slate-900 shrink-0">
+          <input
+            type="text"
+            placeholder="Type a message..."
+            value={composer}
+            onChange={(e) => setComposer(e.target.value)}
+            className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSend(composer);
+            }}
+          />
+          <button
+            onClick={() => handleSend(composer)}
+            className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
