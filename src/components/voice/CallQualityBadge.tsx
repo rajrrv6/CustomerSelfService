@@ -16,7 +16,7 @@ export function CallQualityBadge({ quality, latency, packetLoss }: CallQualityBa
     badgeColor = 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900';
     qualityLabel = 'Good';
   } else if (quality === 'poor') {
-    badgeColor = 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-450 border border-rose-200 dark:border-rose-900';
+    badgeColor = 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900';
     qualityLabel = 'Poor Connection';
     Icon = WifiOff;
   }
@@ -28,7 +28,7 @@ export function CallQualityBadge({ quality, latency, packetLoss }: CallQualityBa
         <span>{qualityLabel}</span>
       </div>
 
-      <div className="flex items-center gap-2.5 text-[10px] text-slate-450 font-mono">
+      <div className="flex items-center gap-2.5 text-[10px] text-slate-500 font-mono">
         <span className="flex items-center gap-1">
           <Activity className="w-3 h-3 text-slate-500" />
           <span>RTT:</span>

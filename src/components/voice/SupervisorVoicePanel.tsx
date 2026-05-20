@@ -30,9 +30,9 @@ export function SupervisorVoicePanel({
   return (
     <div className="space-y-4">
       {/* Active mode status */}
-      <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 p-3 rounded-2xl flex items-center justify-between">
+      <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl flex items-center justify-between">
         <div>
-          <span className="block text-[8px] uppercase tracking-wider text-slate-450 font-bold font-mono">Supervisor Console</span>
+          <span className="block text-[8px] uppercase tracking-wider text-slate-500 font-bold font-mono">Supervisor Console</span>
           <strong className="block text-[11px] text-slate-800 dark:text-white capitalize">
             Mode: {mode === 'none' ? 'Inactive' : mode}
           </strong>
@@ -41,7 +41,7 @@ export function SupervisorVoicePanel({
         {mode !== 'none' && (
           <button
             onClick={onStopMonitoring}
-            className="flex items-center gap-1 px-2 py-1 text-[9px] bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 text-rose-600 dark:text-rose-450 rounded-lg font-bold"
+            className="flex items-center gap-1 px-2 py-1 text-[9px] bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 rounded-lg font-bold"
           >
             <ShieldOff className="w-3.5 h-3.5" />
             <span>Stop Monitor</span>
@@ -98,7 +98,7 @@ export function SupervisorVoicePanel({
               <button
                 key={i}
                 onClick={() => onWhisperCoach(h)}
-                className="w-full text-left p-1.5 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-900 hover:border-amber-400 text-[9px] text-slate-550 leading-relaxed rounded-lg truncate flex items-center justify-between"
+                className="w-full text-left p-1.5 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-900 hover:border-amber-400 text-[9px] text-slate-500 leading-relaxed rounded-lg truncate flex items-center justify-between"
               >
                 <span className="truncate flex-1">{h}</span>
                 <Play className="w-2.5 h-2.5 text-slate-400 shrink-0 ml-1.5" />
@@ -112,7 +112,7 @@ export function SupervisorVoicePanel({
               placeholder="Type custom whisper hint..."
               value={customHint}
               onChange={(e) => setCustomHint(e.target.value)}
-              className="flex-1 bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-900 text-[10px] px-2.5 py-1.5 rounded-lg outline-none text-slate-800 dark:text-white"
+              className="flex-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-900 text-[10px] px-2.5 py-1.5 rounded-lg outline-none text-slate-800 dark:text-white"
             />
             <button
               onClick={() => {
@@ -130,7 +130,7 @@ export function SupervisorVoicePanel({
 
       {/* Whisper hint notification card */}
       {whisperHint && (
-        <div className="p-3 bg-amber-100/50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-lg text-xs leading-relaxed text-slate-700 dark:text-slate-350">
+        <div className="p-3 bg-amber-100/50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-lg text-xs leading-relaxed text-slate-700 dark:text-slate-300">
           <span className="block font-bold text-amber-700 dark:text-amber-400 font-mono text-[9px] uppercase mb-1">
             Incoming Supervisor Whisper Coaching:
           </span>

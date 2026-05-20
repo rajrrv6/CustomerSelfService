@@ -29,6 +29,7 @@ import {
 import { SVGDonutChart, SVGLineChart } from './Charts';
 
 import { DialogFlowLayout } from '@/components/dialog-builder/DialogFlowLayout';
+import { IntegrationsDashboard } from '@/components/integrations/IntegrationsDashboard';
 
 export function ClientAdminView({ activeSubScreen }: { activeSubScreen: string }) {
   const {
@@ -778,39 +779,7 @@ export function ClientAdminView({ activeSubScreen }: { activeSubScreen: string }
       );
 
     case 'integrations':
-      return (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">ERP & CRM Connectors</h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500">Synchronize client order lists, dispatch databases, and billing tokens.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              { name: 'Salesforce CRM Cloud', desc: 'Syncs customer profiles and ticket state.', status: 'connected' },
-              { name: 'SAP Inventory ERP', desc: 'Fetches ORD shipping information.', status: 'connected' },
-              { name: 'Stripe Billing System', desc: 'Handles subscription auto-refills.', status: 'degraded' }
-            ].map((conn, idx) => (
-              <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-sm">
-                <div>
-                  <h4 className="font-bold text-xs text-slate-800 dark:text-white">{conn.name}</h4>
-                  <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">{conn.desc}</p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-850 flex items-center justify-between">
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
-                    conn.status === 'connected'
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
-                      : 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-450'
-                  }`}>
-                    {conn.status}
-                  </span>
-                  <button className="text-[10px] font-bold text-blue-500 hover:underline">Settings</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
+      return <IntegrationsDashboard />;
 
     case 'surveys':
       return (

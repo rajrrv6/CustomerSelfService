@@ -43,7 +43,7 @@ export function VoiceDialer({
   };
 
   return (
-    <div className="fixed bottom-20 right-6 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl z-40 animate-in slide-in-from-bottom-5 duration-200 text-xs font-semibold text-slate-850 dark:text-slate-200 select-none" style={{ borderRadius: '2rem' }}>
+    <div className="fixed bottom-20 right-6 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl z-40 animate-in slide-in-from-bottom-5 duration-200 text-xs font-semibold text-slate-800 dark:text-slate-200 select-none" style={{ borderRadius: '2rem' }}>
       
       {/* Console Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/20">
@@ -56,7 +56,7 @@ export function VoiceDialer({
         </div>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-slate-200 dark:hover:bg-slate-850 rounded-lg text-slate-400 hover:text-slate-650"
+          className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600"
         >
           <X className="w-4 h-4" />
         </button>
@@ -69,7 +69,7 @@ export function VoiceDialer({
           className={`flex-1 py-2.5 border-b-2 flex items-center justify-center gap-1 transition-colors ${
             activeTab === 'dial'
               ? 'border-blue-600 text-blue-600 bg-blue-50/20'
-              : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-350'
+              : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           <Phone className="w-3 h-3" />
@@ -81,7 +81,7 @@ export function VoiceDialer({
           className={`flex-1 py-2.5 border-b-2 flex items-center justify-center gap-1 transition-colors ${
             activeTab === 'sip'
               ? 'border-blue-600 text-blue-600 bg-blue-50/20'
-              : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-350'
+              : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           <Globe className="w-3 h-3" />
@@ -93,7 +93,7 @@ export function VoiceDialer({
           className={`flex-1 py-2.5 border-b-2 flex items-center justify-center gap-1 transition-colors ${
             activeTab === 'pool'
               ? 'border-blue-600 text-blue-600 bg-blue-50/20'
-              : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-350'
+              : 'border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           <Settings className="w-3 h-3" />
@@ -116,12 +116,12 @@ export function VoiceDialer({
 
         {activeTab === 'sip' && (
           <div className="space-y-3">
-            <span className="text-[9px] uppercase tracking-wider text-slate-450 font-mono block">Registered Gateway Routes:</span>
+            <span className="text-[9px] uppercase tracking-wider text-slate-500 font-mono block">Registered Gateway Routes:</span>
             <div className="space-y-2">
               {sipTrunksSeed.map((trunk) => (
                 <div
                   key={trunk.id}
-                  className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl flex justify-between items-center"
+                  className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl flex justify-between items-center"
                 >
                   <div className="space-y-1">
                     <strong className="block text-slate-900 dark:text-white leading-none">{trunk.name}</strong>
@@ -131,7 +131,7 @@ export function VoiceDialer({
 
                   <div className="text-right space-y-1.5">
                     <div className="flex justify-end">{getTrunkStatusIcon(trunk.status)}</div>
-                    <span className="block text-[9px] text-slate-450 font-mono font-bold">
+                    <span className="block text-[9px] text-slate-500 font-mono font-bold">
                       Channels: {trunk.channels}
                     </span>
                   </div>
@@ -143,7 +143,7 @@ export function VoiceDialer({
 
         {activeTab === 'pool' && (
           <div className="space-y-3">
-            <span className="text-[9px] uppercase tracking-wider text-slate-450 font-mono block">Outbound DID Numbers Pool:</span>
+            <span className="text-[9px] uppercase tracking-wider text-slate-500 font-mono block">Outbound DID Numbers Pool:</span>
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1 scrollbar-thin">
               {phoneNumberPoolSeed.map((item) => (
                 <div
@@ -151,7 +151,7 @@ export function VoiceDialer({
                   className={`p-3 bg-slate-50 dark:bg-slate-950 border rounded-2xl flex justify-between items-center transition-all ${
                     activeCallerId === item.phoneNumber
                       ? 'border-blue-500 bg-blue-50/10'
-                      : 'border-slate-100 dark:border-slate-850'
+                      : 'border-slate-100 dark:border-slate-800'
                   }`}
                 >
                   <div className="space-y-1">
@@ -167,7 +167,7 @@ export function VoiceDialer({
                       className={`px-2 py-1 text-[9px] rounded-lg font-bold transition-all ${
                         activeCallerId === item.phoneNumber
                           ? 'bg-blue-600 text-white'
-                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-50'
+                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       {activeCallerId === item.phoneNumber ? 'Active' : 'Select'}

@@ -41,18 +41,18 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
   switch (activeSubScreen) {
     case 'supervisor_monitor':
       return (
-        <div className="space-y-6">
-          <div>
+        <div className="space-y-4 sm:space-y-6 min-w-0">
+          <div className="space-y-1.5">
             <h2 className="text-xl font-bold text-slate-800 dark:text-white">Supervisor Monitoring Console</h2>
             <p className="text-xs text-slate-400 dark:text-slate-500">Monitor active chats, review agent sentiment flags, and whisper coaching guidelines in real-time.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Monitor roster */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm space-y-4 min-w-0">
               <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono mb-2">Live Conversation Roster</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                <table className="w-full min-w-190 text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
                       <th className="pb-3">Customer</th>
@@ -102,7 +102,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </div>
 
             {/* Live Whisper composer panel */}
-            <div className="bg-slate-150/40 dark:bg-slate-900/55 p-5 rounded-2xl border border-slate-200 dark:border-slate-850 h-fit space-y-4 text-xs font-semibold">
+            <div className="bg-slate-150/40 dark:bg-slate-900/55 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-850 h-fit space-y-4 text-xs font-semibold min-w-0">
               <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono flex items-center gap-1.5">
                 <Volume2 className="w-4 h-4 text-purple-500" />
                 Live Agent Whisper

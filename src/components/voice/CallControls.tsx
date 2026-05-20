@@ -37,7 +37,7 @@ export function CallControls({
           className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border transition-all ${
             isMuted
               ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-950/20 dark:border-rose-900 dark:text-rose-400'
-              : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800'
+              : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
           }`}
         >
           {isMuted ? <MicOff className="w-4 h-4 text-rose-500" /> : <Mic className="w-4 h-4 text-slate-500" />}
@@ -51,7 +51,7 @@ export function CallControls({
           className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border transition-all ${
             isHeld
               ? 'bg-amber-50 border-amber-250 text-amber-600 dark:bg-amber-950/20 dark:border-amber-900 dark:text-amber-400'
-              : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800'
+              : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
           }`}
         >
           {isHeld ? <Play className="w-4 h-4 text-amber-500 animate-pulse" /> : <Pause className="w-4 h-4 text-slate-500" />}
@@ -65,7 +65,7 @@ export function CallControls({
           className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border transition-all ${
             isRecording
               ? 'bg-red-50 border-red-250 text-red-600 dark:bg-red-950/20 dark:border-red-900 dark:text-red-400 font-bold'
-              : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800'
+              : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
           }`}
         >
           <Disc className={`w-4 h-4 ${isRecording ? 'text-red-500 animate-pulse' : 'text-slate-500'}`} />
@@ -76,7 +76,7 @@ export function CallControls({
         <button
           onClick={onConference}
           disabled={disabled}
-          className="flex items-center justify-center gap-2 p-2.5 bg-white border border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+          className="flex items-center justify-center gap-2 p-2.5 bg-white border border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
         >
           <Users className="w-4 h-4 text-slate-500" />
           <span>Conference</span>
@@ -89,7 +89,7 @@ export function CallControls({
         <button
           onClick={onTransfer}
           disabled={disabled}
-          className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+          className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
         >
           <Share2 className="w-4 h-4 text-slate-500" />
           <span>Transfer Call</span>

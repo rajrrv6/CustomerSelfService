@@ -105,7 +105,7 @@ export function DialPad({ value, onChange, onKeyPress, onBackspace, onCall, disa
             type="button"
             disabled={disabled}
             onClick={() => handleKeyClick(k.num)}
-            className="w-14 h-14 rounded-full flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-850 dark:text-slate-200 active:scale-95 transition-all outline-none"
+            className="w-14 h-14 rounded-full flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 active:scale-95 transition-all outline-none"
           >
             <span className="text-base font-bold font-mono">{k.num}</span>
             <span className="text-[7px] text-slate-400 font-mono tracking-widest">{k.letters || '\u00A0'}</span>

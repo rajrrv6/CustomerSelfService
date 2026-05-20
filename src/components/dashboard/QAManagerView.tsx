@@ -169,9 +169,9 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
 
     case 'coaching':
       return (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
+        <div className="space-y-4 sm:space-y-6 min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+            <div className="space-y-1.5">
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">Agent Coaching Plans</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500">Draft customized training programs and monitor agent score targets.</p>
             </div>
@@ -184,9 +184,9 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {coachingPlans.map((plan) => (
-              <div key={plan.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+              <div key={plan.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col justify-between min-w-0">
                 <div className="space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
@@ -212,13 +212,13 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
 
           {/* Create coaching plan modal */}
           {showAddPlanModal && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-sm w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95">
-                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 max-h-[90dvh] overflow-y-auto">
+                <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <h3 className="font-bold text-slate-850 dark:text-white text-sm">Create Coaching Plan</h3>
                   <button onClick={() => setShowAddPlanModal(false)} className="text-slate-400 text-lg">×</button>
                 </div>
-                <form onSubmit={handleCreateCoachingPlan} className="p-5 space-y-4 text-xs font-semibold">
+                <form onSubmit={handleCreateCoachingPlan} className="p-4 sm:p-5 space-y-4 text-xs font-semibold">
                   <div>
                     <label className="block text-slate-500 mb-1.5">Select Agent</label>
                     <select

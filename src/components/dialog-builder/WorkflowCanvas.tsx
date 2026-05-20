@@ -51,6 +51,8 @@ export function WorkflowCanvas({
 
   // Port connection draft helper states
   const [linkingSourceId, setLinkingSourceId] = useState<string | null>(null);
+  const [isTouchPanning, setIsTouchPanning] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Dragging individual nodes state variables
   const dragInfoRef = useRef<{
@@ -78,6 +80,27 @@ export function WorkflowCanvas({
 
   const handleMouseUp = () => {
     setIsPanning(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const target = e.target as HTMLElement;
+    if (target !== containerRef.current && target.tagName !== 'svg') return;
+    const touch = e.touches[0];
+    setIsTouchPanning(true);
+    touchStartRef.current = { x: touch.clientX - panX, y: touch.clientY - panY };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isTouchPanning || !touchStartRef.current || e.touches.length !== 1) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    onPan(touch.clientX - touchStartRef.current.x, touch.clientY - touchStartRef.current.y);
+  };
+
+  const handleTouchEnd = () => {
+    setIsTouchPanning(false);
+    touchStartRef.current = null;
   };
 
   // Node drag events callback orchestrator
@@ -130,7 +153,10 @@ export function WorkflowCanvas({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      className="flex-1 bg-slate-50 dark:bg-slate-950 overflow-hidden relative cursor-grab active:cursor-grabbing select-none"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="flex-1 bg-slate-50 dark:bg-slate-950 overflow-hidden relative cursor-grab active:cursor-grabbing select-none touch-none"
     >
       {/* Visual Dot Grid Layer Backdrop */}
       <div
@@ -150,7 +176,7 @@ export function WorkflowCanvas({
         }}
       >
         {/* SVG connection lines layer */}
-        <svg className="absolute inset-0 w-[4000px] h-[3000px] pointer-events-none overflow-visible">
+        <svg className="absolute inset-0 w-1000 h-750 pointer-events-none overflow-visible">
           <defs>
             <marker
               id="arrowhead"
@@ -331,7 +357,7 @@ export function WorkflowCanvas({
       </div>
 
       {/* Floating hints */}
-      <div className="absolute top-4 left-4 bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-lg max-w-[240px] text-[10px] font-semibold text-slate-500 leading-normal pointer-events-none">
+      <div className="hidden lg:block absolute top-4 left-4 bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-lg max-w-60 text-[10px] font-semibold text-slate-500 leading-normal pointer-events-none">
         <p className="font-bold text-slate-800 dark:text-white mb-1">💡 Pro Tips:</p>
         <ul className="list-disc pl-3.5 space-y-0.5">
           <li>Pan: Left click backdrop & drag</li>
@@ -344,8 +370,8 @@ export function WorkflowCanvas({
 
       {/* Bottom overlay indicating active selection */}
       {selectedEdgeId && (
-        <div className="absolute bottom-4 right-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-3 py-2 shadow-lg flex items-center gap-2 text-[10px]">
-          <span className="font-mono text-slate-450 font-bold">Selected Link: {selectedEdgeId}</span>
+        <div className="hidden sm:flex absolute bottom-4 right-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-3 py-2 shadow-lg items-center gap-2 text-[10px]">
+          <span className="font-mono text-slate-500 font-bold">Selected Link: {selectedEdgeId}</span>
           <button
             onClick={() => onDeleteEdge(selectedEdgeId)}
             className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold"

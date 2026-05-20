@@ -24,7 +24,7 @@ export function IntentNode({ node, selected, isActive, onSelect, onDelete }: Nod
           ? 'border-blue-500 ring-2 ring-blue-500/20 scale-[1.02]'
           : selected
           ? 'border-slate-800 dark:border-white'
-          : 'border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700'
+          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
       style={{ left: node.x, top: node.y }}
     >
@@ -58,7 +58,7 @@ export function IntentNode({ node, selected, isActive, onSelect, onDelete }: Nod
             <span className="text-[9px] text-slate-400 font-bold uppercase block">Utterances</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {utterances.slice(0, 2).map((ut, idx) => (
-                <span key={idx} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800/80 rounded text-[9px] font-normal text-slate-650 truncate max-w-[90px]">
+                <span key={idx} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800/80 rounded text-[9px] font-normal text-slate-600 truncate max-w-22.5">
                   &quot;{ut}&quot;
                 </span>
               ))}

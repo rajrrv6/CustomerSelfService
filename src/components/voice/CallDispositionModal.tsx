@@ -40,7 +40,7 @@ export function CallDispositionModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md w-full rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 text-xs font-semibold text-slate-850 dark:text-slate-200">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md w-full rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 text-xs font-semibold text-slate-800 dark:text-slate-200">
         
         {/* Header */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20">
@@ -55,11 +55,11 @@ export function CallDispositionModal({
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           
           {/* Caller Profile Info */}
-          <div className="p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-850 rounded-2xl flex justify-between items-center text-[11px]">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 rounded-2xl flex justify-between items-center text-[11px]">
             <div>
               <span className="block text-[8px] uppercase tracking-wider text-slate-400 font-bold font-mono">Caller:</span>
               <strong className="text-slate-900 dark:text-white block mt-0.5">{contactName}</strong>
-              <span className="text-slate-450 font-mono text-[9px]">{phoneNumber}</span>
+              <span className="text-slate-500 font-mono text-[9px]">{phoneNumber}</span>
             </div>
             
             <div className="text-right">
@@ -74,7 +74,7 @@ export function CallDispositionModal({
             <select
               value={selectedCode}
               onChange={(e) => setSelectedCode(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-250 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:border-blue-500 font-bold text-slate-800 dark:text-slate-200"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:border-blue-500 font-bold text-slate-800 dark:text-slate-200"
             >
               {codes.map((code) => (
                 <option key={code} value={code}>
@@ -94,7 +94,7 @@ export function CallDispositionModal({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Detail the call resolution, next action steps, or follow-ups here..."
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-250 dark:border-slate-800 rounded-xl p-3 text-xs leading-relaxed outline-none focus:border-blue-500 text-slate-800 dark:text-slate-200 font-normal"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs leading-relaxed outline-none focus:border-blue-500 text-slate-800 dark:text-slate-200 font-normal"
               />
               {notes.trim().length === 0 && (
                 <div className="absolute right-3 bottom-3 text-slate-400">

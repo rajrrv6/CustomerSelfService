@@ -23,29 +23,29 @@ export function WrapupModal({ isOpen, onClose, onResolve, slaStatus }: WrapupMod
   };
 
   const slaLabels = {
-    within_sla: { bg: 'bg-emerald-100 text-emerald-800', label: 'WITHIN SLA TARGET' },
-    warning: { bg: 'bg-amber-100 text-amber-800', label: 'SLA WARNING STAGE' },
-    breached: { bg: 'bg-rose-100 text-rose-800', label: 'SLA BREACHED' }
+    within_sla: { bg: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400', label: 'WITHIN SLA TARGET' },
+    warning: { bg: 'bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400', label: 'SLA WARNING STAGE' },
+    breached: { bg: 'bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400', label: 'SLA BREACHED' }
   };
 
   const activeSla = slaLabels[slaStatus] || slaLabels.within_sla;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-sm w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 text-xs font-semibold">
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/20">
+      <form onSubmit={handleSubmit} className="bg-slate-50/95 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-sm w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 text-xs font-semibold">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-100/70 dark:bg-slate-950/20">
           <div className="flex items-center gap-1.5">
             <ClipboardCheck className="w-4.5 h-4.5 text-emerald-600" />
             <h3 className="font-bold text-slate-800 dark:text-white">Resolve Case & Disposition</h3>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-650 text-lg">×</button>
+          <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-lg">×</button>
         </div>
 
         <div className="p-5 space-y-4">
           {/* SLA Outcome Badge */}
           <div className={`p-2.5 rounded-xl border flex items-center justify-between ${activeSla.bg}`}>
             <span className="text-[10px] font-bold uppercase tracking-wider font-mono">Case SLA Outcome</span>
-            <span className="font-mono text-[9px] font-extrabold uppercase px-2 py-0.5 bg-white/40 rounded">
+            <span className="font-mono text-[9px] font-extrabold uppercase px-2 py-0.5 bg-white/70 dark:bg-slate-950/40 rounded text-current">
               {activeSla.label}
             </span>
           </div>

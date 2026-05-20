@@ -37,10 +37,11 @@ export function SVGLineChart({
     : '';
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-      <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">{title}</h4>
-      <div className="relative" style={{ height }}>
-        <svg viewBox={`0 0 400 ${height}`} className="w-full h-full overflow-visible">
+    <div className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+      <h4 className="mb-3 text-sm font-semibold text-slate-500 dark:text-slate-400 sm:mb-4">{title}</h4>
+      <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain">
+        <div className="relative min-w-[300px]" style={{ height }}>
+          <svg viewBox={`0 0 400 ${height}`} className="h-full w-full max-w-none overflow-visible">
           <defs>
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={gradientColor} stopOpacity="0.3" />
@@ -141,6 +142,7 @@ export function SVGLineChart({
             </text>
           ))}
         </svg>
+        </div>
       </div>
     </div>
   );
@@ -169,10 +171,11 @@ export function SVGBarChart({
   const step = (400 - padding * 2) / data.length;
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-      <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">{title}</h4>
-      <div className="relative" style={{ height }}>
-        <svg viewBox={`0 0 400 ${height}`} className="w-full h-full overflow-visible">
+    <div className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+      <h4 className="mb-3 text-sm font-semibold text-slate-500 dark:text-slate-400 sm:mb-4">{title}</h4>
+      <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain">
+        <div className="relative min-w-[300px]" style={{ height }}>
+        <svg viewBox={`0 0 400 ${height}`} className="h-full w-full max-w-none overflow-visible">
           {/* Grid lines */}
           {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
             const y = padding + ratio * chartHeight;
@@ -252,6 +255,7 @@ export function SVGBarChart({
             );
           })}
         </svg>
+        </div>
       </div>
     </div>
   );
@@ -289,7 +293,7 @@ export function SVGDonutChart({
   return (
     <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
       <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4">{title}</h4>
-      <div className="flex flex-row items-center justify-around gap-4 py-2">
+      <div className="flex flex-col items-center justify-around gap-4 py-2 sm:flex-row">
         {/* SVG Circle */}
         <div className="relative w-32 h-32">
           <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">

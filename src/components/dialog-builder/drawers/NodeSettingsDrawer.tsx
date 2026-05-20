@@ -67,9 +67,9 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
   };
 
   return (
-    <div className="w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-full flex flex-col shrink-0 text-xs font-semibold shadow-xl z-20 overflow-hidden animate-slide-in">
+    <div className="fixed inset-x-0 bottom-0 z-30 w-full max-h-[85dvh] rounded-t-3xl border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-auto flex flex-col shrink-0 text-xs font-semibold shadow-2xl overflow-hidden animate-slide-in lg:inset-y-0 lg:bottom-auto lg:right-0 lg:left-auto lg:w-80 lg:max-h-none lg:rounded-none lg:border-t-0 lg:border-l">
       {/* Header */}
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950 sticky top-0 z-10">
         <div className="flex items-center gap-1.5 text-slate-800 dark:text-white">
           <Settings className="w-4 h-4 text-blue-500" />
           <h3 className="font-bold">Node Configurations</h3>
@@ -80,10 +80,10 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
       </div>
 
       {/* Inputs container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[calc(85dvh-56px)] lg:max-h-none">
         {/* Name */}
         <div>
-          <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Display Label</label>
+          <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Display Label</label>
           <input
             type="text"
             value={nodeName}
@@ -94,7 +94,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* Output Statement Text */}
         <div>
-          <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Bot Speech Output</label>
+          <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Bot Speech Output</label>
           <textarea
             rows={2}
             value={outputText}
@@ -106,9 +106,9 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* Intent specific config */}
         {node.type === 'intent' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Trigger Intent Name</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Trigger Intent Name</label>
               <input
                 type="text"
                 value={intentName}
@@ -119,11 +119,11 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
             </div>
 
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1.5">Utterances Training list</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1.5">Utterances Training list</label>
               <div className="space-y-1.5">
                 {utterances.map((ut, idx) => (
                   <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-900">
-                    <span className="truncate max-w-[190px]">&quot;{ut}&quot;</span>
+                    <span className="truncate max-w-47.5">&quot;{ut}&quot;</span>
                     <button onClick={() => setUtterances(utterances.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -143,7 +143,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
                       setUtterances([...utterances, newUtterance]);
                       setNewUtterance('');
                     }}
-                    className="p-2 bg-blue-650 text-white rounded-xl"
+                    className="p-2 bg-blue-600 text-white rounded-xl"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -155,9 +155,9 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* API Hook Settings */}
         {node.type === 'api' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">HTTP Method</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">HTTP Method</label>
               <select
                 value={apiMethod}
                 onChange={(e) => setApiMethod(e.target.value as 'GET' | 'POST')}
@@ -169,7 +169,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
             </div>
 
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Target Gateway URL</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Target Gateway URL</label>
               <input
                 type="text"
                 value={apiUrl}
@@ -181,7 +181,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
             {apiMethod === 'POST' && (
               <div>
-                <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">JSON Payload Body</label>
+                <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">JSON Payload Body</label>
                 <textarea
                   rows={4}
                   value={apiPayload}
@@ -196,9 +196,9 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* Database queries settings */}
         {node.type === 'db' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Target DB Table</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Target DB Table</label>
               <input
                 type="text"
                 value={dbTargetTable}
@@ -209,7 +209,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
             </div>
 
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">SQL Query Code</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">SQL Query Code</label>
               <textarea
                 rows={3}
                 value={dbQuery}
@@ -223,9 +223,9 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* RAG Knowledge base settings */}
         {node.type === 'rag' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Select Knowledge Resource</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Select Knowledge Resource</label>
               <input
                 type="text"
                 value={ragSource}
@@ -236,7 +236,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
             </div>
 
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Minimum Retrieval Match Score</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Minimum Retrieval Match Score</label>
               <input
                 type="number"
                 step="0.05"
@@ -252,16 +252,16 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* Branch settings */}
         {node.type === 'branch' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
-            <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Routing Branches Expressions</label>
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Routing Branches Expressions</label>
             <div className="space-y-2">
               {branchConditions.map((cond, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-900 font-mono text-[10px]">
                   <div>
-                    <span className="block text-[8px] text-slate-450 uppercase">Rule</span>
-                    <strong className="text-violet-650 truncate block max-w-[120px]">{cond.condition}</strong>
-                    <span className="block text-[8px] text-slate-450 uppercase mt-0.5">Target node</span>
-                    <span className="truncate block max-w-[120px]">{cond.targetNodeId}</span>
+                    <span className="block text-[8px] text-slate-500 uppercase">Rule</span>
+                    <strong className="text-violet-600 truncate block max-w-30">{cond.condition}</strong>
+                    <span className="block text-[8px] text-slate-500 uppercase mt-0.5">Target node</span>
+                    <span className="truncate block max-w-30">{cond.targetNodeId}</span>
                   </div>
                   <button onClick={() => setBranchConditions(branchConditions.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700">
                     <Trash2 className="w-3.5 h-3.5" />
@@ -269,7 +269,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
                 </div>
               ))}
 
-              <div className="bg-slate-50/50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-150 dark:border-slate-850 space-y-2">
+              <div className="bg-slate-50/50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <input
                   type="text"
                   value={newCondExpr}
@@ -291,7 +291,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
                     setNewCondExpr('');
                     setNewCondTarget('');
                   }}
-                  className="w-full py-1 bg-violet-600 hover:bg-violet-750 text-white rounded-lg text-[10px] font-bold"
+                  className="w-full py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-[10px] font-bold"
                 >
                   Add Branch Path
                 </button>
@@ -302,9 +302,9 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* Handoff queue settings */}
         {node.type === 'handoff' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Queue Name</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Queue Name</label>
               <input
                 type="text"
                 value={handoffQueue}
@@ -318,9 +318,9 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* Delay timer settings */}
         {node.type === 'delay' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
             <div>
-              <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Wait Duration (seconds)</label>
+              <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Wait Duration (seconds)</label>
               <input
                 type="number"
                 value={delaySeconds}
@@ -333,14 +333,14 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* Forms Node configurations */}
         {node.type === 'form' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
-            <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Interactive Form Fields</label>
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Interactive Form Fields</label>
             <div className="space-y-2">
               {formFields.map((f, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-900 text-[10px]">
                   <div>
-                    <span className="block font-mono font-bold text-cyan-650">@{f.name} ({f.type})</span>
-                    <span className="block text-slate-450 italic mt-0.5">Prompt: &quot;{f.prompt}&quot;</span>
+                    <span className="block font-mono font-bold text-cyan-600">@{f.name} ({f.type})</span>
+                    <span className="block text-slate-500 italic mt-0.5">Prompt: &quot;{f.prompt}&quot;</span>
                   </div>
                   <button onClick={() => setFormFields(formFields.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700">
                     <Trash2 className="w-3.5 h-3.5" />
@@ -348,7 +348,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
                 </div>
               ))}
 
-              <div className="bg-slate-50/50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-150 dark:border-slate-850 space-y-2">
+              <div className="bg-slate-50/50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <input
                   type="text"
                   value={newFieldName}
@@ -379,7 +379,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
                     setNewFieldName('');
                     setNewFieldPrompt('');
                   }}
-                  className="w-full py-1 bg-cyan-600 hover:bg-cyan-750 text-white rounded-lg text-[10px] font-bold"
+                  className="w-full py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-[10px] font-bold"
                 >
                   Add Slot Field
                 </button>
@@ -390,13 +390,13 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
         {/* Carousel response configurations */}
         {node.type === 'carousel' && (
-          <div className="space-y-3 pt-2 border-t border-slate-150 dark:border-slate-800/80">
-            <label className="block text-slate-450 uppercase text-[9px] font-bold tracking-wider mb-1">Carousel Card Options</label>
+          <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="block text-slate-500 uppercase text-[9px] font-bold tracking-wider mb-1">Carousel Card Options</label>
             <div className="space-y-2">
               {carouselItems.map((item, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-2 rounded-lg border border-slate-100 dark:border-slate-900 text-[10px]">
                   <div>
-                    <strong className="block text-fuchsia-650">{item.title}</strong>
+                    <strong className="block text-fuchsia-600">{item.title}</strong>
                     <span className="block text-slate-400 text-[9px] mt-0.5">{item.subtitle}</span>
                   </div>
                   <button onClick={() => setCarouselItems(carouselItems.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700">
@@ -405,7 +405,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
                 </div>
               ))}
 
-              <div className="bg-slate-50/50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-150 dark:border-slate-850 space-y-2">
+              <div className="bg-slate-50/50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <input
                   type="text"
                   value={newCardTitle}
@@ -427,7 +427,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
                     setNewCardTitle('');
                     setNewCardSubtitle('');
                   }}
-                  className="w-full py-1 bg-fuchsia-600 hover:bg-fuchsia-750 text-white rounded-lg text-[10px] font-bold"
+                  className="w-full py-1 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-lg text-[10px] font-bold"
                 >
                   Add Card Item
                 </button>
@@ -439,7 +439,7 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
 
       {/* Save action button footer */}
       <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex gap-2 bg-slate-50 dark:bg-slate-950">
-        <button onClick={onClose} className="flex-1 py-2 text-center rounded-xl bg-slate-100 hover:bg-slate-250 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300">
+        <button onClick={onClose} className="flex-1 py-2 text-center rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">
           Cancel
         </button>
         <button onClick={handleSave} className="flex-1 py-2 text-center text-white bg-blue-600 hover:bg-blue-700 rounded-xl">

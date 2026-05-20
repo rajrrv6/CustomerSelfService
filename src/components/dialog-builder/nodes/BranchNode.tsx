@@ -24,12 +24,12 @@ export function BranchNode({ node, selected, isActive, onSelect, onDelete }: Nod
           ? 'border-violet-500 ring-2 ring-violet-500/20 scale-[1.02]'
           : selected
           ? 'border-slate-800 dark:border-white'
-          : 'border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700'
+          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
       style={{ left: node.x, top: node.y }}
     >
       {/* Target port indicators */}
-      <div className="absolute left-0 top-1/2 -ml-2 -mt-2 w-3.5 h-3.5 bg-slate-300 dark:bg-slate-750 rounded-full border-2 border-white dark:border-slate-900 z-10" title="Input port" />
+      <div className="absolute left-0 top-1/2 -ml-2 -mt-2 w-3.5 h-3.5 bg-slate-400 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900 z-10" title="Input port" />
       <div className="absolute right-0 top-1/3 -mr-2 -mt-2 w-3.5 h-3.5 bg-violet-500 rounded-full border-2 border-white dark:border-slate-900 z-10 cursor-pointer" title="Output Condition A" />
       <div className="absolute right-0 top-2/3 -mr-2 -mt-2 w-3.5 h-3.5 bg-fuchsia-500 rounded-full border-2 border-white dark:border-slate-900 z-10 cursor-pointer" title="Output Condition B" />
 
@@ -50,11 +50,11 @@ export function BranchNode({ node, selected, isActive, onSelect, onDelete }: Nod
       </div>
 
       <div className="mt-2.5 space-y-2">
-        <span className="text-[10px] text-slate-450 uppercase font-mono block">Router Branches</span>
+        <span className="text-[10px] text-slate-500 uppercase font-mono block">Router Branches</span>
         <div className="space-y-1.5 text-[10px]">
           {conditions.map((cond, idx) => (
             <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-1.5 border border-slate-100 dark:border-slate-900 rounded-lg">
-              <span className="truncate max-w-[110px] font-mono text-slate-650" title={cond.condition}>
+              <span className="truncate max-w-27.5 font-mono text-slate-600" title={cond.condition}>
                 IF {cond.condition}
               </span>
               <span className="text-[8px] bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded text-slate-500 font-mono">

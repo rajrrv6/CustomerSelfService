@@ -119,7 +119,7 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
           </div>
 
           {/* Search bar */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 min-w-0">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
               <input
@@ -133,9 +133,9 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
           </div>
 
           {/* Model Registry Table */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-xs text-slate-500 dark:text-slate-400">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm min-w-0">
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+              <table className="w-full min-w-max border-collapse text-left text-xs text-slate-500 dark:text-slate-400">
                 <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="px-6 py-4">Model Name</th>
@@ -185,13 +185,13 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
 
           {/* Model register modal overlay */}
           {showAddModelModal && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 max-h-[90dvh] overflow-y-auto">
+                <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <h3 className="font-bold text-slate-800 dark:text-white">Register LLM Model</h3>
                   <button onClick={() => setShowAddModelModal(false)} className="text-slate-400 hover:text-slate-600">×</button>
                 </div>
-                <form onSubmit={handleRegisterModel} className="p-6 space-y-4">
+                <form onSubmit={handleRegisterModel} className="p-4 sm:p-6 space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5">Model Name (e.g. GPT-5 Small)</label>
                     <input
@@ -203,7 +203,7 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
                       className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-800 rounded-xl bg-transparent focus:outline-none focus:border-blue-500"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 mb-1.5">Cost Input (per 1k)</label>
                       <input
@@ -227,7 +227,7 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 mb-1.5">Avg Latency (ms)</label>
                       <input
@@ -290,9 +290,9 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
             </button>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-xs text-slate-500 dark:text-slate-400">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm min-w-0">
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+              <table className="w-full min-w-max border-collapse text-left text-xs text-slate-500 dark:text-slate-400">
                 <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="px-6 py-4">Engine Name</th>
@@ -337,13 +337,13 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
 
           {/* Provider modal overlay */}
           {showAddProviderModal && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 max-h-[90dvh] overflow-y-auto">
+                <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <h3 className="font-bold text-slate-800 dark:text-white">Register ASR/TTS Engine</h3>
                   <button onClick={() => setShowAddProviderModal(false)} className="text-slate-400 hover:text-slate-600">×</button>
                 </div>
-                <form onSubmit={handleRegisterProvider} className="p-6 space-y-4">
+                <form onSubmit={handleRegisterProvider} className="p-4 sm:p-6 space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-1.5">Engine Name</label>
                     <input
@@ -355,7 +355,7 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
                       className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-800 rounded-xl bg-transparent focus:outline-none focus:border-blue-500"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 mb-1.5">Type</label>
                       <select
@@ -529,7 +529,7 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
                 </div>
                 <span className="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-bold">HEALTHY</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center border-t border-b border-slate-100 dark:border-slate-850 py-3">
+              <div className="grid grid-cols-1 gap-2 py-3 text-center border-t border-b border-slate-100 dark:border-slate-850 sm:grid-cols-3">
                 <div>
                   <span className="text-[9px] text-slate-400 uppercase font-mono block">Dimensions</span>
                   <span className="text-sm font-bold font-mono">1,536</span>
@@ -566,7 +566,7 @@ export function SuperAdminView({ activeSubScreen }: { activeSubScreen: string })
                 </div>
                 <span className="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-bold">HEALTHY</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center border-t border-b border-slate-100 dark:border-slate-850 py-3">
+              <div className="grid grid-cols-1 gap-2 py-3 text-center border-t border-b border-slate-100 dark:border-slate-850 sm:grid-cols-3">
                 <div>
                   <span className="text-[9px] text-slate-400 uppercase font-mono block">Dimensions</span>
                   <span className="text-sm font-bold font-mono">3,072</span>

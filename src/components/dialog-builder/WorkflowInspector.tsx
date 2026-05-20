@@ -5,9 +5,11 @@ interface WorkflowInspectorProps {
   variables: Record<string, string>;
   onUpdateVariable: (key: string, value: string) => void;
   traceHistory: string[];
+  className?: string;
+  variant?: 'default' | 'compact';
 }
 
-export function WorkflowInspector({ variables, onUpdateVariable, traceHistory }: WorkflowInspectorProps) {
+export function WorkflowInspector({ variables, onUpdateVariable, traceHistory, className = '', variant = 'default' }: WorkflowInspectorProps) {
   const [activeTab, setActiveTab] = useState<'variables' | 'regression'>('variables');
   const [testResults, setTestResults] = useState<Array<{ name: string; status: 'passed' | 'failed' | 'idle'; output: string }>>([
     { name: '1. VIP Branch Escalation Route', status: 'idle', output: 'Asserts route reaches RAG check when invoiceAmount > 1000.' },
@@ -76,7 +78,11 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory }:
   };
 
   return (
-    <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-full flex flex-col shrink-0 text-xs font-semibold select-none shadow-sm">
+    <div
+      className={`border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 text-xs font-semibold select-none shadow-sm ${
+        variant === 'compact' ? 'w-full h-auto border-0 shadow-none rounded-none' : 'w-80 h-full'
+      } ${className}`}
+    >
       {/* Tabs */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-950">
         <button
@@ -105,8 +111,8 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory }:
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {activeTab === 'variables' ? (
           <div className="space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-850">
-              <span className="text-[10px] text-slate-450 uppercase font-mono tracking-wider">Memory Register</span>
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">Memory Register</span>
               <Database className="w-3.5 h-3.5 text-blue-500" />
             </div>
 
@@ -118,7 +124,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory }:
                     type="text"
                     value={val}
                     onChange={(e) => onUpdateVariable(key, e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg font-mono text-[11px] text-slate-850 dark:text-slate-200 focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg font-mono text-[11px] text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               ))}
@@ -126,9 +132,9 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory }:
 
             {/* Trace History */}
             {traceHistory.length > 0 && (
-              <div className="pt-4 border-t border-slate-150 dark:border-slate-800/80 space-y-2">
-                <span className="text-[10px] text-slate-450 uppercase font-mono tracking-wider block">Live Trace Map</span>
-                <div className="space-y-1 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-150 dark:border-slate-850 font-mono text-[9px] leading-relaxed">
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80 space-y-2">
+                <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider block">Live Trace Map</span>
+                <div className="space-y-1 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-[9px] leading-relaxed">
                   {traceHistory.map((nodeId, idx) => (
                     <div key={idx} className="flex items-center gap-1 text-slate-500">
                       <span className="text-blue-500 font-bold">[{idx + 1}]</span>
@@ -141,8 +147,8 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory }:
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-850">
-              <span className="text-[10px] text-slate-450 uppercase font-mono tracking-wider">Assertions</span>
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">Assertions</span>
               <Cpu className="w-3.5 h-3.5 text-violet-500" />
             </div>
 
@@ -156,7 +162,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory }:
 
             <div className="space-y-3 pt-2">
               {testResults.map((test, i) => (
-                <div key={i} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 p-3 rounded-xl space-y-1.5">
+                <div key={i} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 rounded-xl space-y-1.5">
                   <div className="flex justify-between items-start gap-2">
                     <span className="font-bold text-slate-800 dark:text-slate-200 leading-tight">
                       {test.name}
@@ -171,7 +177,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory }:
                       <RefreshCcw className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-450 font-normal leading-normal italic font-mono">
+                  <p className="text-[10px] text-slate-500 font-normal leading-normal italic font-mono">
                     {test.output}
                   </p>
                 </div>

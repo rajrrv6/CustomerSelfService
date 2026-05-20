@@ -18,20 +18,20 @@ export function WorkflowMinimap({ nodes, activeNodeId }: WorkflowMinimapProps) {
   const rangeY = maxY - minY || 1;
 
   return (
-    <div className="absolute bottom-4 left-4 bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 shadow-lg select-none z-10 w-40 h-28 flex flex-col justify-between text-[9px] font-semibold text-slate-400 font-mono">
-      <div className="flex items-center gap-1 border-b border-slate-100 dark:border-slate-850 pb-1">
-        <Map className="w-3 h-3 text-blue-500" />
-        <span>FLOW MINIMAP</span>
+    <div className="pointer-events-none absolute bottom-2 start-2 z-10 flex h-20 w-28 flex-col justify-between rounded-xl border border-slate-200 bg-white/95 p-1.5 text-[8px] font-semibold text-slate-400 shadow-lg select-none dark:border-slate-800 dark:bg-slate-900/95 sm:bottom-3 sm:start-3 sm:h-24 sm:w-32 sm:rounded-2xl sm:p-2 sm:text-[9px] lg:bottom-4 lg:start-4 lg:h-28 lg:w-40 lg:p-2.5">
+      <div className="flex items-center gap-1 border-b border-slate-100 pb-0.5 dark:border-slate-800 sm:pb-1">
+        <Map className="h-2.5 w-2.5 text-blue-500 sm:h-3 sm:w-3" />
+        <span className="font-mono uppercase">Map</span>
       </div>
 
-      <div className="relative flex-1 bg-slate-50 dark:bg-slate-950 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-850 mt-1">
+      <div className="relative mt-0.5 flex-1 overflow-hidden rounded-md border border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-950 sm:rounded-lg sm:mt-1">
         {nodes.map((n) => {
           // Calculate percentage coordinates
           const pctX = ((n.x - minX) / rangeX) * 85 + 5;
           const pctY = ((n.y - minY) / rangeY) * 80 + 5;
 
           // Color maps
-          let dotColor = 'bg-slate-350 dark:bg-slate-650';
+          let dotColor = 'bg-slate-400 dark:bg-slate-600';
           if (n.type === 'intent') dotColor = 'bg-blue-500';
           else if (n.type === 'api') dotColor = 'bg-indigo-500';
           else if (n.type === 'db') dotColor = 'bg-emerald-500';

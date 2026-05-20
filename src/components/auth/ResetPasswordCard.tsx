@@ -120,7 +120,7 @@ export function ResetPasswordCard() {
 
   if (!hasPendingSession || sessionInvalid) {
     return (
-      <div className="bg-white dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8 text-center space-y-4">
+      <div className="bg-slate-50/95 dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8 text-center space-y-4">
         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           {isRtl
             ? 'انتهت صلاحية جلسة إعادة التعيين أو لم تبدأ من صفحة نسيت كلمة المرور. اطلب رابطاً جديداً.'
@@ -141,7 +141,7 @@ export function ResetPasswordCard() {
 
   if (phase === 'success') {
     return (
-      <div className="bg-white dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8 text-center space-y-4">
+      <div className="bg-slate-50/95 dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8 text-center space-y-4">
         <div className="mx-auto w-14 h-14 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
           <CheckCircle2 className="w-7 h-7" aria-hidden />
         </div>
@@ -157,7 +157,7 @@ export function ResetPasswordCard() {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8">
+    <div className="bg-slate-50/95 dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8">
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <div className="space-y-1.5">
           <label htmlFor="new-password" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
