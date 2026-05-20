@@ -24,16 +24,16 @@ export function CarouselNode({ node, selected, isActive, onSelect, onDelete }: N
           ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/20 scale-[1.02]'
           : selected
           ? 'border-slate-800 dark:border-white'
-          : 'border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700'
+          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
       style={{ left: node.x, top: node.y }}
     >
       {/* Target port indicators */}
-      <div className="absolute left-0 top-1/2 -ml-2 -mt-2 w-3.5 h-3.5 bg-slate-300 dark:bg-slate-750 rounded-full border-2 border-white dark:border-slate-900 z-10" title="Input port" />
+      <div className="absolute left-0 top-1/2 -ml-2 -mt-2 w-3.5 h-3.5 bg-slate-400 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900 z-10" title="Input port" />
       <div className="absolute right-0 top-1/2 -mr-2 -mt-2 w-3.5 h-3.5 bg-fuchsia-500 rounded-full border-2 border-white dark:border-slate-900 z-10 cursor-pointer" title="Output port" />
 
       <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-1.5 text-fuchsia-650 dark:text-fuchsia-400">
+        <div className="flex items-center gap-1.5 text-fuchsia-600 dark:text-fuchsia-400">
           <Layers className="w-4 h-4 shrink-0" />
           <span className="font-bold font-mono">CAROUSEL RESP</span>
         </div>
@@ -50,11 +50,11 @@ export function CarouselNode({ node, selected, isActive, onSelect, onDelete }: N
 
       <div className="mt-2.5 space-y-1.5">
         <div>
-          <span className="text-[10px] text-slate-450 uppercase font-mono block">Carousel Cards</span>
+          <span className="text-[10px] text-slate-500 uppercase font-mono block">Carousel Cards</span>
           <div className="space-y-1.5 mt-1 text-[10px]">
             {items.map((it, idx) => (
               <div key={idx} className="bg-slate-50/50 dark:bg-slate-950 p-2 border border-slate-100 dark:border-slate-900 rounded-xl leading-normal">
-                <span className="font-bold text-slate-850 dark:text-slate-200 block truncate">{it.title}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">{it.title}</span>
                 <span className="text-[9px] text-slate-400 block truncate">{it.subtitle}</span>
               </div>
             ))}

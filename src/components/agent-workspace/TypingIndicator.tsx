@@ -9,7 +9,7 @@ export function TypingIndicator({ name }: { name: string }) {
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }} />
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
-        <span className="text-slate-450 font-sans ml-1">{name} is typing...</span>
+        <span className="text-slate-500 font-sans ml-1">{name} is typing...</span>
       </div>
     </div>
   );

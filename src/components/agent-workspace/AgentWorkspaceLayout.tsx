@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { UnifiedInbox } from './UnifiedInbox';
 import { ConversationPanel } from './ConversationPanel';
@@ -33,7 +33,9 @@ import { queueSeed } from '@/data/seed/queueSeed';
 import { agentMetricsSeed, shiftScheduleSeed } from '@/data/seed/agentMetricsSeed';
 import { callHistorySeed, CallHistoryItem } from '@/data/seed/callHistorySeed';
 
-import { Clock, Flame, PhoneCall, History, Users, MessageSquare, Shield } from 'lucide-react';
+import { Clock, Flame, PhoneCall, History, Users, MessageSquare, Shield, Inbox, UserCircle } from 'lucide-react';
+import { MobileSheet } from '@/components/responsive/MobileSheet';
+import { MobileTabs } from '@/components/responsive/MobileTabs';
 
 export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScreen: string }) {
   const {
@@ -105,6 +107,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
 
   // Voice Sub-tabs state
   const [voiceTab, setVoiceTab] = useState<'history' | 'queue' | 'voicemail' | 'supervisor'>('history');
+  const [mobileOverlay, setMobileOverlay] = useState<'inbox' | 'customer360' | null>(null);
 
   // Simulate incoming call from queue automatically after a delay if agent is online and idle
   useEffect(() => {
@@ -145,6 +148,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   const [showConferenceModal, setShowConferenceModal] = useState(false);
   const [showWrapupModal, setShowWrapupModal] = useState(false);
   const [summaryText, setSummaryText] = useState<string | null>(null);
+  const activeCallPanelRef = useRef<HTMLDivElement | null>(null);
 
   // Whisper / Live simulated supervisors
   const [activeWhisper, setActiveWhisper] = useState<string>(
@@ -299,6 +303,14 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     );
   };
 
+  const hasMobileActiveCall = call && (call.status === 'active' || call.status === 'connecting' || call.status === 'held');
+
+  const handleReturnToActiveCall = () => {
+    setMobileOverlay(null);
+    closeDialer();
+    activeCallPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   // Sub-screens routing
   if (activeSubScreen === 'agent_dashboard') {
     return (
@@ -346,31 +358,31 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
 
   // Unified support desk view
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm relative">
+    <div className="flex flex-col h-[calc(100vh-8rem)] border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden bg-slate-50/95 dark:bg-slate-900 shadow-sm relative min-w-0">
       
       {/* Top Auxiliary break toolbar */}
-      <div className="h-12 border-b border-slate-200 dark:border-slate-800 px-5 bg-slate-50/80 dark:bg-slate-950/20 flex items-center justify-between text-[11px] font-bold text-slate-650 shrink-0">
+      <div className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-slate-200 bg-slate-50/80 px-3 py-2 text-[11px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-950/20 dark:text-slate-300 sm:px-5 sm:py-0 sm:h-12 sm:flex-nowrap">
         
         {/* Active capacity status */}
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <Flame className="w-4 h-4 text-orange-500 shrink-0" />
             <span>Capacity Meter:</span>
-            <span className="font-mono text-slate-850 dark:text-slate-200">{conversations.filter(c => c.status === 'active').length}/4 active</span>
+            <span className="font-mono text-slate-800 dark:text-slate-200">{conversations.filter(c => c.status === 'active').length}/4 active</span>
           </span>
         </div>
 
         {/* Break state controls */}
         <div className="flex items-center gap-3">
-          <span className="text-slate-450 uppercase font-mono text-[9px]">Break state:</span>
-          <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-250 dark:border-slate-700 text-[10px] font-bold">
+          <span className="text-slate-500 dark:text-slate-400 uppercase font-mono text-[9px]">Break state:</span>
+          <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-300 dark:border-slate-700 text-[10px] font-bold">
             {(['online', 'away', 'break'] as const).map((st) => (
               <button
                 key={st}
                 type="button"
                 onClick={() => handleAuxStatusChange(st)}
                 className={`px-2.5 py-1 rounded transition-all capitalize ${
-                  auxStatus === st ? 'bg-white dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-550'
+                  auxStatus === st ? 'bg-slate-50 dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {st}
@@ -378,71 +390,95 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             ))}
           </div>
           
-          <span className="flex items-center gap-1 text-[10px] text-slate-400 font-mono">
-            <Clock className="w-3.5 h-3.5 text-slate-500" />
+          <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+            <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span>Duration:</span>
             <span className="text-slate-800 dark:text-white font-bold">{formatAuxTime(auxSeconds)}</span>
           </span>
         </div>
       </div>
 
-      {/* Main split-pane content */}
-      <div className="flex-1 flex overflow-hidden">
-        
-        {/* Left pane: Unified Inbox */}
-        <UnifiedInbox
-          conversations={conversations}
-          activeChatId={activeChatId}
-          onSelectChat={(id) => setActiveChatId(id)}
-          activeTab={activeTab}
-          onChangeTab={setActiveTab}
-          selectedQueue={selectedQueue}
-          onChangeQueue={setSelectedQueue}
-          queues={queueSeed}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+      {/* Main split-pane content — desktop: 3-col; mobile: primary work + sheets */}
+      <div className={`flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row ${hasMobileActiveCall ? 'pb-28 lg:pb-0' : ''}`}>
+        {/* Left pane: Unified Inbox (desktop only — mobile uses sheet) */}
+        <div className="hidden h-full min-h-0 w-80 shrink-0 lg:block">
+          <UnifiedInbox
+            conversations={conversations}
+            activeChatId={activeChatId}
+            onSelectChat={(id) => setActiveChatId(id)}
+            activeTab={activeTab}
+            onChangeTab={setActiveTab}
+            selectedQueue={selectedQueue}
+            onChangeQueue={setSelectedQueue}
+            queues={queueSeed}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+        </div>
 
         {/* Middle pane: Conversation Panel or Voice Panel */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-slate-50/95 px-2 py-2 dark:border-slate-800 dark:bg-slate-950/40 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileOverlay('inbox')}
+              className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-2 text-[10px] font-bold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              <Inbox className="h-4 w-4 shrink-0 text-blue-600" />
+              <span className="truncate">Queues</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileOverlay('customer360')}
+              className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-2 text-[10px] font-bold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              <UserCircle className="h-4 w-4 shrink-0 text-indigo-600" />
+              <span className="truncate">360°</span>
+            </button>
+          </div>
+
         {activeTab === 'voice' ? (
-          <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50 dark:bg-slate-950 p-5 space-y-4">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-4 overflow-hidden bg-slate-50 p-3 dark:bg-slate-950 sm:p-5">
             
             {/* If call is active, connecting, held, or disposition, show active call panel */}
             {call && (call.status === 'active' || call.status === 'connecting' || call.status === 'held' || call.status === 'disposition') ? (
-              <ActiveCallPanel
-                call={call}
-                formatDuration={formatDuration}
-                onToggleMute={toggleMute}
-                onToggleHold={toggleHold}
-                onToggleRecording={toggleRecording}
-                onTransfer={() => setDialTarget('', 'Transfer Target')}
-                onConference={() => setDialTarget('', 'Conference Target')}
-                onHangup={hangupCall}
-              />
+              <div ref={activeCallPanelRef} className="scroll-mt-24">
+                <ActiveCallPanel
+                  call={call}
+                  formatDuration={formatDuration}
+                  onToggleMute={toggleMute}
+                  onToggleHold={toggleHold}
+                  onToggleRecording={toggleRecording}
+                  onTransfer={() => setDialTarget('', 'Transfer Target')}
+                  onConference={() => setDialTarget('', 'Conference Target')}
+                  onHangup={hangupCall}
+                />
+              </div>
             ) : (
               // Idle state / Voice dashboard summary
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4 text-xs font-semibold text-slate-850 dark:text-slate-200 shadow-sm shrink-0">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">SIP Voice Terminal</h3>
-                    <p className="text-[10px] text-slate-400 font-mono">Agent status is online. Awaiting inbound audio sessions.</p>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-sm shrink-0">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <h3 className="text-base font-extrabold leading-tight text-slate-900 dark:text-white">SIP Voice Terminal</h3>
+                    <p className="font-mono text-[10px] text-slate-400">Agent status is online. Awaiting inbound audio sessions.</p>
                   </div>
 
                   <button
+                    type="button"
                     onClick={openDialer}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-sm"
+                    className="flex shrink-0 items-center justify-center gap-1.5 self-stretch rounded-xl bg-blue-600 px-4 py-2.5 font-bold text-white shadow-sm hover:bg-blue-700 sm:self-auto"
                   >
-                    <PhoneCall className="w-4 h-4 animate-bounce" />
+                    <PhoneCall className="h-4 w-4 animate-bounce" />
                     <span>Open Dialer Pad</span>
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-center">
-                  <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl">
                     <span className="text-[9px] uppercase tracking-wider text-slate-400 font-mono font-bold block">Capacity</span>
                     <strong className="text-lg font-black font-mono text-slate-800 dark:text-white">1 Call Active Limit</strong>
                   </div>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl">
                     <span className="text-[9px] uppercase tracking-wider text-slate-400 font-mono font-bold block">Voice Queue Status</span>
                     <strong className="text-lg font-black font-mono text-slate-800 dark:text-white">{queue.length} Waiters</strong>
                   </div>
@@ -450,58 +486,73 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
               </div>
             )}
 
-            {/* Voice sub-tabs pane (History, Queue, Voicemail, Supervisor console) */}
-            <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col min-h-0">
-              {/* Navigation tabs header */}
-              <div className="flex border-b border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 text-[10px] uppercase font-bold text-center shrink-0">
+            {/* Voice sub-tabs — scrollable strip on mobile, equal tabs on desktop */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-900">
+              <div className="lg:hidden">
+                <MobileTabs
+                  items={[
+                    { id: 'history', label: 'History', icon: <History className="h-3.5 w-3.5" /> },
+                    { id: 'queue', label: `Queue (${queue.length})`, icon: <Users className="h-3.5 w-3.5" /> },
+                    { id: 'voicemail', label: 'VM', icon: <MessageSquare className="h-3.5 w-3.5" /> },
+                    { id: 'supervisor', label: 'Supervisor', icon: <Shield className="h-3.5 w-3.5" /> },
+                  ]}
+                  activeId={voiceTab}
+                  onChange={(id) => setVoiceTab(id as typeof voiceTab)}
+                />
+              </div>
+              <div className="hidden shrink-0 border-b border-slate-200 bg-slate-50/50 text-center text-[10px] font-bold uppercase dark:border-slate-800 dark:bg-slate-950/20 lg:flex">
                 <button
+                  type="button"
                   onClick={() => setVoiceTab('history')}
-                  className={`flex-1 py-3 border-b-2 flex items-center justify-center gap-1 transition-colors ${
+                  className={`flex flex-1 items-center justify-center gap-1 border-b-2 py-3 transition-colors ${
                     voiceTab === 'history'
-                      ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900 font-bold'
-                      : 'border-transparent text-slate-400 hover:text-slate-650'
+                      ? 'border-blue-600 bg-slate-50 font-bold text-blue-600 dark:bg-slate-900 dark:text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
                 >
-                  <History className="w-3.5 h-3.5" />
+                  <History className="h-3.5 w-3.5" />
                   <span>Call History</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setVoiceTab('queue')}
-                  className={`flex-1 py-3 border-b-2 flex items-center justify-center gap-1 transition-colors relative ${
+                  className={`relative flex flex-1 items-center justify-center gap-1 border-b-2 py-3 transition-colors ${
                     voiceTab === 'queue'
-                      ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900 font-bold'
-                      : 'border-transparent text-slate-400 hover:text-slate-650'
+                      ? 'border-blue-600 bg-slate-50 font-bold text-blue-600 dark:bg-slate-900 dark:text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Users className="w-3.5 h-3.5" />
+                  <Users className="h-3.5 w-3.5" />
                   <span>Voice Queue ({queue.length})</span>
                   {queue.length > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                    <span className="absolute inset-e-1.5 top-1.5 h-2 w-2 animate-pulse rounded-full bg-rose-500" />
                   )}
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setVoiceTab('voicemail')}
-                  className={`flex-1 py-3 border-b-2 flex items-center justify-center gap-1 transition-colors ${
+                  className={`flex flex-1 items-center justify-center gap-1 border-b-2 py-3 transition-colors ${
                     voiceTab === 'voicemail'
-                      ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900 font-bold'
-                      : 'border-transparent text-slate-400 hover:text-slate-650'
+                      ? 'border-blue-600 bg-slate-50 font-bold text-blue-600 dark:bg-slate-900 dark:text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
                 >
-                  <MessageSquare className="w-3.5 h-3.5" />
+                  <MessageSquare className="h-3.5 w-3.5" />
                   <span>Voicemails</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setVoiceTab('supervisor')}
-                  className={`flex-1 py-3 border-b-2 flex items-center justify-center gap-1 transition-colors ${
+                  className={`flex flex-1 items-center justify-center gap-1 border-b-2 py-3 transition-colors ${
                     voiceTab === 'supervisor'
-                      ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900 font-bold'
-                      : 'border-transparent text-slate-400 hover:text-slate-650'
+                      ? 'border-blue-600 bg-slate-50 font-bold text-blue-600 dark:bg-slate-900 dark:text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Shield className="w-3.5 h-3.5" />
+                  <Shield className="h-3.5 w-3.5" />
                   <span>Supervisor Console</span>
                 </button>
               </div>
@@ -557,12 +608,87 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             onSummarize={handleTriggerSummary}
           />
         )}
+        </div>
 
-        {/* Right pane: Customer 360 Drawer */}
-        <div className="w-72 border-l border-slate-200 dark:border-slate-800 shrink-0 h-full overflow-hidden">
+        {/* Right pane: Customer 360 (desktop) */}
+        <div className="hidden h-full w-72 min-w-0 shrink-0 overflow-hidden border-slate-200 dark:border-slate-800 lg:block lg:border-s">
           <Customer360Drawer profile={activeCustomerProfile} />
         </div>
       </div>
+
+      {hasMobileActiveCall && (
+        <div className="fixed inset-x-3 bottom-3 z-70 lg:hidden">
+          <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/95">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                  Active Voice Session
+                </p>
+                <p className="truncate text-sm font-extrabold text-slate-900 dark:text-white">
+                  {call?.contactName || 'Current caller'}
+                </p>
+              </div>
+              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                {call ? formatDuration(call.duration) : '00:00'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
+              <button
+                type="button"
+                onClick={handleReturnToActiveCall}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-blue-700 transition-all hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-950/50"
+              >
+                <span>Return to Active Call</span>
+              </button>
+              <button
+                type="button"
+                onClick={hangupCall}
+                disabled={call?.status !== 'active' && call?.status !== 'held'}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-white transition-all hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span>Hang Up</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <MobileSheet
+        open={mobileOverlay === 'inbox'}
+        onClose={() => setMobileOverlay(null)}
+        title="Conversation queues"
+        description="Switch channels, queues, and active sessions."
+        bodyClassName="max-h-[min(82dvh,640px)]"
+      >
+        <UnifiedInbox
+          conversations={conversations}
+          activeChatId={activeChatId}
+          onSelectChat={(id) => {
+            setActiveChatId(id);
+            setMobileOverlay(null);
+          }}
+          activeTab={activeTab}
+          onChangeTab={setActiveTab}
+          selectedQueue={selectedQueue}
+          onChangeQueue={setSelectedQueue}
+          queues={queueSeed}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          className="h-full min-h-[min(60dvh,480px)] w-full max-w-full border-0"
+        />
+      </MobileSheet>
+
+      <MobileSheet
+        open={mobileOverlay === 'customer360'}
+        onClose={() => setMobileOverlay(null)}
+        title="Customer 360"
+        description={activeChat?.customerName ?? 'Context'}
+        bodyClassName="max-h-[min(85dvh,680px)]"
+      >
+        <div className="min-h-[min(50dvh,400px)]">
+          <Customer360Drawer profile={activeCustomerProfile} />
+        </div>
+      </MobileSheet>
 
       {/* Voice Modals */}
       <IncomingCallModal
@@ -617,13 +743,13 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
       {/* Summary Output popup */}
       {summaryText && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 text-xs font-semibold">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/20">
-              <span className="font-bold text-slate-850 dark:text-white">AI Summary Result</span>
-              <button onClick={() => setSummaryText(null)} className="text-slate-400 text-lg">×</button>
+          <div className="bg-slate-50/95 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md w-full rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 text-xs font-semibold">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-100/70 dark:bg-slate-950/20">
+              <span className="font-bold text-slate-800 dark:text-white">AI Summary Result</span>
+              <button onClick={() => setSummaryText(null)} className="text-slate-500 dark:text-slate-400 text-lg">×</button>
             </div>
             <div className="p-5 space-y-4">
-              <p className="whitespace-pre-line text-slate-700 dark:text-slate-350 leading-relaxed font-mono">
+              <p className="whitespace-pre-line text-slate-700 dark:text-slate-300 leading-relaxed font-mono">
                 {summaryText}
               </p>
               <div className="flex justify-end pt-2">

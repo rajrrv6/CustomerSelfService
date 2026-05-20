@@ -14,11 +14,11 @@ export function SupervisorPanel({ onTriggerWhisper, onJoinSession }: SupervisorP
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm text-xs font-semibold">
-      <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-850">
+    <div className="bg-slate-50/95 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm text-xs font-semibold">
+      <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <Shield className="w-4.5 h-4.5 text-purple-600" />
-          <h3 className="font-bold text-slate-850 dark:text-white">Supervisor Live Portal</h3>
+          <h3 className="font-bold text-slate-800 dark:text-white">Supervisor Live Portal</h3>
         </div>
         <span className="flex items-center gap-1 text-[9px] text-emerald-500 font-mono">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
@@ -33,10 +33,10 @@ export function SupervisorPanel({ onTriggerWhisper, onJoinSession }: SupervisorP
           { label: 'Avg Wait Speed', val: '2.4 min', sub: 'Target < 3m' },
           { label: 'Active Supervisors', val: '2 Online', sub: 'Marc, Nadia' }
         ].map((met, idx) => (
-          <div key={idx} className="p-3 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-850 rounded-xl text-center">
+          <div key={idx} className="p-3 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 rounded-xl text-center">
             <span className="text-[9px] text-slate-400 font-bold uppercase font-mono block leading-tight">{met.label}</span>
             <span className="text-sm font-bold text-slate-800 dark:text-white block mt-1 font-mono">{met.val}</span>
-            <span className="text-[8px] text-slate-450 block font-normal mt-0.5">{met.sub}</span>
+            <span className="text-[8px] text-slate-500 dark:text-slate-400 block font-normal mt-0.5">{met.sub}</span>
           </div>
         ))}
       </div>
@@ -62,7 +62,7 @@ export function SupervisorPanel({ onTriggerWhisper, onJoinSession }: SupervisorP
       <div className="pt-2">
         <button
           onClick={onJoinSession}
-          className="w-full py-2 bg-purple-650 hover:bg-purple-700 text-white rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-550/20 text-xs"
+          className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-purple-600/20 text-xs"
         >
           <Radio className="w-4 h-4" />
           Join Active Session (Three-Way Chat)

@@ -28,6 +28,9 @@ interface WorkflowToolbarProps {
   onStartSimulation: () => void;
   onResetSimulation: () => void;
   simulationActive: boolean;
+  onOpenInspector: () => void;
+  /** Open NLU simulator in mobile sheet (lg+ uses side panel) */
+  onOpenSimulator?: () => void;
 }
 
 export function WorkflowToolbar({
@@ -44,19 +47,43 @@ export function WorkflowToolbar({
   validation,
   onStartSimulation,
   onResetSimulation,
-  simulationActive
+  simulationActive,
+  onOpenInspector,
+  onOpenSimulator
 }: WorkflowToolbarProps) {
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-between text-xs font-semibold select-none z-10 shrink-0">
+    <div className="bg-slate-50 dark:bg-slate-950 px-3 py-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3 text-xs font-semibold select-none z-10 shrink-0 min-w-0">
       
       {/* Node creation controls */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-mono mr-1.5">Add Node:</span>
+      <div className="flex items-center justify-between gap-2 sm:hidden">
+        <span className="block font-mono text-[10px] uppercase tracking-wider text-slate-400">Panels</span>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onOpenInspector}
+            className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+          >
+            Variables
+          </button>
+          {onOpenSimulator && (
+            <button
+              type="button"
+              onClick={onOpenSimulator}
+              className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
+              Simulator
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
+        <span className="hidden sm:block text-[10px] text-slate-400 uppercase tracking-wider font-mono mr-1.5 shrink-0">Add Node:</span>
         {(['intent', 'api', 'db', 'rag', 'branch', 'handoff', 'delay', 'form', 'carousel'] as WorkflowNode['type'][]).map((type) => (
           <button
             key={type}
             onClick={() => onAddNode(type)}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-blue-500 hover:text-blue-500 transition-all text-[10px]"
+            className="shrink-0 flex items-center gap-1 px-3 py-2 sm:px-2.5 sm:py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-blue-500 hover:text-blue-500 transition-all text-[10px] min-h-10"
           >
             <Plus className="w-3 h-3" />
             <span className="uppercase font-mono">{type}</span>
@@ -65,13 +92,13 @@ export function WorkflowToolbar({
       </div>
 
       {/* Editor history and zoom actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 -mx-1 px-1 sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
         {/* History stacks */}
-        <div className="flex items-center gap-1 border-r border-slate-200 dark:border-slate-850 pr-3">
+        <div className="flex items-center gap-1 border-r border-slate-200 dark:border-slate-800 pr-2 sm:pr-3 shrink-0">
           <button
             disabled={!canUndo}
             onClick={onUndo}
-            className="p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg disabled:opacity-40 hover:text-blue-500 transition-colors"
+            className="p-2 sm:p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg disabled:opacity-40 hover:text-blue-500 transition-colors min-h-10 min-w-10"
             title="Undo"
           >
             <Undo className="w-4 h-4" />
@@ -79,7 +106,7 @@ export function WorkflowToolbar({
           <button
             disabled={!canRedo}
             onClick={onRedo}
-            className="p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg disabled:opacity-40 hover:text-blue-500 transition-colors"
+            className="p-2 sm:p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg disabled:opacity-40 hover:text-blue-500 transition-colors min-h-10 min-w-10"
             title="Redo"
           >
             <Redo className="w-4 h-4" />
@@ -87,27 +114,27 @@ export function WorkflowToolbar({
         </div>
 
         {/* Zoom */}
-        <div className="flex items-center gap-1 border-r border-slate-200 dark:border-slate-850 pr-3">
+        <div className="flex items-center gap-1 border-r border-slate-200 dark:border-slate-800 pr-2 sm:pr-3 shrink-0">
           <button
             onClick={onZoomOut}
-            className="p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:text-blue-500"
+            className="p-2 sm:p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:text-blue-500 min-h-10 min-w-10"
             title="Zoom Out"
           >
             <ZoomOut className="w-4 h-4" />
           </button>
-          <span className="w-12 text-center text-[10px] font-mono text-slate-400">
+          <span className="w-14 sm:w-12 text-center text-[10px] font-mono text-slate-400 shrink-0">
             {Math.round(zoom * 100)}%
           </span>
           <button
             onClick={onZoomIn}
-            className="p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:text-blue-500"
+            className="p-2 sm:p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:text-blue-500 min-h-10 min-w-10"
             title="Zoom In"
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
             onClick={onZoomReset}
-            className="p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:text-blue-500"
+            className="p-2 sm:p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:text-blue-500 min-h-10 min-w-10"
             title="Reset Zoom"
           >
             <Maximize className="w-4 h-4" />
@@ -115,20 +142,20 @@ export function WorkflowToolbar({
         </div>
 
         {/* Validate & Simulator triggers */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
           <button
             onClick={onValidate}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 border border-slate-250 dark:border-slate-750 text-slate-700 dark:text-slate-300 rounded-xl"
+            className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl min-h-10"
           >
             Validate Flow
           </button>
 
           <button
             onClick={simulationActive ? onResetSimulation : onStartSimulation}
-            className={`flex items-center gap-1.5 px-4 py-1.5 text-white font-bold rounded-xl transition-all shadow-sm ${
+            className={`flex items-center gap-1.5 px-4 py-2 sm:py-1.5 text-white font-bold rounded-xl transition-all shadow-sm min-h-10 ${
               simulationActive
                 ? 'bg-rose-500 hover:bg-rose-600'
-                : 'bg-emerald-650 hover:bg-emerald-700'
+                : 'bg-emerald-600 hover:bg-emerald-700'
             }`}
           >
             {simulationActive ? <RotateCcw className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -139,9 +166,9 @@ export function WorkflowToolbar({
 
       {/* Validation status output banner */}
       {validation && (validation.errors.length > 0 || validation.warnings.length > 0) && (
-        <div className="w-full mt-2.5 p-3 rounded-2xl flex flex-col gap-1.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900 font-mono text-[10px]">
+        <div className="w-full overflow-x-auto mt-2.5 p-3 rounded-2xl flex flex-col gap-1.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 font-mono text-[10px]">
           {validation.errors.map((err, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-rose-650 dark:text-rose-450">
+            <div key={i} className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400">
               <AlertTriangle className="w-3.5 h-3.5" />
               <span>[ERROR] {err}</span>
             </div>
@@ -156,7 +183,7 @@ export function WorkflowToolbar({
       )}
 
       {validation && validation.errors.length === 0 && validation.warnings.length === 0 && (
-        <div className="w-full mt-2.5 p-3 rounded-2xl flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-250 dark:border-emerald-900 font-mono text-[10px] text-emerald-700 dark:text-emerald-400">
+        <div className="w-full overflow-x-auto mt-2.5 p-3 rounded-2xl flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 font-mono text-[10px] text-emerald-700 dark:text-emerald-400">
           <CheckCircle className="w-3.5 h-3.5" />
           <span>Workflow structural integrity looks correct. Ready for production ingestion deployment pipeline.</span>
         </div>

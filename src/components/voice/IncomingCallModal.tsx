@@ -52,7 +52,7 @@ export function IncomingCallModal({
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-sm w-full rounded-[2.5rem] overflow-hidden shadow-2xl p-6 text-center space-y-6 animate-in zoom-in-95 text-slate-850 dark:text-slate-200">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-sm w-full rounded-[2.5rem] overflow-hidden shadow-2xl p-6 text-center space-y-6 animate-in zoom-in-95 text-slate-800 dark:text-slate-200">
         
         {/* Ringing animations */}
         <div className="relative flex justify-center py-4">
@@ -71,11 +71,11 @@ export function IncomingCallModal({
           <h3 className="text-lg font-extrabold text-slate-900 dark:text-white leading-tight">
             {contactName}
           </h3>
-          <p className="text-xs text-slate-450 font-mono">{phoneNumber}</p>
+          <p className="text-xs text-slate-500 font-mono">{phoneNumber}</p>
         </div>
 
         {/* Incoming SIP details */}
-        <div className="bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-850 text-[10px] font-mono text-slate-450">
+        <div className="bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800 text-[10px] font-mono text-slate-500">
           <span>Inbound via US-East Gateway</span>
         </div>
 

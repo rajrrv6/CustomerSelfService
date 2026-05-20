@@ -24,12 +24,12 @@ export function FormNode({ node, selected, isActive, onSelect, onDelete }: NodeP
           ? 'border-cyan-500 ring-2 ring-cyan-500/20 scale-[1.02]'
           : selected
           ? 'border-slate-800 dark:border-white'
-          : 'border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700'
+          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
       }`}
       style={{ left: node.x, top: node.y }}
     >
       {/* Target port indicators */}
-      <div className="absolute left-0 top-1/2 -ml-2 -mt-2 w-3.5 h-3.5 bg-slate-300 dark:bg-slate-750 rounded-full border-2 border-white dark:border-slate-900 z-10" title="Input port" />
+      <div className="absolute left-0 top-1/2 -ml-2 -mt-2 w-3.5 h-3.5 bg-slate-400 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-900 z-10" title="Input port" />
       <div className="absolute right-0 top-1/2 -mr-2 -mt-2 w-3.5 h-3.5 bg-cyan-500 rounded-full border-2 border-white dark:border-slate-900 z-10 cursor-pointer" title="Output port" />
 
       <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
@@ -49,11 +49,11 @@ export function FormNode({ node, selected, isActive, onSelect, onDelete }: NodeP
       </div>
 
       <div className="mt-2.5 space-y-2">
-        <span className="text-[10px] text-slate-450 uppercase font-mono block">Inputs List</span>
+        <span className="text-[10px] text-slate-500 uppercase font-mono block">Inputs List</span>
         <div className="space-y-1">
           {fields.map((f, i) => (
             <div key={i} className="flex justify-between items-center text-[9px] bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded">
-              <span className="text-slate-650 truncate max-w-[110px] font-mono">@{f.name}</span>
+              <span className="text-slate-600 truncate max-w-27.5 font-mono">@{f.name}</span>
               <span className="text-slate-400 font-mono italic">[{f.type}]</span>
             </div>
           ))}

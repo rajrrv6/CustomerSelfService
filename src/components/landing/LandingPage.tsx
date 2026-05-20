@@ -26,8 +26,8 @@ export function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#030712] text-slate-900 dark:text-slate-100" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -top-40 start-1/4 w-[480px] h-[480px] rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute bottom-0 end-1/4 w-[400px] h-[400px] rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute -top-40 inset-s-1/4 w-120 h-120 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute bottom-0 inset-e-1/4 w-100 h-100 rounded-full bg-indigo-500/10 blur-3xl" />
       </div>
 
       <header className="relative z-10 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/50 backdrop-blur-md">
@@ -79,14 +79,14 @@ export function LandingPage() {
               {isRtl ? (
                 <>
                   أتمتة الدعم، وتمكين الوكلاء،{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-l from-blue-600 to-indigo-500">
+                  <span className="text-transparent bg-clip-text bg-linear-to-l from-blue-600 to-indigo-500">
                     وقياس كل تفاعل
                   </span>
                 </>
               ) : (
                 <>
                   Orchestrate AI bots, agent workspaces, and{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
+                  <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-indigo-500">
                     customer self-service
                   </span>{' '}
                   in one control plane
@@ -157,7 +157,7 @@ export function LandingPage() {
         </section>
 
         <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-900 dark:to-indigo-950 p-8 sm:p-12 text-center text-white relative overflow-hidden">
+          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-linear-to-br from-slate-900 to-slate-800 dark:from-slate-900 dark:to-indigo-950 p-8 sm:p-12 text-center text-white relative overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_60%)]" aria-hidden />
             <h2 className="relative text-2xl sm:text-3xl font-bold">
               {isRtl ? 'جاهز لتشغيل تجربة العملاء الذكية؟' : 'Ready to operate your AI-native CX stack?'}

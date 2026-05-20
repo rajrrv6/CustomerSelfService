@@ -56,7 +56,7 @@ export function VoicemailPanel() {
             playingId === vm.id
               ? 'border-blue-500 shadow-sm'
               : vm.isRead
-              ? 'border-slate-100 dark:border-slate-850'
+              ? 'border-slate-100 dark:border-slate-800'
               : 'border-blue-200 dark:border-blue-900 border-l-4'
           }`}
         >
@@ -69,30 +69,30 @@ export function VoicemailPanel() {
                 <Mail className="w-4 h-4 text-blue-500" />
               )}
               <div>
-                <strong className="block text-slate-850 dark:text-white text-xs">{vm.callerName}</strong>
-                <span className="text-[10px] text-slate-450 font-mono">{vm.phoneNumber}</span>
+                <strong className="block text-slate-800 dark:text-white text-xs">{vm.callerName}</strong>
+                <span className="text-[10px] text-slate-500 font-mono">{vm.phoneNumber}</span>
               </div>
             </div>
             
             <div className="text-right">
               <span className="block text-[9px] text-slate-400 font-mono">{vm.timestamp}</span>
-              <span className="text-[9px] text-slate-450 font-mono">({vm.duration})</span>
+              <span className="text-[9px] text-slate-500 font-mono">({vm.duration})</span>
             </div>
           </div>
 
           {/* Transcription */}
-          <div className="bg-white dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-850">
+          <div className="bg-white dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="block text-[8px] uppercase tracking-wider text-slate-400 font-bold font-mono mb-1">
               AI Speech-To-Text:
             </span>
-            <p className="text-[10px] text-slate-450 leading-relaxed font-normal italic">
+            <p className="text-[10px] text-slate-500 leading-relaxed font-normal italic">
               &quot;{vm.transcription}&quot;
             </p>
           </div>
 
           {/* Audio Player simulation */}
           {playingId === vm.id && (
-            <div className="space-y-1 bg-slate-200/50 dark:bg-slate-900/80 p-2 rounded-xl border border-slate-250 dark:border-slate-800">
+            <div className="space-y-1 bg-slate-200/50 dark:bg-slate-900/80 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
               <div className="h-1.5 w-full bg-slate-300 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-blue-600 rounded-full transition-all duration-300"
@@ -107,7 +107,7 @@ export function VoicemailPanel() {
           )}
 
           {/* Actions */}
-          <div className="flex justify-between items-center pt-1 border-t border-slate-100 dark:border-slate-850">
+          <div className="flex justify-between items-center pt-1 border-t border-slate-100 dark:border-slate-800">
             <button
               onClick={() => deleteVoicemail(vm.id)}
               className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-rose-500 rounded-lg"

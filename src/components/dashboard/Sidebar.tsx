@@ -5,6 +5,7 @@ import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
 import {
   Sparkles,
+  Globe,
   Bot,
   Brain,
   ShieldCheck,
@@ -35,12 +36,18 @@ interface SidebarItem {
 
 export function Sidebar({
   activeScreen,
-  setActiveScreen
+  setActiveScreen,
+  isMobileOpen = false,
+  onCloseMobile,
+  isRtl = false
 }: {
   activeScreen: string;
   setActiveScreen: (screenId: string) => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
+  isRtl?: boolean;
 }) {
-  const { role, lang } = useApp();
+  const { role, lang, setLang } = useApp();
   const t = translations[lang];
 
   // Helper to compile sidebar options based on role
@@ -127,24 +134,36 @@ export function Sidebar({
   const menuItems = getSidebarItems(role);
 
   return (
-    <aside className="w-64 bg-[#0b0f19] dark:bg-[#03050a] text-slate-300 flex flex-col justify-between shrink-0 h-screen sticky top-0 transition-colors">
+    <aside
+      className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} z-50 w-72 max-w-[85vw] bg-[#0b0f19] dark:bg-[#03050a] text-slate-300 flex flex-col justify-between shrink-0 h-screen lg:static lg:w-64 transition-transform duration-300 ${
+        isMobileOpen ? 'translate-x-0' : isRtl ? 'translate-x-full lg:translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}
+    >
       {/* Top Section */}
       <div className="flex flex-col flex-1">
         {/* Brand Header */}
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800/80">
+        <div className="h-16 flex items-center gap-3 px-5 border-b border-slate-800/80">
           <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
             <Sparkles className="w-4 h-4" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h2 className="font-bold text-sm text-white tracking-tight leading-none">AI-Native mPaaS</h2>
             <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-widest mt-1 block">
               Omnichannel CX
             </span>
           </div>
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/70"
+            aria-label="Close sidebar"
+          >
+            ×
+          </button>
         </div>
 
         {/* Sidebar Nav */}
-        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
+        <nav className="flex-1 overflow-y-auto px-4 py-4 sm:py-6 space-y-1.5">
           <div className="px-3 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             {role.replace('_', ' ')} Options
           </div>
@@ -154,7 +173,7 @@ export function Sidebar({
               <button
                 key={item.id}
                 onClick={() => setActiveScreen(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all text-left ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                     : 'hover:bg-slate-800/50 hover:text-slate-100 text-slate-400'
@@ -171,7 +190,35 @@ export function Sidebar({
       </div>
 
       {/* Footer Section */}
-      <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 text-[10px] text-slate-500 text-center font-semibold">
+      <div className="border-t border-slate-800/80 bg-slate-950/40 px-4 py-3 text-[10px] text-slate-500 text-center font-semibold">
+        <div className="lg:hidden mb-3 rounded-2xl border border-slate-800/80 bg-slate-950/70 p-3 text-left">
+          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <Globe className="h-3.5 w-3.5 text-blue-400" />
+            <span>{lang === 'ar' ? 'اللغة' : 'Language'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {(['en', 'ar'] as const).map((locale) => {
+              const isActive = lang === locale;
+
+              return (
+                <button
+                  key={locale}
+                  type="button"
+                  onClick={() => setLang(locale)}
+                  className={`flex-1 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
+                    isActive
+                      ? 'border-blue-500 bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                      : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:bg-slate-800'
+                  }`}
+                  aria-pressed={isActive}
+                >
+                  {locale === 'en' ? 'EN' : 'ع'}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="flex items-center justify-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 glow-active" />
           <span>Tenant: MP-CORE-PROD</span>

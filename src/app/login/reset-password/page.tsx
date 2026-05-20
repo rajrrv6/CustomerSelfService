@@ -10,7 +10,7 @@ const ResetPasswordCard = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex justify-center">
+      <div className="bg-slate-50/95 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" aria-hidden />
       </div>
     ),

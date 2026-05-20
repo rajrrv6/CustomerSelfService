@@ -40,7 +40,7 @@ export function LoginCard() {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none p-6 sm:p-8">
+    <div className="bg-slate-50/95 dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none p-6 sm:p-8">
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-xs font-semibold text-slate-600 dark:text-slate-300">

@@ -22,7 +22,7 @@ export function ConversationMessage({ message, lang }: ConversationMessageProps)
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 leading-relaxed border shadow-sm ${
           isUser
-            ? 'bg-slate-100 text-slate-800 dark:bg-slate-850 dark:text-slate-200 rounded-bl-none border-slate-200 dark:border-slate-800'
+            ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 rounded-bl-none border-slate-200 dark:border-slate-800'
             : isAgent
             ? 'bg-blue-600 text-white rounded-br-none border-blue-500'
             : 'bg-purple-600 text-white rounded-br-none border-purple-500'
@@ -39,7 +39,7 @@ export function ConversationMessage({ message, lang }: ConversationMessageProps)
 
         {/* Simulated Attachment Preview */}
         {hasAttachment && (
-          <div className="mt-3 p-2 bg-white/10 rounded-xl border border-white/20 flex items-center gap-2">
+          <div className="mt-3 p-2 bg-slate-950/20 dark:bg-white/10 rounded-xl border border-slate-200/30 dark:border-white/10 flex items-center gap-2">
             {isImage ? (
               <ImageIcon className="w-5 h-5 text-blue-300" />
             ) : (
@@ -58,7 +58,7 @@ export function ConversationMessage({ message, lang }: ConversationMessageProps)
 
         {/* Translation Overlay */}
         {message.translatedText && (
-          <div className="mt-2.5 pt-2 border-t border-white/10 dark:border-slate-700/50 text-[10px] opacity-80 italic font-mono flex items-center gap-1.5">
+          <div className="mt-2.5 pt-2 border-t border-white/10 dark:border-slate-700/50 text-[10px] text-white/80 dark:text-slate-300 italic font-mono flex items-center gap-1.5">
             <Globe className="w-3 h-3 shrink-0" />
             <button
               type="button"
@@ -71,7 +71,7 @@ export function ConversationMessage({ message, lang }: ConversationMessageProps)
         )}
 
         {showTranslation && message.translatedText && (
-          <p className="mt-1.5 p-2 bg-black/10 dark:bg-black/20 rounded-lg text-[10px] leading-relaxed italic border border-white/5 font-mono">
+          <p className="mt-1.5 p-2 bg-white/10 dark:bg-slate-950/30 rounded-lg text-[10px] leading-relaxed italic border border-white/10 dark:border-slate-700/50 font-mono">
             &quot;{message.translatedText}&quot;
           </p>
         )}

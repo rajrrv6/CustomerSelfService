@@ -123,6 +123,7 @@ export default function DemoSandboxPage() {
           activeScreenTitle={getScreenTitle(activeScreen)}
           onLogout={() => setIsLoggedIn(false)}
           onOpenAuditLogs={() => setShowAuditLogs(true)}
+          onOpenMenu={() => {}}
         />
 
         {/* Content viewport area */}

@@ -21,46 +21,46 @@ export function CallHistory({ history, onDial }: CallHistoryProps) {
       {history.map((c) => (
         <div
           key={c.id}
-          className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl flex flex-col gap-2 hover:border-blue-500 dark:hover:border-blue-500 transition-all text-xs text-slate-800 dark:text-slate-200"
+          className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl flex flex-col gap-2 hover:border-blue-500 dark:hover:border-blue-500 transition-all text-xs text-slate-800 dark:text-slate-200"
         >
           {/* Row 1: Header */}
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               {getStatusIcon(c)}
               <div>
-                <strong className="block text-slate-850 dark:text-white">{c.contactName}</strong>
-                <span className="text-[10px] text-slate-450 font-mono">{c.phoneNumber}</span>
+                <strong className="block text-slate-800 dark:text-white">{c.contactName}</strong>
+                <span className="text-[10px] text-slate-500 font-mono">{c.phoneNumber}</span>
               </div>
             </div>
             
             <div className="text-right">
               <span className="block text-[10px] text-slate-400 font-mono">{c.timestamp}</span>
               {c.duration && c.status !== 'missed' && (
-                <span className="text-[10px] text-slate-450 font-mono">({c.duration})</span>
+                <span className="text-[10px] text-slate-500 font-mono">({c.duration})</span>
               )}
             </div>
           </div>
 
           {/* Row 2: Notes / Code */}
           {(c.disposition || c.notes) && (
-            <div className="bg-white dark:bg-slate-900/40 p-2 rounded-xl border border-slate-100 dark:border-slate-850 space-y-1">
+            <div className="bg-white dark:bg-slate-900/40 p-2 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
               {c.disposition && (
                 <span className="inline-block px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 text-[9px] font-bold">
                   {c.disposition}
                 </span>
               )}
               {c.notes && (
-                <p className="text-[10px] text-slate-450 leading-relaxed font-normal">{c.notes}</p>
+                <p className="text-[10px] text-slate-500 leading-relaxed font-normal">{c.notes}</p>
               )}
             </div>
           )}
 
           {/* Call Actions */}
-          <div className="flex gap-2 justify-end pt-1 border-t border-slate-100 dark:border-slate-850">
+          <div className="flex gap-2 justify-end pt-1 border-t border-slate-100 dark:border-slate-800">
             {c.recordingUrl && (
               <button
                 onClick={() => alert(`Simulating play audio: ${c.recordingUrl}`)}
-                className="flex items-center gap-1 px-2.5 py-1 text-[9px] bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 rounded-lg"
+                className="flex items-center gap-1 px-2.5 py-1 text-[9px] bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg"
               >
                 <Play className="w-3 h-3 text-slate-500" />
                 <span>Play Rec</span>

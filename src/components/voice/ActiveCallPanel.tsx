@@ -47,7 +47,7 @@ export function ActiveCallPanel({
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-5 text-xs text-slate-800 dark:text-slate-200 shadow-sm relative">
       
       {/* Call Header info */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center font-bold relative">
             <User className="w-5 h-5" />
@@ -58,17 +58,17 @@ export function ActiveCallPanel({
 
           <div>
             <div className="flex items-center gap-1.5">
-              <strong className="text-slate-850 dark:text-white text-[13px]">{call.contactName}</strong>
+              <strong className="text-slate-800 dark:text-white text-[13px]">{call.contactName}</strong>
               <span className="text-[9px] uppercase tracking-wider px-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-bold font-mono">
                 {call.direction}
               </span>
             </div>
-            <span className="text-[10px] text-slate-450 font-mono block leading-none mt-0.5">{call.phoneNumber}</span>
+            <span className="text-[10px] text-slate-500 font-mono block leading-none mt-0.5">{call.phoneNumber}</span>
           </div>
         </div>
 
         {/* Call Timer duration indicator */}
-        <div className="text-right">
+        <div className="text-start sm:text-end">
           <span className="block text-[9px] text-slate-400 uppercase tracking-widest font-bold font-mono">
             {call.status === 'held' ? 'Call Held' : 'Live duration'}
           </span>
@@ -80,7 +80,7 @@ export function ActiveCallPanel({
 
       {/* Realtime voice soundwave simulation visualization */}
       {call.status === 'active' && !call.isHeld && (
-        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl p-4 flex flex-col items-center gap-2">
+        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center gap-2">
           <div className="flex items-end justify-center gap-1 h-12 w-full" style={{ maxWidth: '200px' }}>
             {waveHeights.map((h, i) => (
               <div
@@ -100,7 +100,7 @@ export function ActiveCallPanel({
         <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900/60 rounded-2xl p-4 text-center text-amber-700 dark:text-amber-400 space-y-1">
           <ShieldAlert className="w-5 h-5 mx-auto text-amber-500" />
           <strong className="block text-[11px]">Audio Stream Placed on Hold</strong>
-          <p className="text-[9px] text-slate-450 font-normal">Customer is hearing hold music stream.</p>
+          <p className="text-[9px] text-slate-500 font-normal">Customer is hearing hold music stream.</p>
         </div>
       )}
 

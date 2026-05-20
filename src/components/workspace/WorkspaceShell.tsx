@@ -68,6 +68,7 @@ function WorkspaceShellInner({
   const [activeScreen, setActiveScreen] = useState(initialScreen);
   const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [showPublicBotOverlay, setShowPublicBotOverlay] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const authorized = canAccessScreen(role, activeScreen);
 
@@ -78,21 +79,33 @@ function WorkspaceShellInner({
 
   return (
     <div
-      className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#030712] transition-colors"
+      className="flex h-screen min-h-dvh overflow-hidden bg-slate-50 dark:bg-[#030712] transition-colors"
       dir={lang === 'ar' ? 'rtl' : 'ltr'}
     >
-      <Sidebar activeScreen={activeScreen} setActiveScreen={setActiveScreen} />
+      {isSidebarOpen && <button type="button" aria-label="Close navigation drawer" onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/50 lg:hidden" />}
+
+      <Sidebar
+        activeScreen={activeScreen}
+        setActiveScreen={(screenId) => {
+          setActiveScreen(screenId);
+          setIsSidebarOpen(false);
+        }}
+        isMobileOpen={isSidebarOpen}
+        onCloseMobile={() => setIsSidebarOpen(false)}
+        isRtl={lang === 'ar'}
+      />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header
           activeScreenTitle={getScreenTitle(activeScreen, t)}
           onLogout={handleLogout}
           onOpenAuditLogs={() => setShowAuditLogs(true)}
+          onOpenMenu={() => setIsSidebarOpen(true)}
         />
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50 dark:bg-[#030712] transition-colors">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-8 bg-slate-50 dark:bg-[#030712] transition-colors min-w-0">
           {!authorized ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 max-w-md mx-auto">
+            <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center space-y-4 max-w-md mx-auto px-2">
               <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
                 <ShieldAlert className="w-8 h-8" />
               </div>
@@ -133,11 +146,14 @@ function WorkspaceShellInner({
       </div>
 
       {role !== 'customer' && (
-        <div className={`fixed bottom-6 z-50 ${lang === 'ar' ? 'left-6' : 'right-6'}`}>
+        <div
+          className="fixed bottom-4 sm:bottom-6 z-50"
+          style={{ [lang === 'ar' ? 'left' : 'right']: '1rem', maxWidth: 'calc(100vw - 2rem)' }}
+        >
           <button
             type="button"
             onClick={() => setShowPublicBotOverlay(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-full shadow-xl hover:bg-blue-700 active:scale-95 transition-all text-xs"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 bg-blue-600 text-white font-bold rounded-full shadow-xl hover:bg-blue-700 active:scale-95 transition-all text-xs max-w-[calc(100vw-2rem)]"
           >
             <MessageSquare className="w-4 h-4" />
             <span>{lang === 'ar' ? 'معاينة البوت' : 'Launch Bot Widget'}</span>
@@ -146,8 +162,8 @@ function WorkspaceShellInner({
       )}
 
       {showPublicBotOverlay && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="relative max-w-md w-full">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-3 sm:p-4">
+          <div className="relative max-w-md w-full max-h-[90dvh]">
             <button
               type="button"
               onClick={() => setShowPublicBotOverlay(false)}
@@ -169,11 +185,11 @@ function WorkspaceShellInner({
             aria-hidden
           />
           <div
-            className={`relative w-96 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 h-full flex flex-col z-10 shadow-2xl text-xs ${
+            className={`relative w-[min(100vw,24rem)] sm:w-96 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 h-full flex flex-col z-10 shadow-2xl text-xs ${
               lang === 'ar' ? 'border-r' : 'border-l'
             }`}
           >
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
               <div className="flex items-center gap-2">
                 <Activity className="w-5 h-5 text-blue-500" />
                 <h3 className="font-bold text-sm text-slate-800 dark:text-white">Tenant System Audit Logs</h3>
@@ -186,14 +202,14 @@ function WorkspaceShellInner({
                 ×
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
               {auditLogs.map((log) => (
                 <div
                   key={log.id}
                   className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 rounded-2xl space-y-1.5"
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-slate-800 dark:text-white truncate max-w-[150px]" title={log.user}>
+                    <span className="font-bold text-slate-800 dark:text-white truncate" style={{ maxWidth: '150px' }} title={log.user}>
                       {log.user}
                     </span>
                     <span className="font-mono text-slate-400 text-[10px]">{log.timestamp}</span>

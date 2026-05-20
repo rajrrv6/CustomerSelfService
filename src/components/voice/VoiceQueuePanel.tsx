@@ -32,24 +32,24 @@ export function VoiceQueuePanel({ queue, onAnswerCaller, onSimulateInbound }: Vo
     <div className="space-y-4">
       {/* Metrics Row */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 p-2.5 rounded-2xl text-center">
-          <span className="block text-[8px] uppercase font-bold text-slate-450 tracking-wider">Active Queue</span>
+        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-2.5 rounded-2xl text-center">
+          <span className="block text-[8px] uppercase font-bold text-slate-500 tracking-wider">Active Queue</span>
           <div className="flex items-center justify-center gap-1.5 mt-0.5 text-slate-800 dark:text-white font-mono text-base font-bold">
             <Users className="w-3.5 h-3.5 text-blue-500" />
             <span>{totalWaiting}</span>
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 p-2.5 rounded-2xl text-center">
-          <span className="block text-[8px] uppercase font-bold text-slate-450 tracking-wider">Max Wait</span>
+        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-2.5 rounded-2xl text-center">
+          <span className="block text-[8px] uppercase font-bold text-slate-500 tracking-wider">Max Wait</span>
           <div className="flex items-center justify-center gap-1.5 mt-0.5 text-slate-800 dark:text-white font-mono text-base font-bold">
             <Clock className="w-3.5 h-3.5 text-amber-500" />
             <span>{formatTime(longestWait)}</span>
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 p-2.5 rounded-2xl text-center">
-          <span className="block text-[8px] uppercase font-bold text-slate-450 tracking-wider">Avg Wait</span>
+        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-2.5 rounded-2xl text-center">
+          <span className="block text-[8px] uppercase font-bold text-slate-500 tracking-wider">Avg Wait</span>
           <div className="flex items-center justify-center gap-1.5 mt-0.5 text-slate-800 dark:text-white font-mono text-base font-bold">
             <Zap className="w-3.5 h-3.5 text-emerald-500" />
             <span>{formatTime(avgWait)}</span>
@@ -60,7 +60,7 @@ export function VoiceQueuePanel({ queue, onAnswerCaller, onSimulateInbound }: Vo
       {/* Simulator Trigger */}
       <button
         onClick={onSimulateInbound}
-        className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-slate-800 text-[10px] rounded-xl flex items-center justify-center gap-1.5 font-bold"
+        className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 text-[10px] rounded-xl flex items-center justify-center gap-1.5 font-bold"
       >
         <Volume2 className="w-4 h-4 text-blue-500 shrink-0" />
         <span>Trigger Simulated Queue Inbound</span>
@@ -71,16 +71,16 @@ export function VoiceQueuePanel({ queue, onAnswerCaller, onSimulateInbound }: Vo
         {queue.map((c) => (
           <div
             key={c.id}
-            className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl flex justify-between items-center text-xs text-slate-800 dark:text-slate-200"
+            className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl flex justify-between items-center text-xs text-slate-800 dark:text-slate-200"
           >
             <div className="space-y-1">
               <div className="flex items-center gap-1.5">
                 <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${getPriorityColor(c.priority)}`}>
                   {c.priority}
                 </span>
-                <strong className="text-slate-850 dark:text-white">{c.customerName}</strong>
+                <strong className="text-slate-800 dark:text-white">{c.customerName}</strong>
               </div>
-              <span className="block text-[9px] text-slate-450 font-mono leading-none">{c.phoneNumber}</span>
+              <span className="block text-[9px] text-slate-500 font-mono leading-none">{c.phoneNumber}</span>
               <span className="block text-[9px] text-slate-400 font-mono">Queue: {c.queueName}</span>
             </div>
 
