@@ -46,7 +46,7 @@ export function ConversationMessage({ message, lang }: ConversationMessageProps)
               <FileText className="w-5 h-5 text-emerald-300" />
             )}
             <div className="text-[10px] text-left">
-              <span className="font-bold block truncate max-w-[150px]">
+              <span className="font-bold block truncate" style={{ maxWidth: '150px' }}>
                 {isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}
               </span>
               <span className="opacity-75 block text-[8px] font-mono">

@@ -10,13 +10,30 @@ import { TransferModal } from './TransferModal';
 import { ConferenceModal } from './ConferenceModal';
 import { WrapupModal } from './WrapupModal';
 
+// Telephony Hooks
+import { useCallState } from '@/hooks/useCallState';
+import { useDialer } from '@/hooks/useDialer';
+import { useVoiceQueue } from '@/hooks/useVoiceQueue';
+import { useSupervisorVoice } from '@/hooks/useSupervisorVoice';
+
+// Telephony Components
+import { VoiceDialer } from '../voice/VoiceDialer';
+import { IncomingCallModal } from '../voice/IncomingCallModal';
+import { CallDispositionModal } from '../voice/CallDispositionModal';
+import { ActiveCallPanel } from '../voice/ActiveCallPanel';
+import { CallHistory } from '../voice/CallHistory';
+import { VoiceQueuePanel } from '../voice/VoiceQueuePanel';
+import { SupervisorVoicePanel } from '../voice/SupervisorVoicePanel';
+import { VoicemailPanel } from '../voice/VoicemailPanel';
+
 // Seed imports
 import { conversationsSeed } from '@/data/seed/conversationsSeed';
 import { customer360Seed } from '@/data/seed/customer360Seed';
 import { queueSeed } from '@/data/seed/queueSeed';
 import { agentMetricsSeed, shiftScheduleSeed } from '@/data/seed/agentMetricsSeed';
+import { callHistorySeed, CallHistoryItem } from '@/data/seed/callHistorySeed';
 
-import { Clock, Flame } from 'lucide-react';
+import { Clock, Flame, PhoneCall, History, Users, MessageSquare, Shield } from 'lucide-react';
 
 export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScreen: string }) {
   const {
@@ -35,6 +52,92 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   // AUX state
   const [auxStatus, setAuxStatus] = useState<'online' | 'busy' | 'away' | 'break'>('online');
   const [auxSeconds, setAuxSeconds] = useState(0);
+
+  // Call History Local State
+  const [callHistory, setCallHistory] = useState<CallHistoryItem[]>(callHistorySeed);
+
+  const addCallToHistory = (newCall: CallHistoryItem) => {
+    setCallHistory((prev) => [newCall, ...prev]);
+    addAuditLog(`Saved voice call session to history: ${newCall.phoneNumber}`, 'success');
+  };
+
+  // Telephony custom hooks
+  const {
+    call,
+    receiveInbound,
+    startOutbound,
+    answerCall,
+    rejectCall,
+    hangupCall,
+    toggleMute,
+    toggleHold,
+    toggleRecording,
+    submitDisposition,
+    formatDuration
+  } = useCallState(addCallToHistory);
+
+  const {
+    isOpen: isDialerOpen,
+    dialInput,
+    setDialInput,
+    openDialer,
+    closeDialer,
+    dialPadKeyPress,
+    backspaceInput,
+    clearDialInput,
+    setDialTarget
+  } = useDialer();
+
+  const {
+    queue,
+    dequeueCall,
+    simulateInboundQueuedCall
+  } = useVoiceQueue();
+
+  const {
+    mode: supervisorMode,
+    whisperHint,
+    silentMonitor,
+    whisperCoach,
+    bargeIn,
+    stopMonitoring
+  } = useSupervisorVoice();
+
+  // Voice Sub-tabs state
+  const [voiceTab, setVoiceTab] = useState<'history' | 'queue' | 'voicemail' | 'supervisor'>('history');
+
+  // Simulate incoming call from queue automatically after a delay if agent is online and idle
+  useEffect(() => {
+    if (auxStatus !== 'online' || call) return;
+
+    // Trigger random inbound call after 15 seconds of idle time
+    const timer = setTimeout(() => {
+      if (queue.length > 0 && Math.random() > 0.3) {
+        const nextCaller = queue[0];
+        // Remove from queue first
+        dequeueCall(nextCaller.id);
+        // Trigger ringing overlay
+        receiveInbound(nextCaller.phoneNumber, nextCaller.customerName);
+        addAuditLog(`Simulating Inbound voice call from queue: ${nextCaller.customerName}`, 'success');
+      }
+    }, 15000);
+
+    return () => clearTimeout(timer);
+  }, [auxStatus, call, queue, receiveInbound, dequeueCall, addAuditLog]);
+
+  const handleDialOutbound = (number: string, name: string) => {
+    startOutbound(number, name);
+    addAuditLog(`Initiated outbound SIP call to ${number}`, 'success');
+  };
+
+  const handleAnswerQueueCaller = (phoneNumber: string, name: string) => {
+    const matched = queue.find(c => c.phoneNumber === phoneNumber);
+    if (matched) {
+      dequeueCall(matched.id);
+    }
+    receiveInbound(phoneNumber, name);
+    addAuditLog(`Picked up queued call from ${name}`, 'success');
+  };
 
   // Modal displays
   const [isHold, setIsHold] = useState(false);
@@ -300,31 +403,195 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
           onSearchChange={setSearchQuery}
         />
 
-        {/* Middle pane: Conversation Panel */}
-        <ConversationPanel
-          activeChat={activeChat}
-          draftText={draftText}
-          onChangeDraft={setDraftText}
-          onSend={handleSendMessage}
-          onTransferClick={() => setShowTransferModal(true)}
-          onConferenceClick={() => setShowConferenceModal(true)}
-          onResolveClick={() => setShowWrapupModal(true)}
-          onToggleHold={() => {
-            setIsHold(!isHold);
-            addAuditLog(`Liam Bennett ${!isHold ? 'placed session on hold' : 'resumed session'}`, 'success');
-          }}
-          isHold={isHold}
-          whisper={activeWhisper}
-          onCloseWhisper={() => setActiveWhisper('')}
-          lang={lang}
-          onSummarize={handleTriggerSummary}
-        />
+        {/* Middle pane: Conversation Panel or Voice Panel */}
+        {activeTab === 'voice' ? (
+          <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50 dark:bg-slate-950 p-5 space-y-4">
+            
+            {/* If call is active, connecting, held, or disposition, show active call panel */}
+            {call && (call.status === 'active' || call.status === 'connecting' || call.status === 'held' || call.status === 'disposition') ? (
+              <ActiveCallPanel
+                call={call}
+                formatDuration={formatDuration}
+                onToggleMute={toggleMute}
+                onToggleHold={toggleHold}
+                onToggleRecording={toggleRecording}
+                onTransfer={() => setDialTarget('', 'Transfer Target')}
+                onConference={() => setDialTarget('', 'Conference Target')}
+                onHangup={hangupCall}
+              />
+            ) : (
+              // Idle state / Voice dashboard summary
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4 text-xs font-semibold text-slate-850 dark:text-slate-200 shadow-sm shrink-0">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">SIP Voice Terminal</h3>
+                    <p className="text-[10px] text-slate-400 font-mono">Agent status is online. Awaiting inbound audio sessions.</p>
+                  </div>
+
+                  <button
+                    onClick={openDialer}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-sm"
+                  >
+                    <PhoneCall className="w-4 h-4 animate-bounce" />
+                    <span>Open Dialer Pad</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl">
+                    <span className="text-[9px] uppercase tracking-wider text-slate-400 font-mono font-bold block">Capacity</span>
+                    <strong className="text-lg font-black font-mono text-slate-800 dark:text-white">1 Call Active Limit</strong>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl">
+                    <span className="text-[9px] uppercase tracking-wider text-slate-400 font-mono font-bold block">Voice Queue Status</span>
+                    <strong className="text-lg font-black font-mono text-slate-800 dark:text-white">{queue.length} Waiters</strong>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Voice sub-tabs pane (History, Queue, Voicemail, Supervisor console) */}
+            <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col min-h-0">
+              {/* Navigation tabs header */}
+              <div className="flex border-b border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 text-[10px] uppercase font-bold text-center shrink-0">
+                <button
+                  onClick={() => setVoiceTab('history')}
+                  className={`flex-1 py-3 border-b-2 flex items-center justify-center gap-1 transition-colors ${
+                    voiceTab === 'history'
+                      ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-650'
+                  }`}
+                >
+                  <History className="w-3.5 h-3.5" />
+                  <span>Call History</span>
+                </button>
+
+                <button
+                  onClick={() => setVoiceTab('queue')}
+                  className={`flex-1 py-3 border-b-2 flex items-center justify-center gap-1 transition-colors relative ${
+                    voiceTab === 'queue'
+                      ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-650'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Voice Queue ({queue.length})</span>
+                  {queue.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setVoiceTab('voicemail')}
+                  className={`flex-1 py-3 border-b-2 flex items-center justify-center gap-1 transition-colors ${
+                    voiceTab === 'voicemail'
+                      ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-650'
+                  }`}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Voicemails</span>
+                </button>
+
+                <button
+                  onClick={() => setVoiceTab('supervisor')}
+                  className={`flex-1 py-3 border-b-2 flex items-center justify-center gap-1 transition-colors ${
+                    voiceTab === 'supervisor'
+                      ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900 font-bold'
+                      : 'border-transparent text-slate-400 hover:text-slate-650'
+                  }`}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Supervisor Console</span>
+                </button>
+              </div>
+
+              {/* Sub-tab container content */}
+              <div className="flex-1 p-4 overflow-y-auto min-h-0 scrollbar-thin">
+                {voiceTab === 'history' && (
+                  <CallHistory history={callHistory} onDial={handleDialOutbound} />
+                )}
+                
+                {voiceTab === 'queue' && (
+                  <VoiceQueuePanel
+                    queue={queue}
+                    onAnswerCaller={handleAnswerQueueCaller}
+                    onSimulateInbound={simulateInboundQueuedCall}
+                  />
+                )}
+
+                {voiceTab === 'voicemail' && (
+                  <VoicemailPanel />
+                )}
+
+                {voiceTab === 'supervisor' && (
+                  <SupervisorVoicePanel
+                    mode={supervisorMode}
+                    whisperHint={whisperHint}
+                    onSilentMonitor={silentMonitor}
+                    onWhisperCoach={whisperCoach}
+                    onBargeIn={bargeIn}
+                    onStopMonitoring={stopMonitoring}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ConversationPanel
+            activeChat={activeChat}
+            draftText={draftText}
+            onChangeDraft={setDraftText}
+            onSend={handleSendMessage}
+            onTransferClick={() => setShowTransferModal(true)}
+            onConferenceClick={() => setShowConferenceModal(true)}
+            onResolveClick={() => setShowWrapupModal(true)}
+            onToggleHold={() => {
+              setIsHold(!isHold);
+              addAuditLog(`Liam Bennett ${!isHold ? 'placed session on hold' : 'resumed session'}`, 'success');
+            }}
+            isHold={isHold}
+            whisper={activeWhisper}
+            onCloseWhisper={() => setActiveWhisper('')}
+            lang={lang}
+            onSummarize={handleTriggerSummary}
+          />
+        )}
 
         {/* Right pane: Customer 360 Drawer */}
         <div className="w-72 border-l border-slate-200 dark:border-slate-800 shrink-0 h-full overflow-hidden">
           <Customer360Drawer profile={activeCustomerProfile} />
         </div>
       </div>
+
+      {/* Voice Modals */}
+      <IncomingCallModal
+        isOpen={call?.status === 'ringing'}
+        contactName={call?.contactName || ''}
+        phoneNumber={call?.phoneNumber || ''}
+        onAccept={answerCall}
+        onReject={rejectCall}
+      />
+
+      <CallDispositionModal
+        isOpen={call?.status === 'disposition'}
+        contactName={call?.contactName || ''}
+        phoneNumber={call?.phoneNumber || ''}
+        duration={formatDuration(call?.duration || 0)}
+        onSubmit={submitDisposition}
+      />
+
+      <VoiceDialer
+        isOpen={isDialerOpen}
+        onClose={closeDialer}
+        dialInput={dialInput}
+        onDialInputChange={setDialInput}
+        onDialKeyPress={dialPadKeyPress}
+        onBackspace={backspaceInput}
+        onClearInput={clearDialInput}
+        onCall={handleDialOutbound}
+        activeCallStatus={call?.status}
+      />
 
       {/* Modals overlay */}
       <TransferModal

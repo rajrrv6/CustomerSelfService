@@ -64,7 +64,7 @@ export function ConversationPanel({
       {/* Top action header bar */}
       <div className="h-14 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900 z-10">
         <div className="flex items-center gap-2">
-          <h3 className="font-bold text-slate-850 dark:text-white truncate max-w-[180px]">
+          <h3 className="font-bold text-slate-850 dark:text-white truncate" style={{ maxWidth: '180px' }}>
             Chatting with: {activeChat.customerName}
           </h3>
           {activeChat.language === 'ar' && (

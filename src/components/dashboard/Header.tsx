@@ -172,7 +172,7 @@ export function Header({
 
         {/* Theme Toggle */}
         <button
-          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
         >
           {theme === 'light' ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}

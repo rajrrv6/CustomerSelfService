@@ -1,0 +1,187 @@
+'use client';
+
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import type {
+  AuthSession,
+  AuthStatus,
+  AuthUser,
+  LoginCredentials,
+  PendingLogin,
+  ValidationResult,
+} from '@/types/auth';
+import type { UserRole } from '@/types';
+import {
+  clearPendingLogin,
+  clearSession,
+  createSession,
+  persistPendingLogin,
+  persistSession,
+  readPendingLogin,
+  readSession,
+} from '@/lib/auth/authStorage';
+import { validateLoginCredentials } from '@/lib/auth/authValidation';
+import {
+  getHomeRouteForRole,
+  inferRoleFromEmail,
+} from '@/lib/auth/roleRouting';
+
+const MOCK_API_DELAY_MS = 900;
+const MOCK_MFA_DELAY_MS = 700;
+const MOCK_MFA_CODE = '123456';
+
+interface AuthContextValue {
+  status: AuthStatus;
+  user: AuthUser | null;
+  session: AuthSession | null;
+  pendingLogin: PendingLogin | null;
+  isAuthenticated: boolean;
+  login: (
+    credentials: LoginCredentials
+  ) => Promise<{ success: boolean; errors?: ValidationResult['errors'] }>;
+  verifyMfa: (code: string) => Promise<{ success: boolean; redirectTo?: string; error?: string }>;
+  logout: () => void;
+  resendMfaCode: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getInitialAuthState(): {
+  status: AuthStatus;
+  session: AuthSession | null;
+  pendingLogin: PendingLogin | null;
+} {
+  if (typeof window === 'undefined') {
+    return { status: 'idle', session: null, pendingLogin: null };
+  }
+  const existing = readSession();
+  if (existing) {
+    return { status: 'authenticated', session: existing, pendingLogin: null };
+  }
+  const pending = readPendingLogin();
+  if (pending) {
+    return { status: 'pending_mfa', session: null, pendingLogin: pending };
+  }
+  return { status: 'idle', session: null, pendingLogin: null };
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [initial] = useState(getInitialAuthState);
+  const [status, setStatus] = useState<AuthStatus>(initial.status);
+  const [session, setSession] = useState<AuthSession | null>(initial.session);
+  const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(initial.pendingLogin);
+
+  const login = useCallback(async (credentials: LoginCredentials) => {
+    const validation = validateLoginCredentials(credentials);
+    if (!validation.valid) {
+      return { success: false, errors: validation.errors };
+    }
+
+    setStatus('loading');
+
+    await delay(MOCK_API_DELAY_MS);
+
+    const inferredRole = inferRoleFromEmail(credentials.email);
+    const pending: PendingLogin = {
+      email: credentials.email.trim().toLowerCase(),
+      password: credentials.password,
+      inferredRole,
+      requestedAt: new Date().toISOString(),
+    };
+
+    persistPendingLogin(pending);
+    setPendingLogin(pending);
+    setStatus('pending_mfa');
+
+    return { success: true };
+  }, []);
+
+  const verifyMfa = useCallback(
+    async (code: string) => {
+      if (!pendingLogin) {
+        return { success: false, error: 'No pending login session. Please sign in again.' };
+      }
+
+      setStatus('loading');
+      await delay(MOCK_MFA_DELAY_MS);
+
+      if (code !== MOCK_MFA_CODE) {
+        setStatus('pending_mfa');
+        return { success: false, error: 'Invalid verification code. Try 123456 for demo access.' };
+      }
+
+      const newSession = createSession(
+        pendingLogin.email,
+        pendingLogin.inferredRole
+      );
+
+      persistSession(newSession);
+      clearPendingLogin();
+      setPendingLogin(null);
+      setSession(newSession);
+      setStatus('authenticated');
+
+      return {
+        success: true,
+        redirectTo: getHomeRouteForRole(newSession.user.role),
+      };
+    },
+    [pendingLogin]
+  );
+
+  const resendMfaCode = useCallback(async () => {
+    await delay(500);
+  }, []);
+
+  const logout = useCallback(() => {
+    clearSession();
+    clearPendingLogin();
+    setSession(null);
+    setPendingLogin(null);
+    setStatus('idle');
+  }, []);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      status,
+      user: session?.user ?? null,
+      session,
+      pendingLogin,
+      isAuthenticated: status === 'authenticated' && !!session,
+      login,
+      verifyMfa,
+      logout,
+      resendMfaCode,
+    }),
+    [status, session, pendingLogin, login, verifyMfa, logout, resendMfaCode]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuthContext() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error('useAuthContext must be used within AuthProvider');
+  }
+  return ctx;
+}
+
+/** Sync authenticated role into AppContext without duplicating role logic in pages */
+export function useAuthRoleSync(setRole: (role: UserRole) => void, userRole: UserRole | undefined) {
+  useEffect(() => {
+    if (userRole) {
+      setRole(userRole);
+    }
+  }, [userRole, setRole]);
+}

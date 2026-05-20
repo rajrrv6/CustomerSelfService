@@ -127,7 +127,7 @@ export function AIReplyComposer({
         <select
           onChange={(e) => handleApplyMacro(e.target.value)}
           defaultValue=""
-          className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl max-w-[200px] text-[10px] text-slate-650"
+          className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl max-w-50 text-[10px] text-slate-650"
         >
           <option value="" disabled>Insert Canned Reply...</option>
           {macros.map((m, idx) => (
