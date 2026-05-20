@@ -332,12 +332,12 @@ export function SVGDonutChart({
         </div>
 
         {/* Legend */}
-        <div className="flex flex-col gap-2 max-w-[150px]">
+        <div className="flex flex-col gap-2" style={{ maxWidth: '150px' }}>
           {segments.map((seg, idx) => (
             <div key={idx} className="flex items-center gap-2 text-xs">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
               <div className="flex flex-col">
-                <span className="text-slate-500 dark:text-slate-400 font-medium truncate max-w-[100px]" title={seg.label}>
+                <span className="text-slate-500 dark:text-slate-400 font-medium truncate" title={seg.label} style={{ maxWidth: '100px' }}>
                   {seg.label}
                 </span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">

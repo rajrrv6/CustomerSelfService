@@ -347,6 +347,7 @@ To unlock your access:
         <div className="flex gap-2">
           {/* Quick Actions Shortcuts */}
           <button
+            type="button"
             onClick={() => setActiveSubScreen('customer_chat_history')}
             className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold rounded-xl transition-all font-mono"
           >
@@ -376,7 +377,7 @@ To unlock your access:
         {activeSubScreen === 'customer_home' && (
           <div className="space-y-6">
             {/* Banner Section */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-750 text-white rounded-3xl p-8 text-center space-y-3.5 shadow-lg shadow-blue-500/10 relative overflow-hidden">
+            <div className="bg-linear-to-r from-blue-600 to-indigo-750 text-white rounded-3xl p-8 text-center space-y-3.5 shadow-lg shadow-blue-500/10 relative overflow-hidden">
               <span className="px-3 py-1 bg-white/15 rounded-full text-[10px] font-bold backdrop-blur-md">
                 FARAH AI SUPPORT DESK
               </span>
@@ -416,6 +417,7 @@ To unlock your access:
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveSubScreen('customer_order_refund')}
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-blue-500 transition-all text-left space-y-2.5 shadow-sm"
               >
@@ -445,11 +447,11 @@ To unlock your access:
           </div>
         )}
 
-        {/* KB SEARCH RESULTS SCREEN */}
         {activeSubScreen === 'customer_kb' && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setActiveSubScreen('customer_home')}
                 className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850"
               >
@@ -529,6 +531,7 @@ To unlock your access:
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setActiveSubScreen('customer_kb')}
                 className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850"
               >
@@ -620,6 +623,7 @@ To unlock your access:
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setActiveSubScreen('customer_my_tickets')}
                 className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850"
               >
@@ -775,6 +779,7 @@ To unlock your access:
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setActiveSubScreen('customer_home')}
                 className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850"
               >
@@ -1038,6 +1043,7 @@ To unlock your access:
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setActiveSubScreen('customer_home')}
                 className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850"
               >
@@ -1334,7 +1340,7 @@ To unlock your access:
       <div className={`fixed bottom-6 ${lang === 'ar' ? 'left-6' : 'right-6'} z-40`}>
         {chatOpen ? (
           /* Opened chat screen */
-          <div className="bg-[#0b0f19] text-white rounded-3xl w-80 shadow-2xl flex flex-col justify-between h-[450px] border border-slate-800 animate-in zoom-in-95 text-xs font-semibold">
+          <div className="bg-[#0b0f19] text-white rounded-3xl w-80 shadow-2xl flex flex-col justify-between border border-slate-800 animate-in zoom-in-95 text-xs font-semibold" style={{ height: '450px' }}>
             {/* Chat header */}
             <div className="bg-blue-600 px-4 py-3 text-white flex justify-between items-center rounded-t-3xl shrink-0">
               <div className="flex items-center gap-2">
@@ -1537,7 +1543,7 @@ To unlock your access:
           /* Closed chat bubble icon */
           <button
             onClick={() => setChatOpen(true)}
-            className="w-14 w-14 h-14 rounded-full bg-blue-650 text-white shadow-xl hover:bg-blue-755 flex items-center justify-center transition-all hover:scale-105 active:scale-95 border-2 border-white dark:border-slate-900"
+            className="w-14 h-14 rounded-full bg-blue-650 text-white shadow-xl hover:bg-blue-755 flex items-center justify-center transition-all hover:scale-105 active:scale-95 border-2 border-white dark:border-slate-900"
           >
             <Brain className="w-7 h-7 text-white" />
           </button>

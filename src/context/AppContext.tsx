@@ -110,6 +110,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const resolveTheme = (themeValue: 'light' | 'dark' | 'system') => {
+    if (themeValue === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    return themeValue;
+  };
+
   const setRole = (newRole: UserRole) => {
     setRoleState(newRole);
     localStorage.setItem('role', newRole);
@@ -146,14 +154,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Sync tailwind dark mode class
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
+    const applyTheme = () => {
+      const resolvedTheme = resolveTheme(theme);
+      root.classList.remove('light', 'dark');
+      root.classList.add(resolvedTheme);
+      root.style.colorScheme = resolvedTheme;
+    };
+
+    applyTheme();
+
+    if (theme !== 'system') {
+      return;
     }
+
+    const handleSystemThemeChange = () => {
+      applyTheme();
+    };
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    };
   }, [theme]);
 
   // Actions implementations
