@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, ShieldAlert } from 'lucide-react';
 import { ActiveCall } from '@/hooks/useCallState';
 import { CallQualityBadge } from './CallQualityBadge';
@@ -29,6 +29,66 @@ export function ActiveCallPanel({
 }: ActiveCallPanelProps) {
   const [notesText, setNotesText] = useState('');
   const [waveHeights, setWaveHeights] = useState<number[]>([12, 24, 18, 32, 16, 28, 20, 36, 14, 30, 22]);
+  const [announcement, setAnnouncement] = useState('');
+
+  const prevMutedRef = useRef<boolean>(call.isMuted);
+  const prevHeldRef = useRef<boolean>(call.isHeld);
+  const prevRecordingRef = useRef<boolean>(call.isRecording);
+  const prevStatusRef = useRef<string>(call.status);
+  const prevQualityRef = useRef<string>(call.quality);
+  const prevCallId = useRef<string>('');
+
+  const currentCallId = `${call.phoneNumber}-${call.direction}`;
+
+  // Track call state changes to announce to screen readers (WCAG 2.1 SC 4.1.3 Status Messages)
+  useEffect(() => {
+    if (prevCallId.current !== currentCallId) {
+      prevCallId.current = currentCallId;
+      prevMutedRef.current = call.isMuted;
+      prevHeldRef.current = call.isHeld;
+      prevRecordingRef.current = call.isRecording;
+      prevStatusRef.current = call.status;
+      prevQualityRef.current = call.quality;
+      setAnnouncement(`Connected to call with ${call.contactName || call.phoneNumber}`);
+      return;
+    }
+
+    const announcements: string[] = [];
+
+    if (prevMutedRef.current !== call.isMuted) {
+      announcements.push(call.isMuted ? 'Microphone muted' : 'Microphone unmuted');
+      prevMutedRef.current = call.isMuted;
+    }
+    if (prevHeldRef.current !== call.isHeld) {
+      announcements.push(call.isHeld ? 'Call placed on hold' : 'Call resumed');
+      prevHeldRef.current = call.isHeld;
+    }
+    if (prevRecordingRef.current !== call.isRecording) {
+      announcements.push(call.isRecording ? 'Call recording started' : 'Call recording stopped');
+      prevRecordingRef.current = call.isRecording;
+    }
+    if (prevStatusRef.current !== call.status) {
+      announcements.push(`Call status: ${call.status}`);
+      prevStatusRef.current = call.status;
+    }
+    if (prevQualityRef.current !== call.quality) {
+      announcements.push(`Call quality changed to ${call.quality}`);
+      prevQualityRef.current = call.quality;
+    }
+
+    if (announcements.length > 0) {
+      setAnnouncement(announcements.join('. '));
+    }
+  }, [
+    call.phoneNumber,
+    call.direction,
+    call.isMuted,
+    call.isHeld,
+    call.isRecording,
+    call.status,
+    call.quality,
+    call.contactName
+  ]);
 
   // Audio stream visualizer animation simulation
   useEffect(() => {
@@ -38,7 +98,7 @@ export function ActiveCallPanel({
       setWaveHeights((prev) =>
         prev.map(() => Math.floor(Math.random() * 32) + 6)
       );
-    }, 150);
+    }, 80);
 
     return () => clearInterval(interval);
   }, [call.status, call.isHeld]);
@@ -52,7 +112,7 @@ export function ActiveCallPanel({
           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center font-bold relative">
             <User className="w-5 h-5" />
             <span className={`absolute right-0 bottom-0 w-2.5 h-2.5 rounded-full border border-white dark:border-slate-900 ${
-              call.status === 'held' ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'
+              call.status === 'held' ? 'bg-amber-500' : 'bg-emerald-500 glow-active'
             }`} />
           </div>
 
@@ -85,7 +145,7 @@ export function ActiveCallPanel({
             {waveHeights.map((h, i) => (
               <div
                 key={i}
-                className="w-1.5 bg-blue-500 rounded-full transition-all duration-150"
+                className="w-1.5 bg-blue-500 rounded-full transition-all duration-75"
                 style={{ height: `${h}px` }}
               />
             ))}
@@ -125,6 +185,11 @@ export function ActiveCallPanel({
         onConference={onConference}
         onHangup={onHangup}
       />
+      
+      {/* Screen Reader Live Announcements */}
+      <div className="sr-only" aria-live="polite">
+        {announcement}
+      </div>
     </div>
   );
 }

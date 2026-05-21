@@ -10,6 +10,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'cross_tenant_analytics',
     'vector_db',
     'sip_trunk',
+    'analytics_center',
   ],
   client_admin: [
     'bots',
@@ -24,11 +25,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'surveys',
     'deployments',
     'integrations',
+    'analytics_center',
   ],
-  operations_manager: ['inbox', 'agents', 'sla', 'surveys', 'integrations'],
+  operations_manager: ['inbox', 'agents', 'sla', 'surveys', 'integrations', 'analytics_center'],
   qa_manager: ['qa_queue', 'coaching', 'inbox', 'surveys'],
   support_agent: ['agent_dashboard', 'inbox', 'tickets'],
-  supervisor: ['inbox', 'supervisor_monitor', 'workforce', 'sla'],
+  supervisor: ['inbox', 'supervisor_monitor', 'workforce', 'sla', 'analytics_center'],
   customer: [
     'customer_home',
     'customer_kb',
@@ -39,7 +41,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'customer_order_refund',
     'customer_chat_history',
   ],
-  viewer: ['surveys', 'sla'],
+  viewer: ['surveys', 'sla', 'analytics_center'],
 };
 
 export const ROLE_DEFAULT_SCREEN: Record<UserRole, string> = {
@@ -77,6 +79,7 @@ export function getScreenTitle(screenId: string, t: TranslationKeys): string {
     surveys: 'Voice of Customer & CSAT',
     deployments: 'Release Pipeline & A/B',
     integrations: t.integrations,
+    analytics_center: 'Analytics & Observability Center',
     qa_queue: 'QA Review Queue',
     coaching: 'Agent Training Plans',
     agent_dashboard: 'Agent Dashboard',

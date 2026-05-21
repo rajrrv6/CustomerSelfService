@@ -96,7 +96,227 @@ body {
   animation: pulse-glow 2s infinite ease-in-out;
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--border) 25%, rgba(156, 163, 175, 0.15) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(90deg, var(--border) 25%, rgba(55, 65, 81, 0.4) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[dir="rtl"] .animate-slide-in-right {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-caret {
+  animation: blink 0.8s infinite;
+}
+
+/* Micro-interaction Hover Lift */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 /* RTL Breadcrumb and Chevron overrides */
 [dir="rtl"] .rtl-flip {
   transform: scaleX(-1);
 }
+
+/* Focus Visible Global Outline System for WCAG SC 2.4.7 */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+  border-color: #3b82f6 !important;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="radio"]:focus-visible {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+/* Accessibility Text Scaling Overrides */
+.portal-scale-sm,
+.portal-scale-sm * {
+  font-size: 11px;
+}
+.portal-scale-sm .text-3xl { font-size: 1.5rem !important; }
+.portal-scale-sm .text-2xl { font-size: 1.25rem !important; }
+.portal-scale-sm .text-xl { font-size: 1.125rem !important; }
+.portal-scale-sm .text-lg { font-size: 0.95rem !important; }
+.portal-scale-sm .text-base { font-size: 0.85rem !important; }
+.portal-scale-sm .text-sm { font-size: 0.75rem !important; }
+.portal-scale-sm .text-xs { font-size: 0.65rem !important; }
+.portal-scale-sm .text-\[10px\] { font-size: 8px !important; }
+.portal-scale-sm .text-\[11px\] { font-size: 9px !important; }
+.portal-scale-sm .text-\[12px\] { font-size: 10px !important; }
+.portal-scale-sm .text-\[9px\] { font-size: 7.5px !important; }
+.portal-scale-sm .text-\[8px\] { font-size: 7px !important; }
+
+.portal-scale-lg,
+.portal-scale-lg * {
+  font-size: 15px;
+}
+.portal-scale-lg .text-3xl { font-size: 2.5rem !important; }
+.portal-scale-lg .text-2xl { font-size: 2rem !important; }
+.portal-scale-lg .text-xl { font-size: 1.625rem !important; }
+.portal-scale-lg .text-lg { font-size: 1.35rem !important; }
+.portal-scale-lg .text-base { font-size: 1.2rem !important; }
+.portal-scale-lg .text-sm { font-size: 1.1rem !important; }
+.portal-scale-lg .text-xs { font-size: 1rem !important; }
+.portal-scale-lg .text-\[10px\] { font-size: 12px !important; }
+.portal-scale-lg .text-\[11px\] { font-size: 13px !important; }
+.portal-scale-lg .text-\[12px\] { font-size: 14px !important; }
+.portal-scale-lg .text-\[9px\] { font-size: 11px !important; }
+.portal-scale-lg .text-\[8px\] { font-size: 10px !important; }
+
+/* High Contrast Mode Global Overrides */
+.high-contrast-mode,
+.high-contrast-mode * {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  background-image: none !important;
+}
+
+.high-contrast-mode button,
+.high-contrast-mode a,
+.high-contrast-mode select,
+.high-contrast-mode input,
+.high-contrast-mode textarea {
+  border: 2px solid #ffff00 !important;
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+  outline-color: #ffff00 !important;
+}
+
+.high-contrast-mode button:hover,
+.high-contrast-mode button:focus-visible,
+.high-contrast-mode a:hover,
+.high-contrast-mode a:focus-visible {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+}
+
+.high-contrast-mode input::placeholder,
+.high-contrast-mode textarea::placeholder {
+  color: #ffff00 !important;
+  opacity: 0.7;
+}
+
+.high-contrast-mode svg {
+  stroke: #ffff00 !important;
+}
+
+.high-contrast-mode svg path,
+.high-contrast-mode svg circle,
+.high-contrast-mode svg line,
+.high-contrast-mode svg polyline,
+.high-contrast-mode svg rect,
+.high-contrast-mode svg polygon {
+  stroke: #ffff00 !important;
+  fill: none !important;
+}
+
+.high-contrast-mode .fill-current {
+  fill: #ffff00 !important;
+}
+
+

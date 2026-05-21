@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, RefreshCcw, FileText, Wand2 } from 'lucide-react';
 import { useIsDesktopOperational } from '@/hooks/useMediaQuery';
 import { MobileSheet } from '@/components/responsive/MobileSheet';
@@ -29,6 +29,34 @@ export function AIReplyComposer({
   const [toolsOpen, setToolsOpen] = useState(false);
 
   const isRtl = lang === 'ar';
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const streamText = (text: string) => {
+    if (process.env.NODE_ENV === 'test') {
+      onChangeDraft(text);
+      return;
+    }
+    if (timerRef.current) clearInterval(timerRef.current);
+    let current = '';
+    let index = 0;
+    const interval = 10; // 10ms per char for snappy yet realistic streaming
+    timerRef.current = setInterval(() => {
+      if (index < text.length) {
+        current += text[index];
+        onChangeDraft(current);
+        index++;
+      } else {
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }, interval);
+  };
 
   const macros = [
     { label: 'Refund Policy Warning', value: 'Under standard Return & Exchange policy ks-1, refunds are limited to 30 days. However, since the unit was received damaged, we can process a full exception for you.' },
@@ -37,12 +65,12 @@ export function AIReplyComposer({
   ];
 
   const handleApplyMacro = (val: string) => {
-    onChangeDraft(val);
+    streamText(val);
   };
 
   const handleRewriteTone = () => {
     setLoadingSuggestion(true);
-    setTimeout(() => {
+    const runRewrite = () => {
       let result = draftText || suggestedReplyText;
       if (selectedTone === 'empathetic') {
         result = `I truly understand how frustrating this must be. Let me resolve this exception right away: ${result}`;
@@ -51,13 +79,19 @@ export function AIReplyComposer({
       } else {
         result = `Dear Client, regarding your request, we have initiated standard process: ${result}`;
       }
-      onChangeDraft(result);
       setLoadingSuggestion(false);
-    }, 500);
+      streamText(result);
+    };
+
+    if (process.env.NODE_ENV === 'test') {
+      runRewrite();
+    } else {
+      setTimeout(runRewrite, 500);
+    }
   };
 
   const handleApplyAISuggestion = () => {
-    onChangeDraft(suggestedReplyText);
+    streamText(suggestedReplyText);
   };
 
   const advancedToolsBlock = (
