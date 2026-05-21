@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { WorkflowNode } from '@/data/seed/workflowSeed';
 import { X, Plus, Trash2, Settings } from 'lucide-react';
 
@@ -42,6 +42,110 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
   const [newCardTitle, setNewCardTitle] = useState('');
   const [newCardSubtitle, setNewCardSubtitle] = useState('');
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync state when selected node changes
+  useEffect(() => {
+    if (node) {
+      setNodeName(node.name || '');
+      setOutputText(node.config?.outputText || '');
+      setIntentName(node.config?.intentName || '');
+      setApiUrl(node.config?.apiUrl || '');
+      setApiMethod(node.config?.apiMethod || 'GET');
+      setApiPayload(node.config?.apiPayload || '');
+      setDbTargetTable(node.config?.dbTargetTable || '');
+      setDbQuery(node.config?.dbQuery || '');
+      setRagSource(node.config?.ragSource || '');
+      setRagMinConfidence(node.config?.ragMinConfidence || 0.85);
+      setHandoffQueue(node.config?.handoffQueue || '');
+      setDelaySeconds(node.config?.delaySeconds || 3);
+      setUtterances(node.config?.utterances || []);
+      setFormFields(node.config?.formFields || []);
+      setBranchConditions(node.config?.branchConditions || []);
+      setCarouselItems(node.config?.carouselItems || []);
+    }
+  }, [node]);
+
+  useEffect(() => {
+    if (!node) return;
+
+    // Capture active element for restoration
+    const previousActiveElement = document.activeElement as HTMLElement | null;
+
+    // ESC close keydown handler
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Focus trapping (mobile viewports only)
+    const containerElement = containerRef.current;
+    if (!containerElement) return;
+
+    const isMobile = () => window.innerWidth < 1024; // lg: breakpoint is 1024px
+
+    const getFocusableElements = () => {
+      return containerElement.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+    };
+
+    const focusable = getFocusableElements();
+    let cleanupTab: (() => void) | undefined;
+
+    if (focusable.length > 0) {
+      const first = focusable[0] as HTMLElement;
+      const last = focusable[focusable.length - 1] as HTMLElement;
+
+      const handleTab = (e: KeyboardEvent) => {
+        if (e.key !== 'Tab') return;
+        if (!isMobile()) return; // Only trap focus on mobile viewports
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            last.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === last) {
+            first.focus();
+            e.preventDefault();
+          }
+        }
+      };
+
+      containerElement.addEventListener('keydown', handleTab);
+      cleanupTab = () => containerElement.removeEventListener('keydown', handleTab);
+
+      // Auto-focus Display Label input on open
+      const timer = setTimeout(() => {
+        first.focus();
+      }, 50);
+
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        if (cleanupTab) cleanupTab();
+        clearTimeout(timer);
+        if (previousActiveElement) {
+          setTimeout(() => {
+            previousActiveElement.focus();
+          }, 50);
+        }
+      };
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previousActiveElement) {
+        setTimeout(() => {
+          previousActiveElement.focus();
+        }, 50);
+      }
+    };
+  }, [node, onClose]);
+
   if (!node) return null;
 
   const handleSave = () => {
@@ -67,7 +171,14 @@ export function NodeSettingsDrawer({ node, onClose, onUpdateConfig, onUpdateName
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 w-full max-h-[85dvh] rounded-t-3xl border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-auto flex flex-col shrink-0 text-xs font-semibold shadow-2xl overflow-hidden animate-slide-in lg:inset-y-0 lg:bottom-auto lg:right-0 lg:left-auto lg:w-80 lg:max-h-none lg:rounded-none lg:border-t-0 lg:border-l">
+    <div 
+      ref={containerRef}
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="node-settings-title"
+      className="fixed inset-x-0 bottom-0 z-30 w-full max-h-[85dvh] rounded-t-3xl border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-auto flex flex-col shrink-0 text-xs font-semibold shadow-2xl overflow-hidden animate-slide-in lg:inset-y-0 lg:bottom-auto lg:right-0 lg:left-auto lg:w-80 lg:max-h-none lg:rounded-none lg:border-t-0 lg:border-l"
+    >
+
       {/* Header */}
       <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950 sticky top-0 z-10">
         <div className="flex items-center gap-1.5 text-slate-800 dark:text-white">

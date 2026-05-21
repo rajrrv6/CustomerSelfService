@@ -61,7 +61,8 @@ export function Sidebar({
           { id: 'cost_benchmarks', label: t.costBenchmarks, icon: <BarChart2 className="w-4 h-4" /> },
           { id: 'cross_tenant_analytics', label: t.crossTenantAnalytics, icon: <TrendingUp className="w-4 h-4" /> },
           { id: 'vector_db', label: t.vectorDbStatus, icon: <Database className="w-4 h-4" /> },
-          { id: 'sip_trunk', label: t.sipTrunkConfig, icon: <Phone className="w-4 h-4" /> }
+          { id: 'sip_trunk', label: t.sipTrunkConfig, icon: <Phone className="w-4 h-4" /> },
+          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> }
         ];
 
       case 'client_admin':
@@ -76,6 +77,7 @@ export function Sidebar({
           { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
           { id: 'sla', label: 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
           { id: 'surveys', label: t.analytics, icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> },
           { id: 'deployments', label: 'Pipelines & A/B', icon: <Play className="w-4 h-4" /> },
           { id: 'integrations', label: t.integrations, icon: <Database className="w-4 h-4" /> }
         ];
@@ -86,7 +88,8 @@ export function Sidebar({
           { id: 'agents', label: 'Queues & Roster', icon: <Users className="w-4 h-4" /> },
           { id: 'sla', label: 'SLA Tracking', icon: <Lock className="w-4 h-4" /> },
           { id: 'surveys', label: 'CSAT Config', icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'integrations', label: 'CRM integration', icon: <Database className="w-4 h-4" /> }
+          { id: 'integrations', label: 'CRM integration', icon: <Database className="w-4 h-4" /> },
+          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> }
         ];
 
       case 'qa_manager':
@@ -109,7 +112,8 @@ export function Sidebar({
           { id: 'inbox', label: 'Live Monitoring', icon: <Mail className="w-4 h-4" /> },
           { id: 'supervisor_monitor', label: 'Agent Whisper', icon: <Shield className="w-4 h-4" /> },
           { id: 'workforce', label: 'Shift Scheduling', icon: <Calendar className="w-4 h-4" /> },
-          { id: 'sla', label: 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> }
+          { id: 'sla', label: 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
+          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> }
         ];
 
       case 'customer':
@@ -123,7 +127,8 @@ export function Sidebar({
       case 'viewer':
         return [
           { id: 'surveys', label: 'CSAT Analytics', icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'sla', label: 'SLA Status', icon: <Lock className="w-4 h-4" /> }
+          { id: 'sla', label: 'SLA Status', icon: <Lock className="w-4 h-4" /> },
+          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> }
         ];
 
       default:
@@ -173,10 +178,10 @@ export function Sidebar({
               <button
                 key={item.id}
                 onClick={() => setActiveScreen(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all text-left ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 text-start ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                    : 'hover:bg-slate-800/50 hover:text-slate-100 text-slate-400'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5'
+                    : 'hover:bg-slate-800/40 hover:text-slate-100 text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
                 }`}
               >
                 <span className={`${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'}`}>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, FileText } from 'lucide-react';
+import { ModalWrapper } from '../shared/ModalWrapper';
 
 interface CallDispositionModalProps {
   isOpen: boolean;
@@ -19,8 +20,6 @@ export function CallDispositionModal({
   const [selectedCode, setSelectedCode] = useState('Inquiry Resolved');
   const [notes, setNotes] = useState('');
 
-  if (!isOpen) return null;
-
   const codes = [
     'Inquiry Resolved',
     'Refund Approved',
@@ -39,20 +38,24 @@ export function CallDispositionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-md w-full rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 text-xs font-semibold text-slate-800 dark:text-slate-200">
-        
-        {/* Header */}
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20">
-          <ShieldCheck className="w-5 h-5 text-blue-500 shrink-0" />
-          <div>
-            <strong className="block text-slate-900 dark:text-white">Call Wrap-Up Disposition</strong>
-            <span className="text-[10px] text-slate-400 font-mono">Select call outcome to complete the voice ticket</span>
-          </div>
+    <ModalWrapper
+      isOpen={isOpen}
+      onClose={() => {}}
+      title="Call Wrap-Up Disposition"
+      hideCloseButton={true}
+      preventCloseOnOverlayClick={true}
+      preventCloseOnEsc={true}
+      maxWidthClass="max-w-md"
+    >
+      <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+        {/* Subtitle / Icon info at the top of the body for parity */}
+        <div className="flex items-center gap-2 mb-4 p-2.5 bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
+          <ShieldCheck className="w-5 h-5 shrink-0" />
+          <span className="text-[10px] font-mono">Select call outcome to complete the voice ticket</span>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           
           {/* Caller Profile Info */}
           <div className="p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 rounded-2xl flex justify-between items-center text-[11px]">
@@ -74,7 +77,7 @@ export function CallDispositionModal({
             <select
               value={selectedCode}
               onChange={(e) => setSelectedCode(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:border-blue-500 font-bold text-slate-800 dark:text-slate-200"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 dark:focus:border-blue-500 font-bold text-slate-800 dark:text-slate-200"
             >
               {codes.map((code) => (
                 <option key={code} value={code}>
@@ -94,7 +97,7 @@ export function CallDispositionModal({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Detail the call resolution, next action steps, or follow-ups here..."
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs leading-relaxed outline-none focus:border-blue-500 text-slate-800 dark:text-slate-200 font-normal"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 dark:focus:border-blue-500 text-slate-800 dark:text-slate-200 font-normal"
               />
               {notes.trim().length === 0 && (
                 <div className="absolute right-3 bottom-3 text-slate-400">
@@ -107,12 +110,13 @@ export function CallDispositionModal({
           {/* Actions */}
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-98 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <span>Complete Voice Session</span>
           </button>
         </form>
       </div>
-    </div>
+    </ModalWrapper>
   );
 }
+

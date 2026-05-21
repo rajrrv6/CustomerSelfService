@@ -14,6 +14,7 @@ import { CustomerPortalView } from '@/components/dashboard/CustomerPortalView';
 import { QAManagerView } from '@/components/dashboard/QAManagerView';
 import { SupervisorView } from '@/components/dashboard/SupervisorView';
 import { PublicBotWidget } from '@/components/dashboard/PublicBotWidget';
+import AnalyticsCenterLayout from '@/components/analytics/AnalyticsCenterLayout';
 import { ShieldAlert, Activity, MessageSquare, X } from 'lucide-react';
 import {
   canAccessScreen,
@@ -69,6 +70,21 @@ function WorkspaceShellInner({
   const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [showPublicBotOverlay, setShowPublicBotOverlay] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Listen for custom navigation events from child components (e.g., BotsTab 'Flows' button)
+  React.useEffect(() => {
+    const handler = (ev: Event) => {
+      const custom = ev as CustomEvent<any>;
+      const screen = custom?.detail?.screenId;
+      if (screen) {
+        setActiveScreen(screen);
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('navigate-to-screen', handler as EventListener);
+    return () => window.removeEventListener('navigate-to-screen', handler as EventListener);
+  }, []);
 
   const authorized = canAccessScreen(role, activeScreen);
 
@@ -127,6 +143,8 @@ function WorkspaceShellInner({
                 )}
               </p>
             </div>
+          ) : activeScreen === 'analytics_center' ? (
+            <AnalyticsCenterLayout />
           ) : (
             <>
               {role === 'super_admin' && <SuperAdminView activeSubScreen={activeScreen} />}
@@ -239,6 +257,8 @@ function WorkspaceShellInner({
           </div>
         </div>
       )}
+
+      {/* navigation events handled in React useEffect above */}
     </div>
   );
 }

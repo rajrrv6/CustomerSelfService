@@ -711,6 +711,35 @@ export const mockTickets: Ticket[] = [
         timestamp: '16:45'
       }
     ]
+  },
+  {
+    id: 'TIC-1020',
+    title: 'Incorrect invoice generation on Gold plan',
+    description: 'Gold level subscription renewal charged twice due to API sync delays. Need support for exemption logs.',
+    customerName: 'David Miller',
+    customerEmail: 'david.miller@yahoo.com',
+    priority: 'medium',
+    status: 'solved',
+    assignedAgentId: 'agent-1',
+    category: 'Billing & Payments',
+    createdAt: '2026-05-18 10:00',
+    slaBreachTime: '2026-05-19 10:00',
+    messages: [
+      {
+        id: 't6',
+        sender: 'customer',
+        senderName: 'David Miller',
+        text: 'Hello, the invoice generated for this billing cycle shows a double charge. Can you check?',
+        timestamp: '10:00'
+      },
+      {
+        id: 't7',
+        sender: 'agent',
+        senderName: 'Liam Bennett',
+        text: 'Hi David, I have corrected the double billing line on the gateway and updated the active statement details. The invoice has been synced.',
+        timestamp: '11:30'
+      }
+    ]
   }
 ];
 

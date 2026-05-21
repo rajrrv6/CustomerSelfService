@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 export interface MobileSheetProps {
@@ -13,10 +13,6 @@ export interface MobileSheetProps {
   bodyClassName?: string;
 }
 
-/**
- * Bottom sheet for mobile progressive disclosure.
- * Desktop: typically not rendered (parent gates with `lg:hidden` + open state).
- */
 export function MobileSheet({
   open,
   onClose,
@@ -25,19 +21,93 @@ export function MobileSheet({
   children,
   bodyClassName = 'max-h-[min(85dvh,720px)]',
 }: MobileSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
+
+    // Focus restoration
+    const previousActiveElement = document.activeElement as HTMLElement | null;
+
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
+
+    // ESC close behavior
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
     };
-  }, [open]);
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Focus trapping
+    const sheetElement = sheetRef.current;
+    let cleanupTab: (() => void) | undefined;
+
+    if (sheetElement) {
+      const getFocusableElements = () => {
+        return sheetElement.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+      };
+
+      const focusable = getFocusableElements();
+      if (focusable.length > 0) {
+        const first = focusable[0] as HTMLElement;
+        const last = focusable[focusable.length - 1] as HTMLElement;
+
+        const handleTab = (e: KeyboardEvent) => {
+          if (e.key !== 'Tab') return;
+
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              last.focus();
+              e.preventDefault();
+            }
+          } else {
+            if (document.activeElement === last) {
+              first.focus();
+              e.preventDefault();
+            }
+          }
+        };
+
+        sheetElement.addEventListener('keydown', handleTab);
+        cleanupTab = () => sheetElement.removeEventListener('keydown', handleTab);
+
+        const timer = setTimeout(() => {
+          first.focus();
+        }, 50);
+
+        return () => {
+          document.body.style.overflow = prevOverflow;
+          window.removeEventListener('keydown', handleKeyDown);
+          if (cleanupTab) cleanupTab();
+          clearTimeout(timer);
+          if (previousActiveElement) {
+            setTimeout(() => {
+              previousActiveElement.focus();
+            }, 50);
+          }
+        };
+      }
+    }
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previousActiveElement) {
+        setTimeout(() => {
+          previousActiveElement.focus();
+        }, 50);
+      }
+    };
+  }, [open, onClose]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-sheet-title">
+    <div ref={sheetRef} className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-sheet-title">
       <button
         type="button"
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -57,7 +127,7 @@ export function MobileSheet({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             aria-label="Close"
           >
             <X className="h-4 w-4" />

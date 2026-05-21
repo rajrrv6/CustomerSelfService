@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CRMConnector } from '@/data/seed/crmConnectorsSeed';
-import { Database, Plus, Check, Settings, ShieldAlert, CreditCard, ShoppingBag, MessageSquare, AlertCircle } from 'lucide-react';
+import { Database, Plus, Check, Settings, AlertCircle, CreditCard, ShoppingBag, MessageSquare } from 'lucide-react';
 
 interface MarketplaceGridProps {
   connectors: CRMConnector[];
@@ -25,8 +25,8 @@ export function MarketplaceGrid({ connectors, onSelectConnector, onLaunchOAuth, 
   });
 
   return (
-    <div className="space-y-6 text-xs font-semibold text-slate-350">
-      {/* Category selector */}
+    <div className="space-y-6 text-xs font-semibold">
+      {/* Category filter pills */}
       <div className="flex flex-wrap gap-2 text-[10px] uppercase font-bold tracking-wider">
         {categories.map(cat => {
           const isActive = activeCategory === cat.id;
@@ -37,7 +37,7 @@ export function MarketplaceGrid({ connectors, onSelectConnector, onLaunchOAuth, 
               className={`px-3.5 py-1.5 rounded-xl border transition-all ${
                 isActive
                   ? 'border-blue-500/20 bg-blue-600 text-white shadow-sm'
-                  : 'border-slate-850 bg-slate-900/60 text-slate-400 hover:border-slate-750'
+                  : 'border-slate-200 dark:border-slate-700 bg-transparent text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
               }`}
             >
               {cat.label}
@@ -46,7 +46,7 @@ export function MarketplaceGrid({ connectors, onSelectConnector, onLaunchOAuth, 
         })}
       </div>
 
-      {/* Grid of integrations */}
+      {/* Connector grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredConnectors.map(conn => {
           const isConnected = conn.status === 'connected' || conn.status === 'degraded';
@@ -55,18 +55,20 @@ export function MarketplaceGrid({ connectors, onSelectConnector, onLaunchOAuth, 
           return (
             <div
               key={conn.id}
-              className={`bg-[#0b0f19]/35 border rounded-3xl p-5.5 hover:border-slate-750 transition-all flex flex-col justify-between h-56 ${
-                isConnected ? 'border-blue-500/10' : 'border-slate-850'
+              className={`bg-white dark:bg-slate-900 border rounded-2xl p-5 hover:shadow-md transition-all flex flex-col justify-between shadow-sm min-h-[220px] ${
+                isConnected 
+                  ? 'border-blue-200 dark:border-blue-900/40' 
+                  : 'border-slate-200 dark:border-slate-800'
               }`}
             >
               {/* Card top */}
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   {/* Category icon */}
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
                     isConnected 
-                      ? 'bg-blue-600/10 border-blue-500/20 text-blue-400' 
-                      : 'bg-slate-900 border-slate-800 text-slate-400'
+                      ? 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400' 
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
                   }`}>
                     {conn.category === 'billing' ? (
                       <CreditCard className="w-5 h-5" />
@@ -83,8 +85,8 @@ export function MarketplaceGrid({ connectors, onSelectConnector, onLaunchOAuth, 
                   {isConnected ? (
                     <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono tracking-wider flex items-center gap-1 ${
                       isDegraded 
-                        ? 'bg-amber-500/10 text-amber-450 border border-amber-500/20' 
-                        : 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400' 
+                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
                     }`}>
                       {isDegraded ? (
                         <>
@@ -99,7 +101,7 @@ export function MarketplaceGrid({ connectors, onSelectConnector, onLaunchOAuth, 
                       )}
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-500 rounded text-[8px] font-bold font-mono tracking-wider">
+                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded text-[8px] font-bold font-mono tracking-wider">
                       AVAILABLE
                     </span>
                   )}
@@ -107,23 +109,23 @@ export function MarketplaceGrid({ connectors, onSelectConnector, onLaunchOAuth, 
 
                 {/* Details */}
                 <div className="space-y-1">
-                  <h4 className="font-bold text-white text-[12px]">{conn.name}</h4>
-                  <p className="text-[10px] text-slate-450 font-normal leading-relaxed min-h-[36px] line-clamp-2">
+                  <h4 className="font-bold text-slate-800 dark:text-white text-[12px]">{conn.name}</h4>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-normal leading-relaxed min-h-[36px] line-clamp-2">
                     {conn.desc}
                   </p>
                 </div>
               </div>
 
-              {/* Action buttons */}
-              <div className="border-t border-slate-850/60 pt-3.5 mt-3 flex justify-between items-center">
-                <span className="text-[9px] font-mono text-slate-500 uppercase font-bold">
+              {/* Action footer */}
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-3.5 mt-3 flex justify-between items-center">
+                <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 uppercase font-bold">
                   {conn.category} INT
                 </span>
 
                 {isConnected ? (
                   <button
                     onClick={() => onSelectConnector(conn)}
-                    className="px-3 py-1.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-350 hover:text-white rounded-xl font-bold flex items-center gap-1.5 transition-all"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-xl font-bold flex items-center gap-1.5 transition-all"
                   >
                     <Settings className="w-3.5 h-3.5" />
                     {isRtl ? 'الإعدادات' : 'Configure'}
@@ -131,7 +133,7 @@ export function MarketplaceGrid({ connectors, onSelectConnector, onLaunchOAuth, 
                 ) : (
                   <button
                     onClick={() => onLaunchOAuth(conn)}
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10"
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-sm shadow-blue-500/20"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     {isRtl ? 'ربط الموصل' : 'Link App'}
