@@ -5,15 +5,17 @@ import { useApp } from '@/context/AppContext';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
 import { Badge } from '@/components/shared/BadgeSystem';
+import { translations } from '@/i18n/translations';
 
 export function QueuesRosterTab() {
-  const { agents } = useApp();
+  const { lang, agents } = useApp();
+  const t = translations[lang];
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Queues & Agent Roster"
-        description="Monitor active live queues, agent allocation targets, and real-time support rosters."
+        title={t.clientAdmin.agents.title}
+        description={t.clientAdmin.agents.description}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -31,10 +33,10 @@ export function QueuesRosterTab() {
                 
                 <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
                   <span className="text-slate-400 dark:text-slate-500">
-                    Chats: <strong className="text-slate-700 dark:text-slate-350">{agent.activeChatsCount}/{agent.maxChatsCount}</strong>
+                    {t.clientAdmin.agents.chats}: <strong className="text-slate-700 dark:text-slate-350">{agent.activeChatsCount}/{agent.maxChatsCount}</strong>
                   </span>
                   <span className="text-slate-400 dark:text-slate-500">
-                    CSAT Score: <strong className="text-emerald-500">{agent.csatScore}%</strong>
+                    {t.clientAdmin.agents.csatScore}: <strong className="text-emerald-500">{agent.csatScore}%</strong>
                   </span>
                 </div>
               </div>

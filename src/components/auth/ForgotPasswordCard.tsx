@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Mail, CheckCircle2 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { validateForgotPasswordEmail } from '@/lib/auth/authValidation';
 import { createPendingPasswordReset } from '@/lib/auth/passwordResetStorage';
 
@@ -17,6 +18,7 @@ function delay(ms: number) {
 export function ForgotPasswordCard() {
   const router = useRouter();
   const { lang } = useApp();
+  const t = translations[lang];
   const isRtl = lang === 'ar';
 
   const [email, setEmail] = useState('');
@@ -57,20 +59,10 @@ export function ForgotPasswordCard() {
         </div>
         <div className="space-y-2">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            {isRtl ? 'تم إرسال التعليمات' : 'Check your inbox'}
+            {t.auth.checkInbox}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-            {isRtl ? (
-              <>
-                إذا كان الحساب موجوداً، ستصلك رسالة تحتوي على رابط إعادة التعيين. في بيئة العرض التوضيحي، يمكنك
-                المتابعة لتعيين كلمة مرور جديدة.
-              </>
-            ) : (
-              <>
-                If an account exists for that email, you will receive reset instructions. In this demo environment, you
-                can continue to set a new password immediately.
-              </>
-            )}
+            {t.auth.instructionsSentDesc}
           </p>
         </div>
         <div className="flex flex-col gap-3 pt-2">
@@ -79,13 +71,13 @@ export function ForgotPasswordCard() {
             onClick={() => router.push('/login/reset-password')}
             className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-500/25 transition-all"
           >
-            {isRtl ? 'تعيين كلمة مرور جديدة' : 'Set new password'}
+            {t.auth.setNewPassword}
           </button>
           <Link
             href="/login"
             className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
           >
-            {isRtl ? 'العودة إلى تسجيل الدخول' : 'Back to sign in'}
+            {t.auth.backToSignIn}
           </Link>
         </div>
       </div>
@@ -97,7 +89,7 @@ export function ForgotPasswordCard() {
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <div className="space-y-1.5">
           <label htmlFor="forgot-email" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            {isRtl ? 'البريد الإلكتروني للمؤسسة' : 'Work email'}
+            {t.auth.workEmail}
           </label>
           <div className="relative">
             <Mail
@@ -111,7 +103,7 @@ export function ForgotPasswordCard() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={isRtl ? 'you@company.com' : 'you@company.com'}
+              placeholder="you@company.com"
               className={`w-full py-2.5 rounded-xl border bg-slate-50 dark:bg-slate-950 text-sm font-mono transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 ${
                 isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'
               } ${error ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'}`}
@@ -137,13 +129,13 @@ export function ForgotPasswordCard() {
               {isRtl ? 'جاري الإرسال...' : 'Sending instructions...'}
             </>
           ) : (
-            isRtl ? 'إرسال رابط إعادة التعيين' : 'Send reset instructions'
+            t.auth.sendResetInstructions
           )}
         </button>
 
         <p className="text-center">
           <Link href="/login" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-            {isRtl ? 'العودة إلى تسجيل الدخول' : 'Back to sign in'}
+            {t.auth.backToSignIn}
           </Link>
         </p>
       </form>

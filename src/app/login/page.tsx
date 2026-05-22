@@ -7,12 +7,13 @@ import { LoginCard } from '@/components/auth/LoginCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useApp } from '@/context/AppContext';
 import { getHomeRouteForRole } from '@/lib/auth/roleRouting';
+import { translations } from '@/i18n/translations';
 
 export default function LoginPage() {
   const router = useRouter();
   const { status, isAuthenticated, user } = useAuth();
   const { lang } = useApp();
-  const isRtl = lang === 'ar';
+  const t = translations[lang];
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -26,13 +27,9 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      badge={isRtl ? 'وصول آمن للمؤسسة' : 'Enterprise secure access'}
-      title={isRtl ? 'تسجيل الدخول' : 'Sign in to your workspace'}
-      subtitle={
-        isRtl
-          ? 'استخدم بريد مؤسستك للمتابعة إلى التحقق متعدد العوامل.'
-          : 'Use your organization email to continue to multi-factor verification.'
-      }
+      badge={t.auth.secureAccess}
+      title={t.auth.loginTitle}
+      subtitle={t.auth.loginSubtitle}
     >
       <LoginCard />
     </AuthLayout>

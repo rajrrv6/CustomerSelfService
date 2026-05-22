@@ -6,9 +6,11 @@ import { Bot as BotIcon, Plus } from 'lucide-react';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
 import { Badge } from '@/components/shared/BadgeSystem';
+import { translations } from '@/i18n/translations';
 
 export function BotsTab() {
-  const { bots, createBot, setBots, addAuditLog } = useApp();
+  const { lang, bots, createBot, setBots, addAuditLog } = useApp();
+  const t = translations[lang];
 
   // Bot creation states
   const [showAddBotModal, setShowAddBotModal] = useState(false);
@@ -53,15 +55,15 @@ export function BotsTab() {
       className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95 animate-fade-in cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
       <Plus className="w-4 h-4" />
-      Create Bot Persona
+      {t.clientAdmin.bots.createButton}
     </button>
   );
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="AI Bots Management"
-        description="Configure corporate personas, custom LLM models, and deflection criteria."
+        title={t.clientAdmin.bots.title}
+        description={t.clientAdmin.bots.description}
         action={headerAction}
       />
 
@@ -79,7 +81,7 @@ export function BotsTab() {
                   </div>
                   <div>
                     <h3 className="font-bold text-sm text-slate-850 dark:text-white">{bot.name}</h3>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Created: {bot.createdAt}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{lang === 'ar' ? 'تم الإنشاء:' : 'Created:'} {bot.createdAt}</span>
                   </div>
                 </div>
                 <Badge type={bot.status}>
@@ -92,14 +94,14 @@ export function BotsTab() {
               </p>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-2.5">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-880/80 space-y-2.5">
               <div className="grid grid-cols-2 gap-2 text-center text-xs">
                 <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-100 dark:border-slate-900/50">
-                  <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-mono block">Deflection</span>
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-mono block">{t.clientAdmin.bots.deflection}</span>
                   <span className="font-bold text-slate-850 dark:text-white font-mono">{bot.deflectionRate}%</span>
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-100 dark:border-slate-900/50">
-                  <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-mono block">Active chats</span>
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-mono block">{t.clientAdmin.bots.activeChats}</span>
                   <span className="font-bold text-slate-850 dark:text-white font-mono">{bot.activeSessions}</span>
                 </div>
               </div>
@@ -115,7 +117,7 @@ export function BotsTab() {
                     }}
                   className="flex-1 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-slate-700 dark:text-slate-350 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
-                  Edit Persona
+                  {t.clientAdmin.bots.editPersona}
                 </button>
                 <button
                   onClick={() => {
@@ -125,7 +127,7 @@ export function BotsTab() {
                   }}
                   className="px-3 py-2 text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
-                  Flows
+                  {t.clientAdmin.bots.flows}
                 </button>
               </div>
             </div>
@@ -137,34 +139,34 @@ export function BotsTab() {
       <ModalWrapper
         isOpen={showAddBotModal}
         onClose={() => setShowAddBotModal(false)}
-        title="Create Bot Persona"
+        title={t.clientAdmin.bots.modalTitleCreate}
         maxWidthClass="max-w-xl"
       >
         <form onSubmit={handleCreateBotSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Bot Name</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.clientAdmin.bots.fieldName}</label>
             <input
               type="text"
               required
-              placeholder="e.g. Layla AI Support"
+              placeholder={t.clientAdmin.bots.fieldNamePlaceholder}
               value={newBotName}
               onChange={(e) => setNewBotName(e.target.value)}
               className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Persona & Voice Description</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.clientAdmin.bots.fieldPersona}</label>
             <textarea
               required
               rows={3}
-              placeholder="e.g. Empathetic financial chatbot. Keeps replies under 2 sentences..."
+              placeholder={t.clientAdmin.bots.fieldPersonaPlaceholder}
               value={newBotPersona}
               onChange={(e) => setNewBotPersona(e.target.value)}
               className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Languages (Comma separated)</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.clientAdmin.bots.fieldLanguages}</label>
             <input
               type="text"
               value={newBotLang}
@@ -178,13 +180,13 @@ export function BotsTab() {
               onClick={() => setShowAddBotModal(false)}
               className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350"
             >
-              Cancel
+              {t.clientAdmin.bots.cancel}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700"
             >
-              Initialize Bot
+              {t.clientAdmin.bots.initialize}
             </button>
           </div>
         </form>
@@ -197,13 +199,13 @@ export function BotsTab() {
           setShowEditPersonaModal(false);
           setEditingBot(null);
         }}
-        title="Persona Editor"
+        title={t.clientAdmin.bots.modalTitleEdit}
         maxWidthClass="max-w-xl"
       >
         {editingBot && (
           <form onSubmit={handleSavePersona} className="space-y-4 text-xs font-semibold">
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Bot Name</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.clientAdmin.bots.fieldName}</label>
               <input
                 type="text"
                 required
@@ -214,7 +216,7 @@ export function BotsTab() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Persona Description</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.clientAdmin.bots.fieldPersona}</label>
               <textarea
                 rows={4}
                 required
@@ -225,17 +227,17 @@ export function BotsTab() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Tone</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.clientAdmin.bots.fieldTone}</label>
               <select
                 value={editTone}
                 onChange={(e) => setEditTone(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none text-xs text-slate-800 dark:text-slate-100"
               >
-                <option>Neutral</option>
-                <option>Friendly</option>
-                <option>Professional</option>
-                <option>Concise</option>
-                <option>Empathetic</option>
+                <option value="Neutral">{lang === 'ar' ? 'محايد' : 'Neutral'}</option>
+                <option value="Friendly">{lang === 'ar' ? 'ودود' : 'Friendly'}</option>
+                <option value="Professional">{lang === 'ar' ? 'مهني' : 'Professional'}</option>
+                <option value="Concise">{lang === 'ar' ? 'موجز' : 'Concise'}</option>
+                <option value="Empathetic">{lang === 'ar' ? 'متعاطف' : 'Empathetic'}</option>
               </select>
             </div>
 
@@ -248,10 +250,10 @@ export function BotsTab() {
                 }}
                 className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                Cancel
+                {t.clientAdmin.bots.cancel}
               </button>
               <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700">
-                Save
+                {t.clientAdmin.bots.save}
               </button>
             </div>
           </form>

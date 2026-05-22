@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { translations } from '@/i18n/translations';
 import { useApp } from '@/context/AppContext';
 
 interface MFAInputProps {
@@ -14,6 +15,7 @@ const DIGIT_COUNT = 6;
 
 export function MFAInput({ onComplete, isLoading = false, error }: MFAInputProps) {
   const { lang } = useApp();
+  const t = translations[lang];
   const isRtl = lang === 'ar';
   const [digits, setDigits] = useState<string[]>(Array(DIGIT_COUNT).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -92,7 +94,7 @@ export function MFAInput({ onComplete, isLoading = false, error }: MFAInputProps
         className="flex justify-center gap-2 sm:gap-3"
         dir="ltr"
         role="group"
-        aria-label={isRtl ? 'رمز التحقق المكون من 6 أرقام' : '6-digit verification code'}
+        aria-label={t.auth.verificationCode6Digit}
         onPaste={handlePaste}
       >
         {digits.map((digit, index) => (
@@ -112,7 +114,7 @@ export function MFAInput({ onComplete, isLoading = false, error }: MFAInputProps
             className={`w-10 h-12 sm:w-11 sm:h-14 text-center text-lg font-bold font-mono rounded-xl border bg-slate-50 dark:bg-slate-950 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 disabled:opacity-50 ${
               error ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'
             }`}
-            aria-label={`${isRtl ? 'رقم' : 'Digit'} ${index + 1}`}
+            aria-label={`${t.auth.digit} ${index + 1}`}
           />
         ))}
       </div>
@@ -126,7 +128,7 @@ export function MFAInput({ onComplete, isLoading = false, error }: MFAInputProps
       {isLoading && (
         <div className="flex justify-center items-center gap-2 text-xs text-slate-500">
           <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-          {isRtl ? 'جاري التحقق من الرمز...' : 'Verifying code...'}
+          {t.auth.verifyingCode}
         </div>
       )}
     </div>

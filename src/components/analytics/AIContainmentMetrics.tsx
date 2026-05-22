@@ -4,10 +4,21 @@ import { SVGLineChart } from '@/components/dashboard/Charts';
 import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
 import { Badge } from '@/components/shared/BadgeSystem';
 import { ShieldAlert, AlertCircle, Clock } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 export function AIContainmentMetrics() {
   const { prompts, hallucinationAlerts, containmentSeries } = useAiMetrics();
-  const promptHeaders = ['Prompt Configuration Name', 'Category Layer', 'Prompt Success Rate', 'Avg Tokens', 'Latency (ms)'];
+  const { lang } = useApp();
+  const t = translations[lang];
+
+  const promptHeaders = [
+    t.analyticsCenter.containment.colPromptName,
+    t.analyticsCenter.containment.colCategory,
+    t.analyticsCenter.containment.colSuccessRate,
+    t.analyticsCenter.containment.colAvgTokens,
+    t.analyticsCenter.containment.colLatency
+  ];
 
   const getAlertSeverityStyle = (score: number) => {
     if (score < 0.4) return 'bg-rose-50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/40 text-rose-800 dark:text-rose-400';
@@ -24,7 +35,7 @@ export function AIContainmentMetrics() {
         <SVGLineChart
           data={containmentSeries.map((s) => s.value)}
           labels={containmentSeries.map((s) => s.timestamp)}
-          title="Farah AI Support Containment Rate (%)"
+          title={t.analyticsCenter.containment.chartTitle}
           gradientColor="#10b981"
         />
 
@@ -33,9 +44,9 @@ export function AIContainmentMetrics() {
           <div className="shrink-0 mb-3">
             <div className="flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 text-rose-500 animate-bounce" />
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Generative Guardrails & Hallucination Logs</h4>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{t.analyticsCenter.containment.guardrailTitle}</h4>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">Real-time alerts triggered by semantic validation failures or low confidence scores.</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">{t.analyticsCenter.containment.guardrailSubtitle}</p>
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[190px]" aria-live="polite">
@@ -45,7 +56,7 @@ export function AIContainmentMetrics() {
                 className={`p-3 rounded-2xl border ${getAlertSeverityStyle(alert.confidenceScore)} space-y-1.5`}
               >
                 <div className="flex justify-between items-center text-[9px] font-mono">
-                  <span className="font-bold uppercase tracking-wider">Confidence Score: {alert.confidenceScore} (CRITICAL)</span>
+                  <span className="font-bold uppercase tracking-wider">{t.analyticsCenter.containment.confidenceScore}: {alert.confidenceScore} ({t.analyticsCenter.containment.critical})</span>
                   <span>{alert.timestamp}</span>
                 </div>
                 <div className="space-y-1 font-sans">
@@ -54,7 +65,9 @@ export function AIContainmentMetrics() {
                 </div>
                 <div className="flex justify-end">
                   <span className="px-2 py-0.5 bg-rose-600/90 text-white rounded text-[8px] font-bold uppercase tracking-wide font-mono">
-                    {alert.resolution.toUpperCase()} TO AGENT
+                    {alert.resolution.toLowerCase() === 'escalated'
+                      ? (lang === 'ar' ? 'تم التصعيد إلى الوكيل' : 'ESCALATED TO AGENT')
+                      : `${alert.resolution.toUpperCase()} ${t.analyticsCenter.containment.escalatedTo}`}
                   </span>
                 </div>
               </div>
@@ -67,8 +80,8 @@ export function AIContainmentMetrics() {
       {/* Row 2: Prompt configuration table */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
         <div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">LLM Prompt Performance Matrix</h4>
-          <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">Telemetry parameters for prompt iterations deployed across Farah AI classification and SAP reasoning layers.</p>
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{t.analyticsCenter.containment.promptMatrixTitle}</h4>
+          <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">{t.analyticsCenter.containment.promptMatrixSubtitle}</p>
         </div>
 
         <EnterpriseTable headers={promptHeaders}>
@@ -81,7 +94,7 @@ export function AIContainmentMetrics() {
                 </Badge>
               </td>
               <td className="px-6 py-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">{p.successRate}%</td>
-              <td className="px-6 py-4 font-mono text-slate-500 dark:text-slate-400">{p.tokensAvg} tokens</td>
+              <td className="px-6 py-4 font-mono text-slate-500 dark:text-slate-400">{p.tokensAvg} {t.analyticsCenter.containment.tokensUnit}</td>
               <td className="px-6 py-4 font-mono font-bold text-slate-900 dark:text-white">{p.latencyMs} ms</td>
             </tr>
           ))}

@@ -1,6 +1,8 @@
 import React from 'react';
 import { useRealtimeMetrics } from '@/hooks/useRealtimeMetrics';
 import { useAnalyticsFeed } from '@/hooks/useAnalyticsFeed';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { Sparkline } from './shared/Sparkline';
 import { journeyFunnelData, deflectionTrends, initialExecutiveKpis } from '@/data/seed/analyticsSeed';
 import { TrendingUp, Users, Activity, Clock, Percent, ShieldCheck, HelpCircle } from 'lucide-react';
@@ -8,6 +10,8 @@ import { TrendingUp, Users, Activity, Clock, Percent, ShieldCheck, HelpCircle } 
 export function ExecutiveDashboard() {
   const { metrics, alerts } = useRealtimeMetrics();
   const { feed } = useAnalyticsFeed();
+  const { lang } = useApp();
+  const t = translations[lang];
 
   // Color categories for live feed events
   const getFeedCategoryStyle = (category: string) => {
@@ -35,7 +39,7 @@ export function ExecutiveDashboard() {
           <div className="flex items-center gap-2 mb-3">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
             <h4 className="font-extrabold text-[11px] uppercase tracking-wider text-rose-700 dark:text-rose-450 font-mono">
-              Live Operations Warnings & SLA Indicators
+              {t.analyticsCenter.execDashboard.alertsTitle}
             </h4>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3" aria-live="polite">
@@ -64,17 +68,17 @@ export function ExecutiveDashboard() {
         {/* Total Interactions */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">Portal Traffic</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">{t.analyticsCenter.execDashboard.kpiPortalTraffic}</span>
             <Activity className="w-4 h-4 text-blue-500" />
           </div>
           <div>
             <span className="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white leading-none">
               {metrics.totalInteractions.toLocaleString()}
             </span>
-            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">Realtime sessions tracked</span>
+            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.execDashboard.kpiPortalTrafficSub}</span>
           </div>
           <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-850">
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">+18.2% vs prev week</span>
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{t.analyticsCenter.execDashboard.kpiPortalTrafficTrend}</span>
             <Sparkline data={[120, 135, 142, 128, 145, 160, metrics.totalInteractions % 200]} color="#10b981" />
           </div>
         </div>
@@ -82,17 +86,17 @@ export function ExecutiveDashboard() {
         {/* Deflection Rate */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">Self-Service Deflection</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">{t.analyticsCenter.execDashboard.kpiDeflection}</span>
             <TrendingUp className="w-4 h-4 text-purple-500" />
           </div>
           <div>
             <span className="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white leading-none">
               {metrics.deflectionRate}%
             </span>
-            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">Resolved without Agent</span>
+            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.execDashboard.kpiDeflectionSub}</span>
           </div>
           <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-850">
-            <span className="text-[10px] text-purple-650 dark:text-purple-400 font-bold">Target: 60.0%</span>
+            <span className="text-[10px] text-purple-650 dark:text-purple-400 font-bold">{t.analyticsCenter.execDashboard.kpiDeflectionTarget}</span>
             <Sparkline data={deflectionTrends.map(d => d.value)} color="#8b5cf6" />
           </div>
         </div>
@@ -100,17 +104,17 @@ export function ExecutiveDashboard() {
         {/* SLA Compliance */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">SLA Compliance</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">{t.analyticsCenter.execDashboard.kpiSla}</span>
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
           </div>
           <div>
             <span className={`text-2xl font-black font-mono tracking-tight leading-none ${metrics.slaCompliance < 95 ? 'text-rose-600 dark:text-rose-450' : 'text-slate-900 dark:text-white'}`}>
               {metrics.slaCompliance}%
             </span>
-            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">Response & Resolution</span>
+            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.execDashboard.kpiSlaSub}</span>
           </div>
           <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-850">
-            <span className="text-[10px] text-slate-450 font-bold">Goal: 98.0%</span>
+            <span className="text-[10px] text-slate-450 font-bold">{t.analyticsCenter.execDashboard.kpiSlaGoal}</span>
             <Sparkline data={[98.5, 98.1, 98.4, 97.9, 98.3, 98.5, metrics.slaCompliance]} color="#10b981" />
           </div>
         </div>
@@ -118,17 +122,17 @@ export function ExecutiveDashboard() {
         {/* Average CSAT */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">Satisfaction Score</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">{t.analyticsCenter.execDashboard.kpiCsat}</span>
             <Users className="w-4 h-4 text-amber-500" />
           </div>
           <div>
             <span className="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white leading-none">
               {metrics.averageCsat} <span className="text-slate-400 text-xs font-normal">/ 5.0</span>
             </span>
-            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">Average CSAT index</span>
+            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.execDashboard.kpiCsatSub}</span>
           </div>
           <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-850">
-            <span className="text-[10px] text-amber-600 dark:text-amber-450 font-bold">Positive ratio: 84%</span>
+            <span className="text-[10px] text-amber-600 dark:text-amber-450 font-bold">{t.analyticsCenter.execDashboard.kpiCsatPositive}</span>
             <Sparkline data={[4.70, 4.71, 4.69, 4.72, 4.75, 4.70, metrics.averageCsat]} color="#f59e0b" />
           </div>
         </div>
@@ -141,8 +145,8 @@ export function ExecutiveDashboard() {
         {/* Customer Journey Funnel */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
           <div>
-            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Customer Journey Conversion Funnel</h4>
-            <p className="text-[10px] text-slate-500 dark:text-slate-450 mt-1">Deflection conversion vs ticket creation drop-off.</p>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{t.analyticsCenter.execDashboard.funnelTitle}</h4>
+            <p className="text-[10px] text-slate-500 dark:text-slate-450 mt-1">{t.analyticsCenter.execDashboard.funnelSubtitle}</p>
           </div>
 
           <div className="space-y-3.5 pt-2">
@@ -153,7 +157,7 @@ export function ExecutiveDashboard() {
                   <div className="flex justify-between items-center text-[10px]">
                     <span className="font-bold text-slate-650 dark:text-slate-300">{step.step}</span>
                     <span className="font-mono text-slate-500 dark:text-slate-400">
-                      {step.count.toLocaleString()} sessions <span className="font-bold text-slate-800 dark:text-slate-200">({step.percentage}%)</span>
+                      {step.count.toLocaleString()} {t.analyticsCenter.execDashboard.funnelSessions} <span className="font-bold text-slate-800 dark:text-slate-200">({step.percentage}%)</span>
                     </span>
                   </div>
                   <div className="h-4 bg-slate-100 dark:bg-slate-950/80 rounded-lg overflow-hidden border border-slate-200/40 dark:border-slate-850">
@@ -173,9 +177,9 @@ export function ExecutiveDashboard() {
           <div className="shrink-0 mb-3">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Real-Time Operational Feed</h4>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{t.analyticsCenter.execDashboard.feedTitle}</h4>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">Live streaming logs from RAG searches, webhooks, and telephony gateways.</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">{t.analyticsCenter.execDashboard.feedSubtitle}</p>
           </div>
 
           <div 

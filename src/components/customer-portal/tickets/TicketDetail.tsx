@@ -4,6 +4,7 @@ import React from 'react';
 import { ArrowLeft, Send, Upload, Star, CheckCircle } from 'lucide-react';
 import { Ticket } from '@/types';
 import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface TicketDetailProps {
   tickets: Ticket[];
@@ -22,7 +23,9 @@ export function TicketDetail({
   setTicketReplyText,
   handlePostReply
 }: TicketDetailProps) {
-  const { addAuditLog } = useApp();
+  const { addAuditLog, lang } = useApp();
+  const t = translations[lang];
+
   const [csatRating, setCsatRating] = React.useState(0);
   const [csatHover, setCsatHover] = React.useState(0);
   const [npsRating, setNpsRating] = React.useState(0);
@@ -30,6 +33,22 @@ export function TicketDetail({
   const [feedbackText, setFeedbackText] = React.useState('');
 
   const ticket = tickets.find((t) => t.id === selectedTicketId) || tickets[0];
+
+  const getPriorityLabel = (priority: string) => {
+    if (priority === 'low') return t.portal.tickets.priorityLow;
+    if (priority === 'medium') return t.portal.tickets.priorityMedium;
+    if (priority === 'high') return t.portal.tickets.priorityHigh;
+    if (priority === 'urgent') return t.portal.tickets.priorityUrgent;
+    return priority;
+  };
+
+  const getCategoryLabel = (category: string) => {
+    if (category === 'Billing & Payments') return t.portal.tickets.categoryBilling;
+    if (category === 'User Authentication') return t.portal.tickets.categoryAuth;
+    if (category === 'API Integrations') return t.portal.tickets.categoryApi;
+    if (category === 'Shipments & Delivery') return t.portal.tickets.categoryShipment;
+    return category;
+  };
 
   if (!ticket) {
     return (
@@ -43,12 +62,12 @@ export function TicketDetail({
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h2 className="text-xl font-bold">Ticket Details</h2>
-            <p className="text-xs text-slate-400">View resolution thread history</p>
+            <h2 className="text-xl font-bold">{t.portal.tickets.detailTitle}</h2>
+            <p className="text-xs text-slate-400">{t.portal.tickets.detailSubtitle}</p>
           </div>
         </div>
         <div className="text-center py-10 text-slate-400">
-          <span>Ticket not found.</span>
+          <span>{t.portal.tickets.ticketNotFound}</span>
         </div>
       </div>
     );
@@ -65,8 +84,8 @@ export function TicketDetail({
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h2 className="text-xl font-bold">Ticket Details</h2>
-          <p className="text-xs text-slate-400">View resolution thread history</p>
+          <h2 className="text-xl font-bold">{t.portal.tickets.detailTitle}</h2>
+          <p className="text-xs text-slate-400">{t.portal.tickets.detailSubtitle}</p>
         </div>
       </div>
 
@@ -77,7 +96,7 @@ export function TicketDetail({
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
             <div className="flex justify-between items-center text-[10px] text-slate-400">
               <span className="font-mono font-bold">{ticket.id}</span>
-              <span>Opened on: 2026-05-18</span>
+              <span>{t.portal.tickets.openedOn} 2026-05-18</span>
             </div>
             <h3 className="font-bold text-sm text-slate-850 dark:text-white">{ticket.title}</h3>
             <p className="text-xs text-slate-655 dark:text-slate-350 leading-relaxed font-normal bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-900/50">
@@ -87,16 +106,20 @@ export function TicketDetail({
 
           {/* Threaded replies */}
           <div className="space-y-3">
-            <span className="text-[10px] font-bold text-slate-400 uppercase font-mono tracking-wider block">Conversation History</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase font-mono tracking-wider block">{t.portal.tickets.conversationHistory}</span>
             
             {/* Thread Item 1: Auto bot triage */}
             <div className="flex justify-start">
               <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none shadow-sm">
                 <div className="flex justify-between items-center gap-4 text-[9px] text-slate-400 font-bold mb-1">
-                  <span>Farah AI Assistant</span>
+                  <span>{lang === 'ar' ? 'فرح - المساعد الذكي' : 'Farah AI Assistant'}</span>
                   <span>May 18, 14:15</span>
                 </div>
-                <p className="text-xs font-medium">Hello David. I have logged ticket {ticket.id} and categorized it under {ticket.category}. An agent will verify and reply shortly.</p>
+                <p className="text-xs font-medium">
+                  {lang === 'ar' 
+                    ? `مرحباً ديفيد. لقد قمت بتسجيل التذكرة ${ticket.id} وتصنيفها تحت ${getCategoryLabel(ticket.category)}. سيقوم الوكيل بالتحقق والرد قريباً.`
+                    : `Hello David. I have logged ticket ${ticket.id} and categorized it under ${ticket.category}. An agent will verify and reply shortly.`}
+                </p>
               </div>
             </div>
 
@@ -105,10 +128,14 @@ export function TicketDetail({
               <div className="flex justify-start">
                 <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none shadow-sm">
                   <div className="flex justify-between items-center gap-4 text-[9px] text-slate-400 font-bold mb-1">
-                    <span>Liam Bennett (Support Desk)</span>
+                    <span>{lang === 'ar' ? 'ليام بينيت (مكتب الدعم)' : 'Liam Bennett (Support Desk)'}</span>
                     <span>May 18, 16:30</span>
                   </div>
-                  <p className="text-xs font-medium">I have checked your duplicate transaction error logs inside Stripe. I can confirm the second charge has been exempted and refunded. It will reflect in your statements shortly.</p>
+                  <p className="text-xs font-medium">
+                    {lang === 'ar'
+                      ? 'لقد تحققت من سجلات أخطاء المعاملات المكررة في Stripe. يمكنني تأكيد أنه تم إعفاء الرسوم الثانية واستردادها. ستظهر في كشوف حساباتك قريباً.'
+                      : 'I have checked your duplicate transaction error logs inside Stripe. I can confirm the second charge has been exempted and refunded. It will reflect in your statements shortly.'}
+                  </p>
                 </div>
               </div>
             )}
@@ -118,26 +145,32 @@ export function TicketDetail({
             feedbackSubmitted ? (
               <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-250 dark:border-emerald-800 rounded-3xl p-5 shadow-sm flex flex-col items-center justify-center text-center space-y-2 animate-in fade-in-50 duration-300">
                 <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-450 animate-bounce" />
-                <h4 className="font-bold text-sm text-emerald-800 dark:text-emerald-350">Thank You for Your Feedback!</h4>
+                <h4 className="font-bold text-sm text-emerald-800 dark:text-emerald-350">{t.portal.tickets.feedbackThankYou}</h4>
                 <p className="text-xs text-slate-555 dark:text-slate-400 font-normal">
-                  Your rating (CSAT: {csatRating}/5, NPS: {npsRating}/10) and notes have been logged to improve our support services.
+                  {lang === 'ar'
+                    ? `تم تسجيل تقييمك (رضا العملاء: ${csatRating}/5، مؤشر صافي المروجين: ${npsRating}/10) وملاحظاتك لتحسين خدمات الدعم الخاصة بنا.`
+                    : `Your rating (CSAT: ${csatRating}/5, NPS: ${npsRating}/10) and notes have been logged to improve our support services.`}
                 </p>
               </div>
             ) : (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-850 pb-2">
                   <div>
-                    <h4 className="font-bold text-xs text-slate-700 dark:text-slate-300 uppercase font-mono">Resolution Feedback Survey</h4>
-                    <p className="text-[10px] text-slate-455 font-normal font-sans">Please rate your experience resolving ticket {ticket.id}</p>
+                    <h4 className="font-bold text-xs text-slate-700 dark:text-slate-300 uppercase font-mono">{t.portal.tickets.resolutionFeedback}</h4>
+                    <p className="text-[10px] text-slate-455 font-normal font-sans">
+                      {lang === 'ar'
+                        ? `يرجى تقييم تجربتك في حل التذكرة ${ticket.id}`
+                        : `Please rate your experience resolving ticket ${ticket.id}`}
+                    </p>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[9px] font-bold font-mono bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400">
-                    SOLVED
+                  <span className="px-2 py-0.5 rounded text-[9px] font-bold font-mono bg-emerald-100 text-emerald-800 dark:bg-emerald-955/50 dark:text-emerald-400">
+                    {t.portal.tickets.solved}
                   </span>
                 </div>
 
                 {/* CSAT Star Rating */}
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold text-slate-450 uppercase font-mono tracking-wider block">1. Customer Satisfaction (CSAT)</span>
+                  <span className="text-[10px] font-bold text-slate-450 uppercase font-mono tracking-wider block">{t.portal.tickets.csatLabel}</span>
                   <div className="flex gap-1.5 items-center">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -160,7 +193,7 @@ export function TicketDetail({
                     ))}
                     {csatRating > 0 && (
                       <span className="text-[10px] font-bold text-slate-500 font-mono pl-2">
-                        ({csatRating}/5 stars)
+                        {lang === 'ar' ? `(${csatRating}/5 نجوم)` : `(${csatRating}/5 stars)`}
                       </span>
                     )}
                   </div>
@@ -168,8 +201,8 @@ export function TicketDetail({
 
                 {/* NPS Score Rating */}
                 <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-850">
-                  <span className="text-[10px] font-bold text-slate-455 uppercase font-mono tracking-wider block">2. Net Promoter Score (NPS)</span>
-                  <p className="text-[10px] text-slate-550 dark:text-slate-400 font-normal">How likely are you to recommend our support desk to a colleague?</p>
+                  <span className="text-[10px] font-bold text-slate-455 uppercase font-mono tracking-wider block">{t.portal.tickets.npsLabel}</span>
+                  <p className="text-[10px] text-slate-550 dark:text-slate-400 font-normal">{t.portal.tickets.npsQuestion}</p>
                   <div className="grid grid-cols-10 gap-1 mt-1.5">
                     {Array.from({ length: 10 }).map((_, i) => {
                       const score = i + 1;
@@ -191,23 +224,23 @@ export function TicketDetail({
                     })}
                   </div>
                   <div className="flex justify-between text-[8px] text-slate-400 font-bold px-1 font-mono uppercase">
-                    <span>Not Likely</span>
-                    <span>Extremely Likely</span>
+                    <span>{t.portal.tickets.notLikely}</span>
+                    <span>{t.portal.tickets.extremelyLikely}</span>
                   </div>
                 </div>
 
                 {/* Review Text Area */}
-                <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-850">
+                <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-855">
                   <label htmlFor="feedback-comment" className="text-[10px] font-bold text-slate-450 uppercase font-mono tracking-wider block">
-                    3. Additional Comments (Optional)
+                    {t.portal.tickets.commentsLabel}
                   </label>
                   <textarea
                     id="feedback-comment"
                     rows={2}
-                    placeholder="Anything else you'd like to share about this resolution..."
+                    placeholder={t.portal.tickets.commentsPlaceholder}
                     value={feedbackText}
                     onChange={(e) => setFeedbackText(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-850 rounded-xl text-xs p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-850 dark:text-slate-100 font-normal"
+                    className="w-full bg-slate-55 dark:bg-slate-950 border border-slate-150 dark:border-slate-850 rounded-xl text-xs p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-850 dark:text-slate-100 font-normal"
                   />
                 </div>
 
@@ -225,7 +258,7 @@ export function TicketDetail({
                       : 'bg-blue-600 hover:bg-blue-700 text-white active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer'
                   }`}
                 >
-                  Submit Resolution Feedback
+                  {t.portal.tickets.submitFeedback}
                 </button>
               </div>
             )
@@ -235,7 +268,7 @@ export function TicketDetail({
           <form onSubmit={handlePostReply} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 flex flex-col gap-2 shadow-sm">
             <textarea
               rows={3}
-              placeholder="Write a message reply back to the support agent..."
+              placeholder={t.portal.tickets.replyPlaceholder}
               value={ticketReplyText}
               onChange={(e) => setTicketReplyText(e.target.value)}
               className="w-full bg-transparent text-xs p-2 focus:outline-none text-slate-850 dark:text-slate-100"
@@ -259,7 +292,7 @@ export function TicketDetail({
                 title="Attach file to ticket"
               >
                 <Upload className="w-3.5 h-3.5" />
-                <span>Attach File</span>
+                <span>{t.portal.tickets.attachFile}</span>
               </button>
               
               <button
@@ -267,7 +300,7 @@ export function TicketDetail({
                 className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-md transition-all focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Send Message</span>
+                <span>{t.portal.tickets.sendMessage}</span>
               </button>
             </div>
           </form>
@@ -277,22 +310,22 @@ export function TicketDetail({
         <div className="space-y-4">
           {/* Metadata summary */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
-            <h4 className="font-bold text-xs text-slate-450 uppercase font-mono">Case Specifications</h4>
+            <h4 className="font-bold text-xs text-slate-450 uppercase font-mono">{t.portal.tickets.caseSpecs}</h4>
             <div className="space-y-2 text-xs font-semibold">
               <div className="flex justify-between">
-                <span className="text-slate-450">Category</span>
-                <span>{ticket.category}</span>
+                <span className="text-slate-450">{t.portal.tickets.categoryLabel}</span>
+                <span>{getCategoryLabel(ticket.category)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-450">Priority</span>
+                <span className="text-slate-450">{t.portal.tickets.priorityLabel}</span>
                 <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono ${
                   ticket.priority === 'urgent' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
                 }`}>
-                  {ticket.priority.toUpperCase()}
+                  {getPriorityLabel(ticket.priority).toUpperCase()}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-450">Resolution Status</span>
+                <span className="text-slate-450">{t.portal.tickets.statusLabel}</span>
                 <span className="font-mono text-blue-500 font-bold uppercase">{ticket.status}</span>
               </div>
             </div>
@@ -300,13 +333,13 @@ export function TicketDetail({
 
           {/* Timeline status milestones */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3.5">
-            <h4 className="font-bold text-xs text-slate-450 uppercase font-mono">Status Timeline</h4>
+            <h4 className="font-bold text-xs text-slate-450 uppercase font-mono">{t.portal.tickets.statusTimeline}</h4>
             
             <div className="space-y-4">
               <div className="flex gap-3 border-l border-emerald-500 pb-2 pl-3 relative">
                 <div className="absolute -left-1 w-2.5 h-2.5 rounded-full bg-emerald-500" />
                 <div className="text-[11px] font-semibold">
-                  <h5 className="font-bold">Ticket Open</h5>
+                  <h5 className="font-bold">{t.portal.tickets.timelineOpen}</h5>
                   <span className="text-[9px] text-slate-450 font-mono">May 18, 14:15</span>
                 </div>
               </div>
@@ -314,16 +347,16 @@ export function TicketDetail({
               <div className={`flex gap-3 pb-2 pl-3 relative ${ticket.status !== 'open' ? 'border-l border-emerald-500' : 'border-l border-slate-250'}`}>
                 <div className={`absolute -left-1 w-2.5 h-2.5 rounded-full ${ticket.status !== 'open' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`} />
                 <div className="text-[11px] font-semibold">
-                  <h5 className="font-bold">Assigned Agent (Liam)</h5>
-                  <span className="text-[9px] text-slate-450 font-mono">{ticket.status !== 'open' ? 'May 18, 14:30' : 'Pending Allocation'}</span>
+                  <h5 className="font-bold">{t.portal.tickets.timelineAssigned}</h5>
+                  <span className="text-[9px] text-slate-455 font-mono">{ticket.status !== 'open' ? 'May 18, 14:30' : t.portal.tickets.pendingAllocation}</span>
                 </div>
               </div>
 
               <div className="flex gap-3 pl-3 relative">
                 <div className={`absolute -left-1 w-2.5 h-2.5 rounded-full ${ticket.status === 'solved' ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`} />
                 <div className="text-[11px] font-semibold">
-                  <h5 className="font-bold">Resolution Finalized</h5>
-                  <span className="text-[9px] text-slate-450 font-mono">{ticket.status === 'solved' ? 'May 18, 16:30' : 'Pending resolution'}</span>
+                  <h5 className="font-bold">{t.portal.tickets.timelineResolved}</h5>
+                  <span className="text-[9px] text-slate-455 font-mono">{ticket.status === 'solved' ? 'May 18, 16:30' : t.portal.tickets.pendingResolution}</span>
                 </div>
               </div>
             </div>

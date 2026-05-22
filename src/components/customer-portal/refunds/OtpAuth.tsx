@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Lock } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface OtpAuthProps {
   otpStep: 'none' | 'email' | 'code' | 'verified';
@@ -26,11 +28,14 @@ export function OtpAuth({
   otpError,
   setOtpError
 }: OtpAuthProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   return (
     <div className="max-w-md mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
       <div className="flex items-center gap-2 text-xs font-bold text-blue-500 uppercase font-mono">
         <Lock className="w-5 h-5" />
-        <span>Secure Order Verification (OTP)</span>
+        <span>{t.portal.refunds.otpTitle}</span>
       </div>
 
       {otpError && (
@@ -42,10 +47,10 @@ export function OtpAuth({
       {otpStep === 'none' || otpStep === 'email' ? (
         <form onSubmit={handleOtpRequest} className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
           <p className="text-[11px] text-slate-450 dark:text-slate-400 font-normal">
-            Please input your registered account email to dispatch a 4-digit code.
+            {t.portal.refunds.otpEmailInstructions}
           </p>
           <div>
-            <label className="block text-slate-450 dark:text-slate-400 mb-1.5">Corporate Email</label>
+            <label className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.corporateEmail}</label>
             <input
               type="email"
               required
@@ -59,16 +64,16 @@ export function OtpAuth({
             />
           </div>
           <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer">
-            Send Verification Code
+            {t.portal.refunds.sendCode}
           </button>
         </form>
       ) : (
         <form onSubmit={handleVerifyOtp} className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
           <p className="text-[11px] text-slate-450 dark:text-slate-400 font-normal">
-            We sent a verification code to {lookupEmail}. Enter the code below (use code 1234).
+            {t.portal.refunds.otpCodeInstructions.replace('{email}', lookupEmail)}
           </p>
           <div>
-            <label className="block text-slate-450 dark:text-slate-400 mb-1.5">Verification Code</label>
+            <label className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.verificationCode}</label>
             <input
               type="text"
               required
@@ -83,7 +88,7 @@ export function OtpAuth({
             />
           </div>
           <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer">
-            Verify Code
+            {t.portal.refunds.verifyCode}
           </button>
         </form>
       )}

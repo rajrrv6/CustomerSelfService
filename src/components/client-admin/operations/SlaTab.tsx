@@ -5,35 +5,34 @@ import { useApp } from '@/context/AppContext';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
 import { Badge } from '@/components/shared/BadgeSystem';
+import { translations } from '@/i18n/translations';
 
 export function SlaTab() {
-  const { slaRules } = useApp();
+  const { lang, slaRules } = useApp();
+  const t = translations[lang];
 
-  const tableHeaders = [
-    'Policy Priority',
-    'Response Limit',
-    'Resolution Limit',
-    'Targets Status'
-  ];
+  const tableHeaders = [...t.clientAdmin.sla.headers];
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="SLA Dashboard Policies"
-        description="Configure corporate response SLAs, resolution deadline limits, and email notification paths."
+        title={t.clientAdmin.sla.title}
+        description={t.clientAdmin.sla.description}
       />
 
       <div className="space-y-4">
-        <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">Configured SLA Targets</h3>
+        <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono">
+          {t.clientAdmin.sla.configuredSla}
+        </h3>
         <EnterpriseTable headers={tableHeaders}>
           {slaRules.map((rule) => (
             <tr key={rule.id}>
               <td className="px-6 py-4 font-bold uppercase text-slate-900 dark:text-white font-mono">{rule.priority}</td>
-              <td className="px-6 py-4 font-mono text-slate-600 dark:text-slate-450">{rule.responseTimeMins} mins</td>
-              <td className="px-6 py-4 font-mono text-slate-600 dark:text-slate-450">{rule.resolutionTimeMins} mins</td>
+              <td className="px-6 py-4 font-mono text-slate-600 dark:text-slate-450">{rule.responseTimeMins} {t.clientAdmin.sla.mins}</td>
+              <td className="px-6 py-4 font-mono text-slate-600 dark:text-slate-450">{rule.resolutionTimeMins} {t.clientAdmin.sla.mins}</td>
               <td className="px-6 py-4">
                 <Badge type={rule.active ? 'success' : 'inactive'}>
-                  {rule.active ? 'ACTIVE' : 'INACTIVE'}
+                  {rule.active ? t.clientAdmin.sla.active : t.clientAdmin.sla.inactive}
                 </Badge>
               </td>
             </tr>

@@ -5,9 +5,10 @@ import { CallHistoryItem } from '@/data/seed/callHistorySeed';
 interface CallHistoryProps {
   history: CallHistoryItem[];
   onDial: (num: string, name: string) => void;
+  disableActions?: boolean;
 }
 
-export function CallHistory({ history, onDial }: CallHistoryProps) {
+export function CallHistory({ history, onDial, disableActions = false }: CallHistoryProps) {
   const getStatusIcon = (item: CallHistoryItem) => {
     if (item.status === 'missed') return <PhoneMissed className="w-4 h-4 text-rose-500" />;
     if (item.status === 'voicemail') return <Voicemail className="w-4 h-4 text-purple-500" />;
@@ -67,8 +68,9 @@ export function CallHistory({ history, onDial }: CallHistoryProps) {
               </button>
             )}
             <button
+              disabled={disableActions}
               onClick={() => onDial(c.phoneNumber, c.contactName)}
-              className="px-2.5 py-1 text-[9px] bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold"
+              className="px-2.5 py-1 text-[9px] bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold disabled:cursor-not-allowed disabled:opacity-60"
             >
               Call Back
             </button>

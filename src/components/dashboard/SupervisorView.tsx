@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Agent, Conversation } from '@/types';
 import { ShieldAlert, Volume2, Send, Calendar, Users, Eye, HelpCircle, Activity } from 'lucide-react';
+import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
 
 export function SupervisorView({ activeSubScreen }: { activeSubScreen: string }) {
   const { agents, conversations, setConversations, addAuditLog } = useApp();
@@ -39,6 +40,9 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
   };
 
   switch (activeSubScreen) {
+    case 'inbox':
+      return <AgentWorkspaceLayout activeSubScreen={activeSubScreen} />;
+
     case 'supervisor_monitor':
       return (
         <div className="space-y-4 sm:space-y-6 min-w-0">

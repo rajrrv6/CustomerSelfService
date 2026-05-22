@@ -8,9 +8,11 @@ import { SectionHeader } from '@/components/shared/SectionHeader';
 import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
 import { Badge } from '@/components/shared/BadgeSystem';
+import { translations } from '@/i18n/translations';
 
 export function AsrTtsRegistryTab() {
-  const { asrProviders, setAsrProviders, addAuditLog } = useApp();
+  const { lang, asrProviders, setAsrProviders, addAuditLog } = useApp();
+  const t = translations[lang];
   const [searchQuery, setSearchQuery] = useState('');
   
   // ASR/TTS creation state
@@ -56,24 +58,17 @@ export function AsrTtsRegistryTab() {
       className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95"
     >
       <Plus className="w-4 h-4" />
-      Register Provider
+      {t.superAdmin.asrTts.registerButton}
     </button>
   );
 
-  const tableHeaders = [
-    'Engine Name',
-    'Type',
-    'Languages Supported',
-    'Latency Index',
-    'Billing Rate (per Min)',
-    'Status'
-  ];
+  const tableHeaders = [...t.superAdmin.asrTts.tableHeaders];
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="ASR & TTS Provider Registry"
-        description="Configure speech-to-text translators and text-to-speech voice generators."
+        title={t.superAdmin.asrTts.title}
+        description={t.superAdmin.asrTts.description}
         action={headerAction}
       />
 
@@ -83,7 +78,7 @@ export function AsrTtsRegistryTab() {
           <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search speech engines..."
+            placeholder={t.superAdmin.asrTts.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 text-xs border border-slate-200 dark:border-slate-850 rounded-xl bg-white dark:bg-slate-900 focus:outline-none focus:border-blue-500"
@@ -95,8 +90,8 @@ export function AsrTtsRegistryTab() {
       <EnterpriseTable
         headers={tableHeaders}
         empty={filteredProviders.length === 0}
-        emptyTitle="No Speech Engines Registered"
-        emptyDesc="No ASR/TTS providers match your search query."
+        emptyTitle={t.superAdmin.asrTts.emptyTitle}
+        emptyDesc={t.superAdmin.asrTts.emptyDesc}
       >
         {filteredProviders.map((provider) => (
           <tr key={provider.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
@@ -131,23 +126,23 @@ export function AsrTtsRegistryTab() {
       <ModalWrapper
         isOpen={showAddProviderModal}
         onClose={() => setShowAddProviderModal(false)}
-        title="Register ASR/TTS Engine"
+        title={t.superAdmin.asrTts.modalTitle}
       >
         <form onSubmit={handleRegisterProvider} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Engine Name</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.asrTts.fieldName}</label>
             <input
               type="text"
               required
               value={newProvider.name}
               onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
-              placeholder="e.g. DeepL Voice Synthesizer"
+              placeholder={t.superAdmin.asrTts.fieldPlaceholder}
               className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-800 rounded-xl bg-transparent focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Type</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.asrTts.fieldType}</label>
               <select
                 value={newProvider.type}
                 onChange={(e) => setNewProvider({ ...newProvider, type: e.target.value as any })}
@@ -159,7 +154,7 @@ export function AsrTtsRegistryTab() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Latency Index (ms)</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.asrTts.fieldLatency}</label>
               <input
                 type="number"
                 required
@@ -170,7 +165,7 @@ export function AsrTtsRegistryTab() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Cost per Minute (USD)</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.asrTts.fieldCost}</label>
             <input
               type="number"
               step="0.0001"
@@ -186,13 +181,13 @@ export function AsrTtsRegistryTab() {
               onClick={() => setShowAddProviderModal(false)}
               className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
             >
-              Cancel
+              {t.superAdmin.asrTts.cancel}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700"
             >
-              Register
+              {t.superAdmin.asrTts.register}
             </button>
           </div>
         </form>

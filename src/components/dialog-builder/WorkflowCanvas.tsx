@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { WorkflowNode, WorkflowEdge } from '@/data/seed/workflowSeed';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { IntentNode } from './nodes/IntentNode';
 import { ApiNode } from './nodes/ApiNode';
 import { DbNode } from './nodes/DbNode';
@@ -45,6 +47,9 @@ export function WorkflowCanvas({
   onPan,
   activeNodeId
 }: WorkflowCanvasProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
@@ -335,7 +340,7 @@ export function WorkflowCanvas({
                     left: `${224 - 8}px`,
                     top: `${35 - 8}px`
                   }}
-                  title="Connect from here"
+                  title={t.dialogFlow.canvas.connectFrom}
                 />
               )}
 
@@ -348,7 +353,7 @@ export function WorkflowCanvas({
                     left: '-8px',
                     top: `${35 - 8}px`
                   }}
-                  title="Link to here"
+                  title={t.dialogFlow.canvas.linkTo}
                 />
               )}
             </div>
@@ -358,25 +363,25 @@ export function WorkflowCanvas({
 
       {/* Floating hints */}
       <div className="hidden lg:block absolute top-4 left-4 bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-lg max-w-60 text-[10px] font-semibold text-slate-500 leading-normal pointer-events-none">
-        <p className="font-bold text-slate-800 dark:text-white mb-1">💡 Pro Tips:</p>
+        <p className="font-bold text-slate-800 dark:text-white mb-1">{t.dialogFlow.canvas.proTips}</p>
         <ul className="list-disc pl-3.5 space-y-0.5">
-          <li>Pan: Left click backdrop & drag</li>
-          <li>Move node: Click node header & drag</li>
-          <li>Connect: Click blue dot, then click green target dot on another node</li>
-          <li>Delete node: Click ✕ on header</li>
-          <li>Delete link: Click link, press Delete or Backspace</li>
+          <li>{t.dialogFlow.canvas.tipPan}</li>
+          <li>{t.dialogFlow.canvas.tipMove}</li>
+          <li>{t.dialogFlow.canvas.tipConnect}</li>
+          <li>{t.dialogFlow.canvas.tipDeleteNode}</li>
+          <li>{t.dialogFlow.canvas.tipDeleteLink}</li>
         </ul>
       </div>
 
       {/* Bottom overlay indicating active selection */}
       {selectedEdgeId && (
         <div className="hidden sm:flex absolute bottom-4 right-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-3 py-2 shadow-lg items-center gap-2 text-[10px]">
-          <span className="font-mono text-slate-500 font-bold">Selected Link: {selectedEdgeId}</span>
+          <span className="font-mono text-slate-500 font-bold">{t.dialogFlow.canvas.selectedLink} {selectedEdgeId}</span>
           <button
             onClick={() => onDeleteEdge(selectedEdgeId)}
             className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold"
           >
-            Delete Link
+            {t.dialogFlow.canvas.deleteLinkButton}
           </button>
         </div>
       )}

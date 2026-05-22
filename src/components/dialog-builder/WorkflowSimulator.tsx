@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Play, CornerDownRight, HelpCircle as HelpIcon } from 'lucide-react';
 import { ChatMessage } from './hooks/useWorkflowSimulation';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface WorkflowSimulatorProps {
   isRunning: boolean;
@@ -26,6 +28,9 @@ export function WorkflowSimulator({
   variant = 'sidebar',
   className = '',
 }: WorkflowSimulatorProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   const [inputText, setInputText] = useState('');
   const [activeView, setActiveView] = useState<'chat' | 'logs'>('chat');
   const chatBottomRef = useRef<HTMLDivElement>(null);
@@ -57,7 +62,7 @@ export function WorkflowSimulator({
       <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
         <div className="flex items-center gap-1.5">
           <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-          <h3 className="font-bold font-mono uppercase text-slate-300">Farah NLU Sim</h3>
+          <h3 className="font-bold font-mono uppercase text-slate-300">{t.dialogFlow.simulator.title}</h3>
         </div>
 
         <div className="flex gap-1.5">
@@ -67,7 +72,7 @@ export function WorkflowSimulator({
               activeView === 'chat' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Chat
+            {t.dialogFlow.simulator.chatTab}
           </button>
           <button
             onClick={() => setActiveView('logs')}
@@ -75,7 +80,7 @@ export function WorkflowSimulator({
               activeView === 'logs' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Trace logs
+            {t.dialogFlow.simulator.traceLogs}
           </button>
         </div>
       </div>
@@ -88,13 +93,13 @@ export function WorkflowSimulator({
               <div className="my-auto text-center space-y-3 px-4">
                 <HelpIcon className="w-8 h-8 mx-auto text-slate-500" />
                 <p className="text-slate-500 font-normal">
-                  Simulator is idle. Setup target parameters in the canvas and click &quot;Start Simulation&quot; to test variables.
+                  {t.dialogFlow.simulator.idleMessage}
                 </p>
                 <button
                   onClick={onStart}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold"
                 >
-                  Start Sim
+                  {t.dialogFlow.simulator.startSim}
                 </button>
               </div>
             )}
@@ -137,7 +142,7 @@ export function WorkflowSimulator({
               </div>
             ))}
             {logs.length === 0 && (
-              <div className="text-center text-slate-600 italic py-10">No execution traces.</div>
+              <div className="text-center text-slate-600 italic py-10">{t.dialogFlow.simulator.noTraceLogs}</div>
             )}
             <div ref={logBottomRef} />
           </div>
@@ -147,13 +152,13 @@ export function WorkflowSimulator({
       {/* Manual Step trigger action */}
       {isRunning && !waitingForInput && (
         <div className="p-3 bg-slate-950 border-t border-slate-900 flex justify-between items-center">
-          <span className="text-[10px] text-slate-500 font-mono">Step debugger active:</span>
+          <span className="text-[10px] text-slate-500 font-mono">{t.dialogFlow.simulator.stepDebugger}</span>
           <button
             onClick={onStep}
             className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow"
           >
             <Play className="w-3.5 h-3.5" />
-            Next Step
+            {t.dialogFlow.simulator.nextStep}
           </button>
         </div>
       )}
@@ -165,7 +170,7 @@ export function WorkflowSimulator({
             <input
               type="text"
               required
-              placeholder={`Provide ${waitingForInput.fieldName}...`}
+              placeholder={lang === 'ar' ? `يرجى تزويد ${waitingForInput.fieldName}...` : `Provide ${waitingForInput.fieldName}...`}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               className="flex-1 bg-slate-900 border border-slate-800 text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-blue-500"
@@ -176,7 +181,7 @@ export function WorkflowSimulator({
           </form>
         ) : (
           <div className="text-center py-1 text-slate-500 italic text-[10px]">
-            {isRunning ? 'Execution in progress. Click Next Step.' : 'Simulator is waiting to be initialized.'}
+            {isRunning ? t.dialogFlow.simulator.executionInProgress : t.dialogFlow.simulator.simulatorWaiting}
           </div>
         )}
       </div>

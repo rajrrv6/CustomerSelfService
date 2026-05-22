@@ -8,9 +8,11 @@ import { SectionHeader } from '@/components/shared/SectionHeader';
 import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
 import { Badge } from '@/components/shared/BadgeSystem';
+import { translations } from '@/i18n/translations';
 
 export function LlmRegistryTab() {
-  const { llmModels, setLlmModels, addAuditLog } = useApp();
+  const { lang, llmModels, setLlmModels, addAuditLog } = useApp();
+  const t = translations[lang];
   const [searchQuery, setSearchQuery] = useState('');
   
   // Model creation state
@@ -61,25 +63,17 @@ export function LlmRegistryTab() {
       className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95"
     >
       <Plus className="w-4 h-4" />
-      Register Model
+      {t.superAdmin.llmRegistry.registerButton}
     </button>
   );
 
-  const tableHeaders = [
-    'Model Name',
-    'Provider',
-    'Context Window',
-    'Cost (Input/Output per 1k)',
-    'Accuracy Score',
-    'Avg Latency',
-    'Status'
-  ];
+  const tableHeaders = [...t.superAdmin.llmRegistry.tableHeaders];
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="LLM Model Registry"
-        description="Configure global model routes, parameter rules, and base pricing structures."
+        title={t.superAdmin.llmRegistry.title}
+        description={t.superAdmin.llmRegistry.description}
         action={headerAction}
       />
 
@@ -89,7 +83,7 @@ export function LlmRegistryTab() {
           <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search registered LLMs..."
+            placeholder={t.superAdmin.llmRegistry.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 text-xs border border-slate-200 dark:border-slate-850 rounded-xl bg-white dark:bg-slate-900 focus:outline-none focus:border-blue-500"
@@ -101,8 +95,8 @@ export function LlmRegistryTab() {
       <EnterpriseTable
         headers={tableHeaders}
         empty={filteredModels.length === 0}
-        emptyTitle="No Models Registered"
-        emptyDesc="No LLM models match your search query."
+        emptyTitle={t.superAdmin.llmRegistry.emptyTitle}
+        emptyDesc={t.superAdmin.llmRegistry.emptyDesc}
       >
         {filteredModels.map((model) => (
           <tr key={model.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
@@ -134,23 +128,23 @@ export function LlmRegistryTab() {
       <ModalWrapper
         isOpen={showAddModelModal}
         onClose={() => setShowAddModelModal(false)}
-        title="Register LLM Model"
+        title={t.superAdmin.llmRegistry.modalTitle}
       >
         <form onSubmit={handleRegisterModel} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Model Name (e.g. GPT-5 Small)</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.llmRegistry.fieldName}</label>
             <input
               type="text"
               required
               value={newModel.name}
               onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
-              placeholder="My Enterprise Llama-4"
+              placeholder={t.superAdmin.llmRegistry.fieldPlaceholder}
               className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-800 rounded-xl bg-transparent focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Cost Input (per 1k)</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.llmRegistry.fieldCostInput}</label>
               <input
                 type="number"
                 step="0.000001"
@@ -161,7 +155,7 @@ export function LlmRegistryTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Cost Output (per 1k)</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.llmRegistry.fieldCostOutput}</label>
               <input
                 type="number"
                 step="0.000001"
@@ -174,7 +168,7 @@ export function LlmRegistryTab() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Avg Latency (ms)</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.llmRegistry.fieldLatency}</label>
               <input
                 type="number"
                 required
@@ -184,7 +178,7 @@ export function LlmRegistryTab() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">Accuracy Score (%)</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">{t.superAdmin.llmRegistry.fieldAccuracy}</label>
               <input
                 type="number"
                 min="50"
@@ -202,13 +196,13 @@ export function LlmRegistryTab() {
               onClick={() => setShowAddModelModal(false)}
               className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
             >
-              Cancel
+              {t.superAdmin.llmRegistry.cancel}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700"
             >
-              Register
+              {t.superAdmin.llmRegistry.register}
             </button>
           </div>
         </form>

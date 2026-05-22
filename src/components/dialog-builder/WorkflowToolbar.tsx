@@ -12,6 +12,8 @@ import {
   Plus
 } from 'lucide-react';
 import { WorkflowNode } from '@/data/seed/workflowSeed';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface WorkflowToolbarProps {
   canUndo: boolean;
@@ -51,19 +53,22 @@ export function WorkflowToolbar({
   onOpenInspector,
   onOpenSimulator
 }: WorkflowToolbarProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   return (
     <div className="bg-slate-50 dark:bg-slate-950 px-3 py-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3 text-xs font-semibold select-none z-10 shrink-0 min-w-0">
       
       {/* Node creation controls */}
       <div className="flex items-center justify-between gap-2 sm:hidden">
-        <span className="block font-mono text-[10px] uppercase tracking-wider text-slate-400">Panels</span>
+        <span className="block font-mono text-[10px] uppercase tracking-wider text-slate-400">{t.dialogFlow.toolbar.panels}</span>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={onOpenInspector}
             className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
           >
-            Variables
+            {t.dialogFlow.toolbar.variables}
           </button>
           {onOpenSimulator && (
             <button
@@ -71,14 +76,14 @@ export function WorkflowToolbar({
               onClick={onOpenSimulator}
               className="rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-[10px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
-              Simulator
+              {t.dialogFlow.toolbar.simulator}
             </button>
           )}
         </div>
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
-        <span className="hidden sm:block text-[10px] text-slate-400 uppercase tracking-wider font-mono mr-1.5 shrink-0">Add Node:</span>
+        <span className="hidden sm:block text-[10px] text-slate-400 uppercase tracking-wider font-mono mr-1.5 shrink-0">{t.dialogFlow.toolbar.addNode}</span>
         {(['intent', 'api', 'db', 'rag', 'branch', 'handoff', 'delay', 'form', 'carousel'] as WorkflowNode['type'][]).map((type) => (
           <button
             key={type}
@@ -147,7 +152,7 @@ export function WorkflowToolbar({
             onClick={onValidate}
             className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl min-h-10"
           >
-            Validate Flow
+            {t.dialogFlow.toolbar.validateFlow}
           </button>
 
           <button
@@ -159,7 +164,7 @@ export function WorkflowToolbar({
             }`}
           >
             {simulationActive ? <RotateCcw className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            {simulationActive ? 'Reset Sim' : 'Start Sim'}
+            {simulationActive ? t.dialogFlow.toolbar.resetSim : t.dialogFlow.toolbar.startSim}
           </button>
         </div>
       </div>
@@ -185,7 +190,7 @@ export function WorkflowToolbar({
       {validation && validation.errors.length === 0 && validation.warnings.length === 0 && (
         <div className="w-full overflow-x-auto mt-2.5 p-3 rounded-2xl flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 font-mono text-[10px] text-emerald-700 dark:text-emerald-400">
           <CheckCircle className="w-3.5 h-3.5" />
-          <span>Workflow structural integrity looks correct. Ready for production ingestion deployment pipeline.</span>
+          <span>{t.dialogFlow.toolbar.validationOk}</span>
         </div>
       )}
     </div>

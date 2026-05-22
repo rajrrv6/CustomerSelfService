@@ -3,6 +3,8 @@
 import React from 'react';
 import { Tv } from 'lucide-react';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface CobrowseModalProps {
   isOpen: boolean;
@@ -21,11 +23,14 @@ export function CobrowseModal({
   cobrowseConnected,
   handleJoinCobrowse
 }: CobrowseModalProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   return (
-    <ModalWrapper isOpen={isOpen} onClose={onClose} title="Join Co-Browse Session" maxWidthClass="max-w-sm">
+    <ModalWrapper isOpen={isOpen} onClose={onClose} title={t.portal.cobrowse.modalTitle} maxWidthClass="max-w-sm">
       <form onSubmit={handleJoinCobrowse} className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
         <p className="text-[11px] text-slate-450 dark:text-slate-455 font-normal leading-relaxed">
-          Generate a secure screen sharing session. An agent will ask you for this 6-digit session validation PIN to consult.
+          {t.portal.cobrowse.instructions}
         </p>
 
         {cobrowseConnected ? (
@@ -33,12 +38,12 @@ export function CobrowseModal({
             <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
               <Tv className="w-5 h-5" />
             </div>
-            <span className="text-emerald-500 font-bold block">Session Active (Screen Shared)</span>
+            <span className="text-emerald-500 font-bold block">{t.portal.cobrowse.sessionActive}</span>
           </div>
         ) : (
           <>
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 mb-1.5">Enter 6-digit PIN (e.g. 982-114)</label>
+              <label className="block text-slate-500 dark:text-slate-400 mb-1.5">{t.portal.cobrowse.pinLabel}</label>
               <input
                 type="text"
                 required
@@ -49,7 +54,7 @@ export function CobrowseModal({
               />
             </div>
             <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer">
-              Establish Sharing Connection
+              {t.portal.cobrowse.connect}
             </button>
           </>
         )}

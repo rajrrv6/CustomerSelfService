@@ -6,41 +6,43 @@ import { SVGBarChart } from '@/components/dashboard/Charts';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
 import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
+import { translations } from '@/i18n/translations';
 
 interface SuperAdminAnalyticsTabProps {
   activeSubScreen: string;
 }
 
 export function SuperAdminAnalyticsTab({ activeSubScreen }: SuperAdminAnalyticsTabProps) {
-  const { llmModels } = useApp();
+  const { lang, llmModels } = useApp();
+  const t = translations[lang];
 
   if (activeSubScreen === 'cost_benchmarks') {
     return (
       <div className="space-y-6">
         <SectionHeader
-          title="Model Cost Benchmarks"
-          description="Benchmark real-world API costs per 1,000,000 tokens for comparative pricing analysis."
+          title={t.superAdmin.analytics.benchmarksTitle}
+          description={t.superAdmin.analytics.benchmarksDesc}
         />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <SVGBarChart
             data={llmModels.map((m) => m.costInput * 1000)}
             labels={llmModels.map((m) => m.name.substring(0, 8))}
-            title="Input Tokens Cost ($ per 1M tokens)"
+            title={t.superAdmin.analytics.inputCostTitle}
             barColor="#3b82f6"
           />
           <SVGBarChart
             data={llmModels.map((m) => m.costOutput * 1000)}
             labels={llmModels.map((m) => m.name.substring(0, 8))}
-            title="Output Tokens Cost ($ per 1M tokens)"
+            title={t.superAdmin.analytics.outputCostTitle}
             barColor="#f43f5e"
           />
         </div>
 
         <OperationalCard hoverEffect={false} className="bg-slate-100 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase font-mono mb-2">Cost Optimization Recommendation</h4>
+          <h4 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase font-mono mb-2">{t.superAdmin.analytics.recommendationTitle}</h4>
           <p className="text-xs leading-relaxed text-slate-500">
-            By automatically routing simple standard queries (e.g. greetings, returns lookup) to <span className="font-semibold text-blue-500">Gemini 1.5 Flash</span> and reserving advanced dialogues for <span className="font-semibold text-emerald-500">Claude 3.5 Sonnet</span>, the platform has achieved an average cost reduction of <span className="font-bold text-slate-800 dark:text-white">43.8%</span> over the past 30 days.
+            {t.superAdmin.analytics.recommendationText}
           </p>
         </OperationalCard>
       </div>
@@ -48,34 +50,30 @@ export function SuperAdminAnalyticsTab({ activeSubScreen }: SuperAdminAnalyticsT
   }
 
   // Cross tenant analytics view
-  const tenantHeaders = [
-    'Client Identifier',
-    'Monthly Tokens',
-    'Active Bots',
-    'SLA Compliance',
-    'Endpoint Load'
-  ];
+  const tenantHeaders = [...t.superAdmin.analytics.tableHeaders];
 
   const tenantRows = [
-    { id: 'saudi-telecom-corp', tokens: '14.8M', bots: 8, sla: '99.2%', load: '14.2 req/sec' },
-    { id: 'al-rajhi-retail', tokens: '22.1M', bots: 12, sla: '98.5%', load: '22.8 req/sec' },
-    { id: 'emirates-airlines', tokens: '8.4M', bots: 4, sla: '99.8%', load: '8.1 req/sec' },
-    { id: 'gulf-fintech-hub', tokens: '1.2M', bots: 2, sla: '94.0%', load: '1.1 req/sec' }
+    { id: 'saudi-telecom-corp', tokens: '14.8M', bots: 8, sla: '99.2%', load: lang === 'ar' ? '14.2 طلب/ثانية' : '14.2 req/sec' },
+    { id: 'al-rajhi-retail', tokens: '22.1M', bots: 12, sla: '98.5%', load: lang === 'ar' ? '22.8 طلب/ثانية' : '22.8 req/sec' },
+    { id: 'emirates-airlines', tokens: '8.4M', bots: 4, sla: '99.8%', load: lang === 'ar' ? '8.1 طلب/ثانية' : '8.1 req/sec' },
+    { id: 'gulf-fintech-hub', tokens: '1.2M', bots: 2, sla: '94.0%', load: lang === 'ar' ? '1.1 طلب/ثانية' : '1.1 req/sec' }
+  ];
+
+  const cards = [
+    { title: t.superAdmin.analytics.metricApiCalls, value: '45.2M', desc: t.superAdmin.analytics.metricApiCallsDesc },
+    { title: t.superAdmin.analytics.metricActiveClusters, value: lang === 'ar' ? '18 مجموعة مستأجرين' : '18 Tenant DBs', desc: t.superAdmin.analytics.metricActiveClustersDesc },
+    { title: t.superAdmin.analytics.metricLatency, value: '240ms', desc: t.superAdmin.analytics.metricLatencyDesc }
   ];
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Cross-Tenant Analytics"
-        description="Infrastructure loads, tokens consumed, and API concurrency counts across enterprise client tenants."
+        title={t.superAdmin.analytics.crossTenantTitle}
+        description={t.superAdmin.analytics.crossTenantDesc}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {[
-          { title: 'Aggregate API Calls', value: '45.2M', desc: '+12.4% over last 30d' },
-          { title: 'Active Tenant Clusters', value: '18 Tenant DBs', desc: 'All healthy status' },
-          { title: 'Platform Latency (p95)', value: '240ms', desc: 'ASR+LLM orchestration pipeline' }
-        ].map((card, i) => (
+        {cards.map((card, i) => (
           <OperationalCard key={i} className="flex flex-col justify-between">
             <div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">{card.title}</span>
@@ -88,7 +86,7 @@ export function SuperAdminAnalyticsTab({ activeSubScreen }: SuperAdminAnalyticsT
 
       {/* Tenants list */}
       <div className="space-y-4">
-        <h3 className="font-bold text-xs text-slate-600 dark:text-slate-400 uppercase font-mono">Active Enterprise Clients</h3>
+        <h3 className="font-bold text-xs text-slate-600 dark:text-slate-400 uppercase font-mono">{t.superAdmin.analytics.activeClientsTitle}</h3>
         <EnterpriseTable headers={tenantHeaders}>
           {tenantRows.map((row, idx) => (
             <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-850">

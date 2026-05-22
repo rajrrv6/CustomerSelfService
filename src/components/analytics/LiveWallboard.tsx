@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useWallboardFeed } from '@/hooks/useWallboardFeed';
 import { useVoiceQueue } from '@/hooks/useVoiceQueue';
 import { useRealtimeMetrics } from '@/hooks/useRealtimeMetrics';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { StatusIndicator } from './shared/StatusIndicator';
 import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
 import { Badge } from '@/components/shared/BadgeSystem';
@@ -22,6 +24,8 @@ import {
 } from 'lucide-react';
 
 export function LiveWallboard() {
+  const { lang } = useApp();
+  const t = translations[lang];
   const { agents, logs, qualityBreakdown } = useWallboardFeed();
   const { queue, simulateInboundQueuedCall, dequeueCall } = useVoiceQueue();
   const { metrics } = useRealtimeMetrics();
@@ -63,9 +67,9 @@ export function LiveWallboard() {
   };
 
   const getActionLabel = (action: 'whisper' | 'barge' | 'silent_monitor') => {
-    if (action === 'whisper') return 'Whispering';
-    if (action === 'barge') return 'Barging In';
-    return 'Silent Monitoring';
+    if (action === 'whisper') return t.analyticsCenter.wallboard.actionWhisper;
+    if (action === 'barge') return t.analyticsCenter.wallboard.actionBarge;
+    return t.analyticsCenter.wallboard.actionSilent;
   };
 
   return (
@@ -77,10 +81,10 @@ export function LiveWallboard() {
           <div className="space-y-1">
             <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-none flex items-center gap-2">
               <Radio className="w-4 h-4 text-blue-500 animate-pulse" />
-              Live Telephony Wallboard Console
+              {t.analyticsCenter.wallboard.consoleTitle}
             </h4>
             <p className="text-[10px] text-slate-500 dark:text-slate-400">
-              Trigger real-time incoming voice calls and manage queue handoffs instantly to test operations.
+              {t.analyticsCenter.wallboard.consoleSubtitle}
             </p>
           </div>
           <button
@@ -89,7 +93,7 @@ export function LiveWallboard() {
             aria-label="Simulate inbound VIP/high priority call"
           >
             <Plus className="w-4 h-4" />
-            Simulate Inbound Call
+            {t.analyticsCenter.wallboard.simulateCall}
           </button>
         </div>
 
@@ -100,7 +104,7 @@ export function LiveWallboard() {
           role="status"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping" />
-          <span>{lastActionMsg || 'System Idle. Waiting for trigger activity...'}</span>
+          <span>{lastActionMsg || t.analyticsCenter.wallboard.systemIdle}</span>
         </div>
       </div>
 
@@ -110,56 +114,56 @@ export function LiveWallboard() {
         {/* Waiting Calls */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">Calls In Queue</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">{t.analyticsCenter.wallboard.kpiCallsInQueue}</span>
             <Phone className="w-4 h-4 text-rose-500" />
           </div>
           <div>
             <span className={`text-2xl font-black font-mono tracking-tight leading-none ${queue.length > 3 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
               {queue.length}
             </span>
-            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">Active waiting callers</span>
+            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.wallboard.kpiCallsInQueueSub}</span>
           </div>
         </div>
 
         {/* Longest Wait */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">Max Queue Wait</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">{t.analyticsCenter.wallboard.kpiMaxWait}</span>
             <Clock className="w-4 h-4 text-amber-500" />
           </div>
           <div>
             <span className={`text-2xl font-black font-mono tracking-tight leading-none ${longestWaitSeconds > 120 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
               {formatWaitTime(longestWaitSeconds)}
             </span>
-            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">Longest active wait duration</span>
+            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.wallboard.kpiMaxWaitSub}</span>
           </div>
         </div>
 
         {/* SIP Codec Avg Quality */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">Voice Quality (MOS)</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">{t.analyticsCenter.wallboard.kpiVoiceQuality}</span>
             <Activity className="w-4 h-4 text-emerald-500" />
           </div>
           <div>
             <span className="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white leading-none">
               {avgMos} <span className="text-slate-400 text-xs font-normal">/ 5.0</span>
             </span>
-            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">Mean Opinion Score (PCMU/Opus)</span>
+            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.wallboard.kpiVoiceQualitySub}</span>
           </div>
         </div>
 
         {/* Roster active counts */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">Active Staffing</span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-widest">{t.analyticsCenter.wallboard.kpiActiveStaff}</span>
             <UserCheck className="w-4 h-4 text-blue-500" />
           </div>
           <div>
             <span className="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white leading-none">
               {metrics.activeAgents}
             </span>
-            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">Total active agent roster</span>
+            <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.wallboard.kpiActiveStaffSub}</span>
           </div>
         </div>
 
@@ -171,16 +175,23 @@ export function LiveWallboard() {
         {/* Waiting queue list */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
           <div>
-            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Live Telephony Waiting Queue</h4>
-            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">Real-time incoming callers waiting for agent allocation.</p>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{t.analyticsCenter.wallboard.queueTitle}</h4>
+            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">{t.analyticsCenter.wallboard.queueSubtitle}</p>
           </div>
 
           <div className="overflow-x-auto min-w-0" aria-live="polite">
-            <EnterpriseTable headers={['Customer Name', 'Contact Number', 'Target Queue', 'Priority', 'Wait Time', 'Action']}>
+            <EnterpriseTable headers={[
+              t.analyticsCenter.wallboard.queueColCustomer,
+              t.analyticsCenter.wallboard.queueColPhone,
+              t.analyticsCenter.wallboard.queueColQueue,
+              t.analyticsCenter.wallboard.queueColPriority,
+              t.analyticsCenter.wallboard.queueColWait,
+              t.analyticsCenter.wallboard.queueColAction
+            ]}>
               {queue.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-slate-400 dark:text-slate-500">
-                    No callers currently waiting in queue.
+                    {t.analyticsCenter.wallboard.queueEmpty}
                   </td>
                 </tr>
               ) : (
@@ -204,7 +215,7 @@ export function LiveWallboard() {
                         aria-label={`Route ${call.customerName} to agent`}
                       >
                         <UserMinus className="w-3 h-3" />
-                        <span>Route</span>
+                        <span>{t.analyticsCenter.wallboard.routeAction}</span>
                       </button>
                     </td>
                   </tr>
@@ -217,8 +228,8 @@ export function LiveWallboard() {
         {/* SIP Trunk Quality */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
           <div>
-            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Twilio Voice quality & SIP Trunks</h4>
-            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">Real-time signal diagnostics, packet loss, and codec degradation parameters.</p>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{t.analyticsCenter.wallboard.sipTitle}</h4>
+            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">{t.analyticsCenter.wallboard.sipSubtitle}</p>
           </div>
 
           <div className="space-y-4 pt-2">
@@ -240,11 +251,11 @@ export function LiveWallboard() {
 
                   <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
                     <div className="bg-white dark:bg-slate-900/60 p-2 rounded-xl border border-slate-100 dark:border-slate-850">
-                      <span className="block text-[8px] text-slate-400 font-sans uppercase">Jitter</span>
+                      <span className="block text-[8px] text-slate-400 font-sans uppercase">{t.analyticsCenter.wallboard.jitter}</span>
                       <span className="font-extrabold text-slate-800 dark:text-slate-250">{trunk.jitterMs.toFixed(1)} ms</span>
                     </div>
                     <div className="bg-white dark:bg-slate-900/60 p-2 rounded-xl border border-slate-100 dark:border-slate-850">
-                      <span className="block text-[8px] text-slate-400 font-sans uppercase">Packet Loss</span>
+                      <span className="block text-[8px] text-slate-400 font-sans uppercase">{t.analyticsCenter.wallboard.packetLoss}</span>
                       <span className={`font-extrabold ${trunk.packetLossAvg > 1.0 ? 'text-rose-500' : 'text-slate-800 dark:text-slate-250'}`}>
                         {trunk.packetLossAvg.toFixed(2)}%
                       </span>
@@ -261,12 +272,18 @@ export function LiveWallboard() {
       {/* Row 3: Supervisor Activity Whisper Log */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
         <div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Supervisor Monitoring & Whisper Log</h4>
-          <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">Audit of real-time supervisor whisper, barge-in, and silent monitoring interactions on active voice channels.</p>
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{t.analyticsCenter.wallboard.supervisorTitle}</h4>
+          <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">{t.analyticsCenter.wallboard.supervisorSubtitle}</p>
         </div>
 
         <div className="overflow-x-auto min-w-0" aria-live="polite">
-          <EnterpriseTable headers={['Supervisor Name', 'Target Agent', 'Monitoring Mode', 'Duration Active', 'Trigger Timestamp']}>
+          <EnterpriseTable headers={[
+            t.analyticsCenter.wallboard.supColSupervisor,
+            t.analyticsCenter.wallboard.supColAgent,
+            t.analyticsCenter.wallboard.supColMode,
+            t.analyticsCenter.wallboard.supColDuration,
+            t.analyticsCenter.wallboard.supColTimestamp
+          ]}>
             {logs.map((log) => (
               <tr key={log.id} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-950/10 animate-fade-in-up">
                 <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{log.supervisorName}</td>
@@ -281,7 +298,7 @@ export function LiveWallboard() {
                     </Badge>
                   </div>
                 </td>
-                <td className="px-6 py-4 font-mono font-bold text-slate-800 dark:text-slate-250">{log.durationMins} mins</td>
+                <td className="px-6 py-4 font-mono font-bold text-slate-800 dark:text-slate-250">{log.durationMins} {t.analyticsCenter.wallboard.minsUnit}</td>
                 <td className="px-6 py-4 text-slate-450 font-mono font-semibold">{log.timestamp}</td>
               </tr>
             ))}

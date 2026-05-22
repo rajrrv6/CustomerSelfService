@@ -7,6 +7,7 @@ import { AsrTtsRegistryTab } from '../speech-providers/AsrTtsRegistryTab';
 import { SuperAdminAnalyticsTab } from '../analytics/SuperAdminAnalyticsTab';
 import { VectorDbStatusTab } from '../vector-db/VectorDbStatusTab';
 import { SipTrunkConfigTab } from '../telephony/SipTrunkConfigTab';
+import { SuperAdminChannelsTab } from '../channels/SuperAdminChannelsTab';
 
 interface SuperAdminLayoutProps {
   activeSubScreen: string;
@@ -25,6 +26,8 @@ export function SuperAdminLayout({ activeSubScreen }: SuperAdminLayoutProps) {
       return <VectorDbStatusTab />;
     case 'sip_trunk':
       return <SipTrunkConfigTab />;
+    case 'channels':
+      return <SuperAdminChannelsTab />;
     default:
       return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">

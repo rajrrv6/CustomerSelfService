@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { Brain, Clock, Send, Star, X, CheckCircle } from 'lucide-react';
 
 interface ChatMessage {
@@ -54,6 +55,7 @@ export function LiveChatOverlay({
   handleSendChatMessage
 }: LiveChatOverlayProps) {
   const { lang, addAuditLog } = useApp();
+  const t = translations[lang];
   const [showSurveyThankYou, setShowSurveyThankYou] = React.useState(false);
   const [showTranscriptSent, setShowTranscriptSent] = React.useState(false);
   const [isHighContrast, setIsHighContrast] = React.useState(false);
@@ -82,8 +84,8 @@ export function LiveChatOverlay({
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-blue-250" />
               <div>
-                <h4 className="font-bold text-xs">Farah AI Support</h4>
-                <span className="text-[9px] opacity-75 block font-mono">Omnichannel Bot Portal</span>
+                <h4 className="font-bold text-xs">{t.portal.liveChat.botName}</h4>
+                <span className="text-[9px] opacity-75 block font-mono">{t.portal.liveChat.botSubtitle}</span>
               </div>
             </div>
             
@@ -130,7 +132,7 @@ export function LiveChatOverlay({
               <div className="flex justify-start">
                 <div className="bg-slate-800 border border-slate-700/50 rounded-2xl px-3 py-2 flex items-center gap-1.5 text-blue-400 font-mono text-[9px]">
                   <Clock className="w-3.5 h-3.5 animate-spin" />
-                  <span>Farah typing...</span>
+                  <span>{t.portal.liveChat.farahTyping}</span>
                 </div>
               </div>
             )}
@@ -138,10 +140,10 @@ export function LiveChatOverlay({
             {/* Handoff queue intermediate position state */}
             {chatStatus === 'queue' && (
               <div className="text-center py-4 bg-slate-900/50 border border-slate-800 rounded-xl space-y-2">
-                <span className="text-amber-500 font-bold block animate-pulse">Routing to Live Agent...</span>
+                <span className="text-amber-500 font-bold block animate-pulse">{t.portal.liveChat.routingToAgent}</span>
                 <div className="text-[10px] text-slate-450">
-                  <p>Current Queue Position: <strong>{queuePos}</strong></p>
-                  <p>Estimated wait: <strong>{queuePos * 1.5} mins</strong></p>
+                  <p>{t.portal.liveChat.queuePosition} <strong>{queuePos}</strong></p>
+                  <p>{t.portal.liveChat.estimatedWait} <strong>{queuePos * 1.5} {t.portal.liveChat.mins}</strong></p>
                 </div>
               </div>
             )}
@@ -149,16 +151,16 @@ export function LiveChatOverlay({
             {/* Survey state */}
             {chatStatus === 'survey' && (
               showSurveyThankYou ? (
-                <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-3 flex flex-col items-center justify-center min-h-[200px]">
+                <div className="bg-slate-900 border border-slate-805 p-6 rounded-2xl text-center space-y-3 flex flex-col items-center justify-center min-h-[200px]">
                   <CheckCircle className="w-10 h-10 text-emerald-550 animate-bounce" />
-                  <span className="font-bold text-sm text-white">Thank You!</span>
-                  <p className="text-[10px] text-slate-400">Your chat feedback has been logged.</p>
+                  <span className="font-bold text-sm text-white">{t.portal.liveChat.surveyThankYou}</span>
+                  <p className="text-[10px] text-slate-400">{t.portal.liveChat.surveyLogged}</p>
                 </div>
               ) : (
                 <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-3.5">
                   <div className="text-center space-y-1">
-                    <span className="font-bold text-xs">CSAT Satisfaction Survey</span>
-                    <p className="text-[10px] text-slate-450 font-normal">How was your interaction with Agent Nadia Vance?</p>
+                    <span className="font-bold text-xs">{t.portal.liveChat.csatTitle}</span>
+                    <p className="text-[10px] text-slate-455 font-normal">{t.portal.liveChat.csatSubtitle}</p>
                   </div>
                   
                   {/* Stars input */}
@@ -177,8 +179,8 @@ export function LiveChatOverlay({
 
                   {/* NPS score selector */}
                   <div className="pt-2 border-t border-slate-800 space-y-1 text-center">
-                    <span className="text-[10px] text-slate-400 font-bold">Net Promoter Score (NPS)</span>
-                    <p className="text-[9px] text-slate-450 font-normal">Scale 1 (Low) to 10 (High)</p>
+                    <span className="text-[10px] text-slate-404 font-bold">{t.portal.liveChat.npsTitle}</span>
+                    <p className="text-[9px] text-slate-450 font-normal">{t.portal.liveChat.npsScale}</p>
                     <div className="flex flex-wrap justify-center gap-1 mt-1">
                       {Array.from({ length: 10 }).map((_, i) => (
                         <button
@@ -207,7 +209,7 @@ export function LiveChatOverlay({
                     }}
                     className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-[10px] text-center font-bold"
                   >
-                    Submit Survey Metrics
+                    {t.portal.liveChat.submitSurvey}
                   </button>
                 </div>
               )
@@ -218,14 +220,14 @@ export function LiveChatOverlay({
               showTranscriptSent ? (
                 <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-3 flex flex-col items-center justify-center min-h-[200px]">
                   <CheckCircle className="w-10 h-10 text-emerald-550 animate-bounce" />
-                  <span className="font-bold text-sm text-white">Transcript Sent!</span>
-                  <p className="text-[10px] text-slate-400 font-mono font-normal">Dispatched to {transcriptEmail}</p>
+                  <span className="font-bold text-sm text-white">{t.portal.liveChat.transcriptSent}</span>
+                  <p className="text-[10px] text-slate-400 font-mono font-normal">{t.portal.liveChat.transcriptDispatchedTo} {transcriptEmail}</p>
                 </div>
               ) : (
                 <div className="bg-slate-905 border border-slate-808 p-3 rounded-xl space-y-3">
-                  <span className="font-bold text-[10px] uppercase font-mono block text-center text-blue-500">Email Chat Transcript</span>
+                  <span className="font-bold text-[10px] uppercase font-mono block text-center text-blue-500">{t.portal.liveChat.emailTranscriptTitle}</span>
                   <div>
-                    <label className="block text-slate-400 text-[10px] mb-1">Email Address</label>
+                    <label className="block text-slate-404 text-[10px] mb-1">{t.portal.liveChat.emailLabel}</label>
                     <input
                       type="email"
                       placeholder="david.miller@yahoo.com"
@@ -251,7 +253,7 @@ export function LiveChatOverlay({
                     }}
                     className="w-full py-1.5 bg-blue-600 rounded-xl text-[10px] text-center font-bold"
                   >
-                    Send Transcript Log
+                    {t.portal.liveChat.sendTranscript}
                   </button>
                 </div>
               )
@@ -263,7 +265,7 @@ export function LiveChatOverlay({
             <div className="p-3 border-t border-slate-800 flex gap-2 bg-[#0b0f19] rounded-b-3xl shrink-0">
               <input
                 type="text"
-                placeholder="Type a message or press 'agent'..."
+                placeholder={t.portal.liveChat.inputPlaceholder}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 className="flex-1 px-3 py-2 border border-slate-800 bg-transparent rounded-xl focus:outline-none text-xs text-white"
@@ -279,7 +281,7 @@ export function LiveChatOverlay({
                   className="px-2 bg-rose-600 hover:bg-rose-700 rounded-xl text-[9px] font-bold"
                   title="End Conversation and Survey"
                 >
-                  Close
+                  {t.portal.liveChat.closeChat}
                 </button>
               ) : (
                 <button
@@ -291,7 +293,7 @@ export function LiveChatOverlay({
                   className="px-2 bg-slate-800 hover:bg-slate-700 border border-slate-700/60 rounded-xl text-[9px] font-bold"
                   title="Consult Human Desk"
                 >
-                  Agent
+                  {t.portal.liveChat.agentButton}
                 </button>
               )}
 
@@ -353,7 +355,6 @@ export function LiveChatOverlay({
         >
           <Brain className="w-7 h-7" style={{ color: 'currentColor' }} />
         </button>
-
       )}
     </div>
   );

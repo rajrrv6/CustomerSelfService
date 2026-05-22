@@ -36,22 +36,57 @@ export function Header({
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
+  const getRoleLabel = (r: UserRole): string => {
+    const maps: Record<UserRole, Record<'en' | 'ar', string>> = {
+      super_admin: { en: 'Super Admin', ar: 'مشرف عام النظام' },
+      client_admin: { en: 'Client Admin', ar: 'مدير العميل' },
+      operations_manager: { en: 'Operations Manager', ar: 'مدير العمليات' },
+      qa_manager: { en: 'QA Manager', ar: 'مدير جودة الخدمة' },
+      supervisor: { en: 'Supervisor', ar: 'مشرف الفريق' },
+      support_agent: { en: 'Support Agent', ar: 'وكيل الدعم' },
+      customer: { en: 'Customer Portal', ar: 'بوابة العملاء' },
+      viewer: { en: 'Viewer', ar: 'مراقب عام' }
+    };
+    return maps[r]?.[lang] ?? r;
+  };
+
   const rolesList: { value: UserRole; label: string }[] = [
-    { value: 'super_admin', label: 'Super Admin' },
-    { value: 'client_admin', label: 'Client Admin' },
-    { value: 'operations_manager', label: 'Operations Manager' },
-    { value: 'qa_manager', label: 'QA Manager' },
-    { value: 'supervisor', label: 'Supervisor' },
-    { value: 'support_agent', label: 'Support Agent' },
-    { value: 'customer', label: 'Customer Portal' },
-    { value: 'viewer', label: 'Viewer' }
+    { value: 'super_admin', label: getRoleLabel('super_admin') },
+    { value: 'client_admin', label: getRoleLabel('client_admin') },
+    { value: 'operations_manager', label: getRoleLabel('operations_manager') },
+    { value: 'qa_manager', label: getRoleLabel('qa_manager') },
+    { value: 'supervisor', label: getRoleLabel('supervisor') },
+    { value: 'support_agent', label: getRoleLabel('support_agent') },
+    { value: 'customer', label: getRoleLabel('customer') },
+    { value: 'viewer', label: getRoleLabel('viewer') }
   ];
 
   // Dummy notification data matching platform events
   const notifications = [
-    { id: 1, text: 'SLA Warning: TIC-1022 response deadline is in 10 minutes', type: 'warning', time: '2m ago' },
-    { id: 2, text: 'Farah AI: Deflection rate increased to 72.8%', type: 'info', time: '12m ago' },
-    { id: 3, text: 'Pinecone Cluster: Reindexed Standard Return Policy PDF', type: 'success', time: '1h ago' }
+    {
+      id: 1,
+      text: lang === 'ar' 
+        ? 'تحذير SLA: موعد الاستجابة لـ TIC-1022 ينتهي خلال 10 دقائق' 
+        : 'SLA Warning: TIC-1022 response deadline is in 10 minutes',
+      type: 'warning',
+      time: lang === 'ar' ? 'منذ دقيقتين' : '2m ago'
+    },
+    {
+      id: 2,
+      text: lang === 'ar' 
+        ? 'فرح AI: ارتفع معدل حل الخدمة الذاتية إلى 72.8%' 
+        : 'Farah AI: Deflection rate increased to 72.8%',
+      type: 'info',
+      time: lang === 'ar' ? 'منذ 12 دقيقة' : '12m ago'
+    },
+    {
+      id: 3,
+      text: lang === 'ar' 
+        ? 'مجموعة Pinecone: تمت إعادة فهرسة ملف سياسة الاسترجاع القياسية PDF' 
+        : 'Pinecone Cluster: Reindexed Standard Return Policy PDF',
+      type: 'success',
+      time: lang === 'ar' ? 'منذ ساعة' : '1h ago'
+    }
   ];
 
   return (
@@ -125,7 +160,7 @@ export function Header({
         {/* Audit Logs Trigger */}
         <button
           onClick={onOpenAuditLogs}
-          title="System Audit Logs"
+          title={lang === 'ar' ? 'سجلات تدقيق النظام' : 'System Audit Logs'}
           className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all relative border border-transparent hover:border-slate-200 dark:hover:border-slate-800 shrink-0"
         >
           <Activity className="w-4.5 h-4.5" />
@@ -149,8 +184,12 @@ export function Header({
               <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
               <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-3 z-50 animate-in fade-in-50 slide-in-from-top-3">
                 <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                  <span className="text-xs font-bold text-slate-800 dark:text-white">Active System Notifications</span>
-                  <span className="text-[10px] text-blue-500 font-semibold cursor-pointer hover:underline">Mark all read</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-white">
+                    {lang === 'ar' ? 'إشعارات النظام النشطة' : 'Active System Notifications'}
+                  </span>
+                  <span className="text-[10px] text-blue-500 font-semibold cursor-pointer hover:underline">
+                    {lang === 'ar' ? 'تحديد الكل كمقروء' : 'Mark all read'}
+                  </span>
                 </div>
                 <div className="max-h-64 overflow-y-auto mt-2">
                   {notifications.map((n) => (
