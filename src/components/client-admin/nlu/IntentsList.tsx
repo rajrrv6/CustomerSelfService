@@ -4,9 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Intent } from '@/types';
 import { SectionHeader } from '@/components/shared/SectionHeader';
+import { translations } from '@/i18n/translations';
 
 export function IntentsList() {
-  const { intents, setIntents, addAuditLog } = useApp();
+  const { lang, intents, setIntents, addAuditLog } = useApp();
+  const t = translations[lang];
 
   // Intent states
   const [editingIntentId, setEditingIntentId] = useState<string | null>(null);
@@ -77,8 +79,8 @@ export function IntentsList() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Intent & Slot Filling Management"
-        description="Train NLU layers, define slots, and configure fallback webhook triggers."
+        title={t.clientAdmin.intents.title}
+        description={t.clientAdmin.intents.description}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -105,7 +107,9 @@ export function IntentsList() {
               </div>
 
               <div className="space-y-2">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase font-mono block">Training Phrases</span>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase font-mono block">
+                  {t.clientAdmin.intents.trainingPhrases}
+                </span>
                 <div className="flex flex-wrap gap-1.5">
                   {intent.utterances.map((utt, i) => (
                     <span
@@ -119,7 +123,7 @@ export function IntentsList() {
                     <div className="flex gap-1.5 mt-1.5 w-full">
                       <input
                         type="text"
-                        placeholder="Add training phrase..."
+                        placeholder={t.clientAdmin.intents.addPhrasePlaceholder}
                         value={newUtterance}
                         onChange={(e) => setNewUtterance(e.target.value)}
                         className="flex-1 px-3 py-1.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-lg text-xs focus:outline-none text-slate-800 dark:text-slate-155"
@@ -131,13 +135,13 @@ export function IntentsList() {
                         onClick={() => handleAddUtterance(intent.id)}
                         className="px-3 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700"
                       >
-                        Add
+                        {t.clientAdmin.intents.addButton}
                       </button>
                       <button
                         onClick={() => setEditingIntentId(null)}
                         className="px-2 py-1 text-xs border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400"
                       >
-                        Close
+                        {t.clientAdmin.intents.closeButton}
                       </button>
                     </div>
                   ) : (
@@ -145,7 +149,7 @@ export function IntentsList() {
                       onClick={() => setEditingIntentId(intent.id)}
                       className="px-2 py-1 border border-dashed border-slate-300 dark:border-slate-700 text-slate-450 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg text-[11px] font-semibold transition-colors"
                     >
-                      + Add Phrase
+                      {t.clientAdmin.intents.addPhraseButton}
                     </button>
                   )}
                 </div>
@@ -153,7 +157,9 @@ export function IntentsList() {
 
               {intent.slots.length > 0 && (
                 <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase font-mono block">Entity Slots (Variables)</span>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase font-mono block">
+                    {t.clientAdmin.intents.entitySlots}
+                  </span>
                   <div className="space-y-1.5">
                     {intent.slots.map((slot, i) => (
                       <div
@@ -166,7 +172,9 @@ export function IntentsList() {
                           <p className="text-[10px] text-slate-500 mt-1 font-normal italic">Prompt: "{slot.prompt}"</p>
                         </div>
                         {slot.required && (
-                          <span className="text-[9px] uppercase font-bold text-rose-500 font-mono">REQUIRED</span>
+                          <span className="text-[9px] uppercase font-bold text-rose-500 font-mono">
+                            {t.clientAdmin.intents.required}
+                          </span>
                         )}
                       </div>
                     ))}
@@ -179,8 +187,10 @@ export function IntentsList() {
 
         {/* Suggested Intents Drawer */}
         <div className="bg-slate-150/40 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-850 h-fit space-y-4">
-          <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono tracking-wider">Suggested Intents (AI Discovery)</h3>
-          <p className="text-xs text-slate-500">The LLM identified cluster phrases that do not match existing intents. Promote them to save time.</p>
+          <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono tracking-wider">
+            {t.clientAdmin.intents.aiDiscoveryTitle}
+          </h3>
+          <p className="text-xs text-slate-500">{t.clientAdmin.intents.aiDiscoveryDesc}</p>
 
           {promotionMessage && (
             <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
@@ -195,39 +205,43 @@ export function IntentsList() {
               const isDisabled = isPromoting || isAlreadyAdded;
 
               return (
-              <div
-                key={sug.name}
-                className={`bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl p-3.5 space-y-2 shadow-sm transition-all duration-200 ${
-                  isPromoting ? 'opacity-0 -translate-y-1 scale-95 pointer-events-none' : 'opacity-100'
-                }`}
-              >
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-800 dark:text-white font-mono">#{sug.name}</span>
-                  <div className="flex items-center gap-1.5">
-                    {isAlreadyAdded && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                        <span aria-hidden="true">✓</span>
-                        Added
-                      </span>
-                    )}
-                    <span className="font-mono text-slate-400 font-bold">{sug.count} hits</span>
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-400">Sample: "{sug.phrase}"</p>
-                <button
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => handlePromoteSuggestion(sug)}
-                  className={`w-full py-1 text-[10px] font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                    isAlreadyAdded
-                      ? 'bg-emerald-600 text-white cursor-not-allowed opacity-75'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-60'
+                <div
+                  key={sug.name}
+                  className={`bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl p-3.5 space-y-2 shadow-sm transition-all duration-200 ${
+                    isPromoting ? 'opacity-0 -translate-y-1 scale-95 pointer-events-none' : 'opacity-100'
                   }`}
                 >
-                  {isPromoting ? 'Promoting...' : isAlreadyAdded ? 'Already Added' : 'Promote to Intent'}
-                </button>
-              </div>
-            );
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-slate-800 dark:text-white font-mono">#{sug.name}</span>
+                    <div className="flex items-center gap-1.5">
+                      {isAlreadyAdded && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                          <span aria-hidden="true">✓</span>
+                          {t.clientAdmin.intents.alreadyAdded}
+                        </span>
+                      )}
+                      <span className="font-mono text-slate-400 font-bold">{sug.count} hits</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400">Sample: "{sug.phrase}"</p>
+                  <button
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={() => handlePromoteSuggestion(sug)}
+                    className={`w-full py-1 text-[10px] font-bold rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                      isAlreadyAdded
+                        ? 'bg-emerald-600 text-white cursor-not-allowed opacity-75'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-60'
+                    }`}
+                  >
+                    {isPromoting
+                      ? t.clientAdmin.intents.promoting
+                      : isAlreadyAdded
+                      ? t.clientAdmin.intents.alreadyAdded
+                      : t.clientAdmin.intents.promoteToIntent}
+                  </button>
+                </div>
+              );
             })}
           </div>
         </div>

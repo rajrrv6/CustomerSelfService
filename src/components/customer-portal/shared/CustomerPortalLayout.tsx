@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { Sparkles, Search, BookOpen, ShieldCheck, Plus, PhoneCall, Volume2, CheckCircle } from 'lucide-react';
 import { AccessibilityWidget } from '../accessibility/AccessibilityWidget';
 import { VoiceCallModal } from '../callbacks/VoiceCallModal';
@@ -43,6 +44,8 @@ export function CustomerPortalLayout({
     conversations,
     setConversations
   } = useApp();
+
+  const t = translations[lang];
 
   // ----------------------------------------------------
   // Mock Data definitions
@@ -327,8 +330,8 @@ To unlock your access:
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-sm">Welcome back, David Miller</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block font-mono">Profile: corporate-gold-user</span>
+            <h3 className="font-bold text-sm">{t.portal.homeHero.welcomeBack}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block font-mono">{t.portal.homeHero.profileBadge}</span>
           </div>
         </div>
 
@@ -338,21 +341,21 @@ To unlock your access:
             onClick={() => setActiveSubScreen('customer_chat_history')}
             className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold rounded-xl transition-all font-mono"
           >
-            Past Chats
+            {t.portal.homeHero.pastChats}
           </button>
           
           <button
             onClick={() => setShowCobrowseModal(true)}
             className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold rounded-xl transition-all font-mono"
           >
-            Co-Browse
+            {t.portal.homeHero.coBrowse}
           </button>
 
           <button
             onClick={() => setShowAccessibilityWidget(true)}
-            className="px-3.5 py-1.5 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-bold rounded-xl hover:bg-blue-100 font-mono"
+            className="px-3.5 py-1.5 bg-blue-55 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-bold rounded-xl hover:bg-blue-100 font-mono"
           >
-            Accessibility Options
+            {t.portal.homeHero.accessibilityOptions}
           </button>
         </div>
       </div>
@@ -362,19 +365,19 @@ To unlock your access:
         {activeSubScreen === 'customer_home' && (
           <div className="space-y-6">
             <div className="bg-linear-to-r from-blue-600 to-indigo-750 text-white rounded-3xl p-8 text-center space-y-3.5 shadow-lg shadow-blue-500/10 relative overflow-hidden">
-              <span className="px-3 py-1 bg-white/15 rounded-full text-[10px] font-bold backdrop-blur-md">
-                FARAH AI SUPPORT DESK
+              <span className="px-3 py-1 bg-white/15 rounded-full text-[10px] font-bold backdrop-blur-md font-mono">
+                {t.portal.homeHero.badge}
               </span>
-              <h2 className="text-3xl font-extrabold tracking-tight">Self-Service Client Portal</h2>
-              <p className="text-xs text-blue-100 max-w-md mx-auto leading-relaxed">
-                Unlock instant solutions by looking up order parameters, reading policy handbooks, or initiating automated refunds.
+              <h2 className="text-3xl font-extrabold tracking-tight">{t.portal.homeHero.heroTitle}</h2>
+              <p className="text-xs text-blue-105 max-w-md mx-auto leading-relaxed">
+                {t.portal.homeHero.heroDesc}
               </p>
 
               <div className="max-w-md mx-auto relative pt-2">
                 <Search className="absolute left-3.5 top-5 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Type query to fetch RAG matching segments (e.g. refund)..."
+                  placeholder={t.portal.homeHero.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -394,8 +397,8 @@ To unlock your access:
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-blue-500 transition-all text-left space-y-2.5 shadow-sm"
               >
                 <BookOpen className="w-6 h-6 text-blue-500" />
-                <h4 className="font-bold text-xs text-slate-850 dark:text-white">Knowledge Hub</h4>
-                <p className="text-[10px] text-slate-450 dark:text-slate-400 font-normal">Search full-text PDF segments stored in Pinecone.</p>
+                <h4 className="font-bold text-xs text-slate-850 dark:text-white">{t.portal.homeHero.knowledgeHubTitle}</h4>
+                <p className="text-[10px] text-slate-450 dark:text-slate-400 font-normal">{t.portal.homeHero.knowledgeHubDesc}</p>
               </button>
 
               <button
@@ -404,8 +407,8 @@ To unlock your access:
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-blue-500 transition-all text-left space-y-2.5 shadow-sm"
               >
                 <ShieldCheck className="w-6 h-6 text-emerald-500" />
-                <h4 className="font-bold text-xs text-slate-850 dark:text-white">Order & Refunds</h4>
-                <p className="text-[10px] text-slate-450 dark:text-slate-400 font-normal">Validate order updates and request product exemptions.</p>
+                <h4 className="font-bold text-xs text-slate-850 dark:text-white">{t.portal.homeHero.orderRefundsTitle}</h4>
+                <p className="text-[10px] text-slate-450 dark:text-slate-400 font-normal">{t.portal.homeHero.orderRefundsDesc}</p>
               </button>
 
               <button
@@ -413,8 +416,8 @@ To unlock your access:
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-blue-500 transition-all text-left space-y-2.5 shadow-sm"
               >
                 <Plus className="w-6 h-6 text-purple-500" />
-                <h4 className="font-bold text-xs text-slate-850 dark:text-white">Submit Ticket</h4>
-                <p className="text-[10px] text-slate-450 dark:text-slate-400 font-normal">Create and track incident reports in CRM systems.</p>
+                <h4 className="font-bold text-xs text-slate-855 dark:text-white">{t.portal.homeHero.submitTicketTitle}</h4>
+                <p className="text-[10px] text-slate-455 dark:text-slate-400 font-normal">{t.portal.homeHero.submitTicketDesc}</p>
               </button>
 
               <button
@@ -422,8 +425,8 @@ To unlock your access:
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-blue-500 transition-all text-left space-y-2.5 shadow-sm"
               >
                 <PhoneCall className="w-6 h-6 text-indigo-500" />
-                <h4 className="font-bold text-xs text-slate-855 dark:text-white">Voice Scheduling</h4>
-                <p className="text-[10px] text-slate-450 dark:text-slate-400 font-normal">Book an outbound call callback time with support agents.</p>
+                <h4 className="font-bold text-xs text-slate-855 dark:text-white">{t.portal.homeHero.voiceSchedulingTitle}</h4>
+                <p className="text-[10px] text-slate-450 dark:text-slate-400 font-normal">{t.portal.homeHero.voiceSchedulingDesc}</p>
               </button>
             </div>
           </div>
@@ -601,7 +604,7 @@ To unlock your access:
           className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white font-bold rounded-full shadow-lg text-[10px] hover:bg-emerald-700 font-mono transition-all hover:scale-105 active:scale-95"
         >
           <Volume2 className="w-4 h-4" />
-          <span>Hotline</span>
+          <span>{t.portal.homeHero.hotline}</span>
         </button>
       </div>
     </div>

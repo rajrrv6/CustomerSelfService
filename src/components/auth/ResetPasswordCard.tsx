@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Lock, CheckCircle2 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import {
   evaluatePasswordStrength,
   RESET_PASSWORD_MIN_LENGTH,
@@ -23,21 +24,12 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function strengthLabel(level: PasswordStrengthLevel, isRtl: boolean): string {
-  if (isRtl) {
-    const map: Record<PasswordStrengthLevel, string> = {
-      weak: 'ضعيفة',
-      fair: 'مقبولة',
-      good: 'جيدة',
-      strong: 'قوية',
-    };
-    return map[level];
-  }
+function strengthLabel(level: PasswordStrengthLevel, t: any): string {
   const map: Record<PasswordStrengthLevel, string> = {
-    weak: 'Weak',
-    fair: 'Fair',
-    good: 'Good',
-    strong: 'Strong',
+    weak: t.auth.weak,
+    fair: t.auth.fair,
+    good: t.auth.good,
+    strong: t.auth.strong,
   };
   return map[level];
 }
@@ -60,6 +52,7 @@ function strengthBarClass(level: PasswordStrengthLevel): string {
 export function ResetPasswordCard() {
   const router = useRouter();
   const { lang } = useApp();
+  const t = translations[lang];
   const isRtl = lang === 'ar';
 
   const [hasPendingSession] = useState(() => !!readPendingPasswordReset());
@@ -112,28 +105,26 @@ export function ResetPasswordCard() {
 
   useEffect(() => {
     if (phase !== 'success') return;
-    const t = setTimeout(() => {
+    const timeout = setTimeout(() => {
       router.replace('/login');
     }, REDIRECT_MS);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timeout);
   }, [phase, router]);
 
   if (!hasPendingSession || sessionInvalid) {
     return (
       <div className="bg-slate-50/95 dark:bg-slate-900/70 dark:backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8 text-center space-y-4">
         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          {isRtl
-            ? 'انتهت صلاحية جلسة إعادة التعيين أو لم تبدأ من صفحة نسيت كلمة المرور. اطلب رابطاً جديداً.'
-            : 'This reset session is missing or has expired. Start again from forgot password.'}
+          {t.auth.sessionExpired}
         </p>
         <Link
           href="/login/forgot-password"
           className="inline-block w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold text-center"
         >
-          {isRtl ? 'طلب إعادة التعيين' : 'Request password reset'}
+          {t.auth.requestPasswordReset}
         </Link>
         <Link href="/login" className="block text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-          {isRtl ? 'العودة إلى تسجيل الدخول' : 'Back to sign in'}
+          {t.auth.backToSignIn}
         </Link>
       </div>
     );
@@ -146,10 +137,10 @@ export function ResetPasswordCard() {
           <CheckCircle2 className="w-7 h-7" aria-hidden />
         </div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-          {isRtl ? 'تم تحديث كلمة المرور' : 'Password updated'}
+          {t.auth.passwordUpdated}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {isRtl ? 'إعادة التوجيه إلى تسجيل الدخول...' : 'Redirecting to sign in...'}
+          {t.auth.redirectingToSignIn}
         </p>
         <Loader2 className="w-5 h-5 animate-spin text-blue-600 mx-auto" aria-hidden />
       </div>
@@ -161,7 +152,7 @@ export function ResetPasswordCard() {
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <div className="space-y-1.5">
           <label htmlFor="new-password" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            {isRtl ? 'كلمة المرور الجديدة' : 'New password'}
+            {t.auth.newPassword}
           </label>
           <div className="relative">
             <Lock
@@ -185,8 +176,8 @@ export function ResetPasswordCard() {
           {newPassword.length > 0 && (
             <div id="password-strength-meter" className="space-y-1.5">
               <div className="flex justify-between items-center text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                <span>{isRtl ? 'القوة' : 'Strength'}</span>
-                <span>{strengthLabel(strength.level, isRtl)}</span>
+                <span>{t.auth.strength}</span>
+                <span>{strengthLabel(strength.level, t)}</span>
               </div>
               <div
                 className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"
@@ -212,7 +203,7 @@ export function ResetPasswordCard() {
 
         <div className="space-y-1.5">
           <label htmlFor="confirm-password" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            {isRtl ? 'تأكيد كلمة المرور' : 'Confirm password'}
+            {t.auth.confirmPassword}
           </label>
           <div className="relative">
             <Lock
@@ -247,16 +238,16 @@ export function ResetPasswordCard() {
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-              {isRtl ? 'جاري الحفظ...' : 'Saving...'}
+              {t.auth.saving}
             </>
           ) : (
-            isRtl ? 'تحديث كلمة المرور' : 'Update password'
+            t.auth.updatePassword
           )}
         </button>
 
         <p className="text-center">
           <Link href="/login" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-            {isRtl ? 'العودة إلى تسجيل الدخول' : 'Back to sign in'}
+            {t.auth.backToSignIn}
           </Link>
         </p>
       </form>

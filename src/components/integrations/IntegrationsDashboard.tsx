@@ -12,6 +12,7 @@ import { ConflictResolutionDrawer } from './ConflictResolutionDrawer';
 import { RetryQueuePanel } from './RetryQueuePanel';
 import { ApiCredentialVault } from './ApiCredentialVault';
 import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { CRMConnector } from '@/data/seed/crmConnectorsSeed';
 import { SyncConflict } from '@/data/seed/syncConflictSeed';
 import { 
@@ -28,6 +29,7 @@ import {
 export function IntegrationsDashboard() {
   const { lang } = useApp();
   const isRtl = lang === 'ar';
+  const t = translations[lang];
 
   const [activeTab, setActiveTab] = useState<'overview' | 'marketplace' | 'webhooks' | 'vault' | 'audits'>('overview');
   
@@ -76,11 +78,11 @@ export function IntegrationsDashboard() {
       {!selectedConnector && (
         <div className="flex border-b border-slate-200 dark:border-slate-800">
           {[
-            { id: 'overview', label: isRtl ? 'لوحة التحكم والمزامنة' : 'Sync Console', icon: <Activity className="w-4 h-4" /> },
-            { id: 'marketplace', label: isRtl ? 'سوق الموصلات' : 'App Marketplace', icon: <Database className="w-4 h-4" /> },
-            { id: 'webhooks', label: isRtl ? 'الويب هوك' : 'Webhooks Console', icon: <Radio className="w-4 h-4" /> },
-            { id: 'vault', label: isRtl ? 'خزنة المفاتيح API' : 'API Token Vault', icon: <Key className="w-4 h-4" /> },
-            { id: 'audits', label: isRtl ? 'سجلات الرقابة والأمن' : 'Audit Trail Logs', icon: <History className="w-4 h-4" /> }
+            { id: 'overview', label: t.clientAdmin.integrations.syncConsole, icon: <Activity className="w-4 h-4" /> },
+            { id: 'marketplace', label: t.clientAdmin.integrations.appMarketplace, icon: <Database className="w-4 h-4" /> },
+            { id: 'webhooks', label: t.clientAdmin.integrations.webhooksConsole, icon: <Radio className="w-4 h-4" /> },
+            { id: 'vault', label: t.clientAdmin.integrations.apiTokenVault, icon: <Key className="w-4 h-4" /> },
+            { id: 'audits', label: t.clientAdmin.integrations.auditTrailLogs, icon: <History className="w-4 h-4" /> }
           ].map(tab => {
             const isActive = activeTab === tab.id;
             return (
@@ -120,16 +122,16 @@ export function IntegrationsDashboard() {
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 md:p-6 space-y-4 shadow-sm">
                   <h4 className="text-[10px] uppercase text-slate-500 dark:text-slate-400 tracking-wider font-bold font-mono flex items-center gap-1.5">
                     <ShieldAlert className="w-4 h-4 text-amber-500" />
-                    {isRtl ? 'التعارضات النشطة' : 'Database Sync Conflicts'}
+                    {t.clientAdmin.integrations.dbSyncConflicts}
                   </h4>
                   <p className="text-[9.5px] text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
-                    Merge schema discrepancies side-by-side to keep a single customer profile index.
+                    {t.clientAdmin.integrations.conflictDesc}
                   </p>
 
                   {conflicts.length === 0 ? (
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center gap-2">
                       <UserCheck className="w-4 h-4" />
-                      <span>{isRtl ? 'رائع! لا توجد أي تعارضات' : 'All customer profiles unified.'}</span>
+                      <span>{t.clientAdmin.integrations.allProfilesUnified}</span>
                     </div>
                   ) : (
                     <div className="space-y-2.5">
@@ -142,11 +144,11 @@ export function IntegrationsDashboard() {
                           <div className="space-y-0.5">
                             <span className="font-bold text-slate-800 dark:text-white text-[11px] block">{conf.customerName}</span>
                             <span className="text-[9px] text-slate-500 uppercase font-mono">
-                              Detected: {conf.sourceConnectorId}
+                              {t.clientAdmin.integrations.detected} {conf.sourceConnectorId}
                             </span>
                           </div>
                           <button className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5">
-                            {isRtl ? 'حل التعارض' : 'Resolve'}
+                            {t.clientAdmin.integrations.resolve}
                             <ArrowRight className="w-3 h-3" />
                           </button>
                         </div>
@@ -168,7 +170,7 @@ export function IntegrationsDashboard() {
               {/* Health Telemetry */}
               <div className="space-y-3.5">
                 <h4 className="text-[10px] uppercase text-slate-500 dark:text-slate-400 tracking-wider font-bold font-mono">
-                  API Operational Health Telemetry
+                  {t.clientAdmin.integrations.apiHealthTitle}
                 </h4>
                 <IntegrationHealthPanel
                   connectors={connectors}
@@ -215,7 +217,7 @@ export function IntegrationsDashboard() {
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 md:p-6 space-y-4 shadow-sm">
               <h3 className="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
                 <History className="w-5 h-5 text-blue-500" />
-                {isRtl ? 'سجلات الرقابة الأمنية للمنظومة' : 'Ecosystem Integration Audit Log'}
+                {t.clientAdmin.integrations.ecosystemAuditLog}
               </h3>
 
               <div className="space-y-3.5">

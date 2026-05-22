@@ -5,6 +5,9 @@ import { QueueSwitcher } from './QueueSwitcher';
 import { QueueConfig } from '@/data/seed/queueSeed';
 import { SentimentBadge } from './SentimentBadge';
 
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
+
 interface UnifiedInboxProps {
   conversations: Conversation[];
   activeChatId: string;
@@ -33,14 +36,17 @@ export function UnifiedInbox({
   onSearchChange,
   className
 }: UnifiedInboxProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   // Tabs config
   const tabs = [
-    { id: 'all', label: 'All', icon: null },
-    { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
-    { id: 'web', label: 'Chat', icon: Globe },
-    { id: 'email', label: 'Email', icon: Mail },
-    { id: 'voice', label: 'Voice', icon: Phone },
-    { id: 'escalated', label: 'Escalated', icon: AlertOctagon }
+    { id: 'all', label: t.agentWorkspace.inbox.tabs.all, icon: null },
+    { id: 'whatsapp', label: t.agentWorkspace.inbox.tabs.whatsapp, icon: MessageSquare },
+    { id: 'web', label: t.agentWorkspace.inbox.tabs.web, icon: Globe },
+    { id: 'email', label: t.agentWorkspace.inbox.tabs.email, icon: Mail },
+    { id: 'voice', label: t.agentWorkspace.inbox.tabs.voice, icon: Phone },
+    { id: 'escalated', label: t.agentWorkspace.inbox.tabs.escalated, icon: AlertOctagon }
   ];
 
   // Filtering
@@ -82,7 +88,7 @@ export function UnifiedInbox({
           <Search className="absolute start-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
-            placeholder="Search active chats..."
+            placeholder={t.agentWorkspace.inbox.searchActive}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 ps-9 pe-4 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
@@ -116,7 +122,7 @@ export function UnifiedInbox({
       <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/40">
         {filtered.length === 0 ? (
           <div className="p-6 text-center text-slate-500 dark:text-slate-400 font-normal">
-            No active conversations match criteria.
+            {t.agentWorkspace.inbox.emptySearch}
           </div>
         ) : (
           filtered.map((chat) => {
@@ -129,14 +135,60 @@ export function UnifiedInbox({
               breached: 'border-rose-500 bg-rose-500'
             }[chat.slaStatus] || 'bg-slate-400';
 
+            // Channel style specifications
+            const channelStyles: Record<string, { borderActive: string; borderInactive: string; bgActive: string; badgeBg: string }> = {
+              whatsapp: {
+                borderActive: 'border-emerald-500 dark:border-emerald-400',
+                borderInactive: 'border-emerald-500/20 dark:border-emerald-500/10',
+                bgActive: 'bg-emerald-500/10 dark:bg-emerald-500/5',
+                badgeBg: 'bg-emerald-500'
+              },
+              email: {
+                borderActive: 'border-violet-500 dark:border-violet-400',
+                borderInactive: 'border-violet-500/20 dark:border-violet-500/10',
+                bgActive: 'bg-violet-500/10 dark:bg-violet-500/5',
+                badgeBg: 'bg-violet-500'
+              },
+              web: {
+                borderActive: 'border-sky-500 dark:border-sky-400',
+                borderInactive: 'border-sky-500/20 dark:border-sky-500/10',
+                bgActive: 'bg-sky-500/10 dark:bg-sky-500/5',
+                badgeBg: 'bg-sky-500'
+              },
+              voice: {
+                borderActive: 'border-cyan-500 dark:border-cyan-400',
+                borderInactive: 'border-cyan-500/20 dark:border-cyan-500/10',
+                bgActive: 'bg-cyan-500/10 dark:bg-cyan-500/5',
+                badgeBg: 'bg-cyan-500'
+              }
+            };
+
+            const escStyle = {
+              borderActive: 'border-rose-600 dark:border-rose-500',
+              borderInactive: 'border-rose-600/30 dark:border-rose-500/20 animate-pulse',
+              bgActive: 'bg-rose-500/10 dark:bg-rose-500/5',
+              badgeBg: 'bg-rose-600'
+            };
+
+            const channelIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+              whatsapp: MessageSquare,
+              email: Mail,
+              web: Globe,
+              voice: Phone
+            };
+
+            const isEscalated = chat.status === 'escalated';
+            const style = isEscalated ? escStyle : (channelStyles[chat.channel] || channelStyles.web);
+            const IconComponent = isEscalated ? AlertOctagon : (channelIcons[chat.channel] || MessageSquare);
+
             return (
               <button
                 key={chat.id}
                 onClick={() => onSelectChat(chat.id)}
                 className={`flex w-full gap-3 border-s-4 p-4 text-start transition-all ${
                   isActive
-                    ? 'border-blue-600 bg-blue-50/60 dark:border-blue-600 dark:bg-blue-900/10'
-                    : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? `${style.borderActive} ${style.bgActive}`
+                    : `${style.borderInactive} hover:bg-slate-100 dark:hover:bg-slate-800/40`
                 }`}
               >
                 {/* Avatar area */}
@@ -150,8 +202,8 @@ export function UnifiedInbox({
                     )}
                   </div>
                   {/* Channel icon badge */}
-                  <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 bg-blue-500 text-white flex items-center justify-center text-[7px] font-extrabold uppercase">
-                    {chat.channel.substring(0, 2)}
+                  <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${style.badgeBg} text-white flex items-center justify-center p-0.5 shadow-sm`}>
+                    <IconComponent className="w-2.5 h-2.5 shrink-0" />
                   </span>
                 </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { initialNodes, initialEdges } from '@/data/seed/workflowSeed';
 import { useWorkflowState } from './hooks/useWorkflowState';
 import { useNodeSelection } from './hooks/useNodeSelection';
@@ -14,6 +15,7 @@ import { MobileSheet } from '@/components/responsive/MobileSheet';
 
 export function DialogFlowLayout() {
   const { lang, addAuditLog } = useApp();
+  const t = translations[lang];
 
   // Workflow builder graph state manager
   const {
@@ -184,13 +186,13 @@ export function DialogFlowLayout() {
             />
             <div className="absolute inset-x-0 bottom-0 max-h-[85dvh] rounded-t-3xl border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
-                <span className="text-xs font-bold text-slate-800 dark:text-white">Workflow Inspector</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-white">{t.dialogFlow.layout.mobileInspectorTitle}</span>
                 <button
                   type="button"
                   onClick={() => setIsInspectorOpen(false)}
                   className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold"
                 >
-                  Close
+                  {t.dialogFlow.layout.mobileInspectorClose}
                 </button>
               </div>
               <WorkflowInspector
@@ -262,8 +264,8 @@ export function DialogFlowLayout() {
       <MobileSheet
         open={simulatorSheetOpen}
         onClose={() => setSimulatorSheetOpen(false)}
-        title="Farah NLU Simulator"
-        description="Run chat simulation and inspect trace logs."
+        title={t.dialogFlow.layout.simulatorSheetTitle}
+        description={t.dialogFlow.layout.simulatorSheetDesc}
         bodyClassName="max-h-[min(85dvh,640px)]"
       >
         <div className="flex min-h-[min(55dvh,480px)] flex-col">
@@ -282,19 +284,19 @@ export function DialogFlowLayout() {
 
       {/* Persistence footer bar */}
       <div className="bg-slate-50 dark:bg-slate-950 px-4 sm:px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-[10px] font-mono text-slate-400 shrink-0">
-        <span className="truncate">mPaaS AI Workflow Engine: v1.8.0-stable</span>
+        <span className="truncate">{t.dialogFlow.layout.footerVersion}</span>
         <div className="flex flex-wrap gap-2.5 sm:justify-end">
           <button
             onClick={handleLoadFlow}
             className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 rounded-lg text-slate-700 dark:text-slate-300"
           >
-            Load Cache Draft
+            {t.dialogFlow.layout.footerLoadDraft}
           </button>
           <button
             onClick={handleSaveFlow}
             className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold"
           >
-            Save Cache Draft
+            {t.dialogFlow.layout.footerSaveDraft}
           </button>
         </div>
       </div>

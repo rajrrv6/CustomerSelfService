@@ -1,7 +1,8 @@
 'use client';
-
 import React from 'react';
 import { ArrowLeft, Star } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface ChatHistoryItem {
   id: string;
@@ -20,6 +21,9 @@ export function CustomerChatHistory({
   historicalChats,
   setActiveSubScreen
 }: CustomerChatHistoryProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   return (
     <div className="space-y-6 text-slate-800 dark:text-slate-200">
       <div className="flex items-center gap-3">
@@ -31,8 +35,8 @@ export function CustomerChatHistory({
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h2 className="text-xl font-bold">Resolved Chat History</h2>
-          <p className="text-xs text-slate-400">View logs of past resolved customer support chats.</p>
+          <h2 className="text-xl font-bold">{t.portal.chatHistory.title}</h2>
+          <p className="text-xs text-slate-400">{t.portal.chatHistory.subtitle}</p>
         </div>
       </div>
 
@@ -43,12 +47,12 @@ export function CustomerChatHistory({
             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3"
           >
             <div className="flex justify-between items-center text-[10px] text-slate-450 dark:text-slate-400 font-mono">
-              <span>Chat ID: {chat.id}</span>
-              <span>Solved: {chat.solvedDate}</span>
+              <span>{t.portal.chatHistory.chatId} {chat.id}</span>
+              <span>{t.portal.chatHistory.solved} {chat.solvedDate}</span>
             </div>
             <h4 className="font-bold text-xs text-slate-800 dark:text-white">{chat.title}</h4>
             <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-850 text-xs">
-              <span className="text-slate-450 dark:text-slate-400">Agent: <strong>{chat.agent}</strong></span>
+              <span className="text-slate-450 dark:text-slate-400">{t.portal.chatHistory.agent} <strong>{chat.agent}</strong></span>
               
               <div className="flex gap-0.5 text-amber-500">
                 {Array.from({ length: chat.rating }).map((_, i) => (

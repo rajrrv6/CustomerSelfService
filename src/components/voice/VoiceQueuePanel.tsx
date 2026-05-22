@@ -6,9 +6,10 @@ interface VoiceQueuePanelProps {
   queue: QueuedCall[];
   onAnswerCaller: (phoneNumber: string, name: string) => void;
   onSimulateInbound: () => void;
+  disableActions?: boolean;
 }
 
-export function VoiceQueuePanel({ queue, onAnswerCaller, onSimulateInbound }: VoiceQueuePanelProps) {
+export function VoiceQueuePanel({ queue, onAnswerCaller, onSimulateInbound, disableActions = false }: VoiceQueuePanelProps) {
   
   // Format seconds -> mm:ss
   const formatTime = (sec: number) => {
@@ -59,8 +60,9 @@ export function VoiceQueuePanel({ queue, onAnswerCaller, onSimulateInbound }: Vo
 
       {/* Simulator Trigger */}
       <button
+        disabled={disableActions}
         onClick={onSimulateInbound}
-        className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 text-[10px] rounded-xl flex items-center justify-center gap-1.5 font-bold"
+        className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 text-[10px] rounded-xl flex items-center justify-center gap-1.5 font-bold disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Volume2 className="w-4 h-4 text-blue-500 shrink-0" />
         <span>Trigger Simulated Queue Inbound</span>
@@ -89,8 +91,9 @@ export function VoiceQueuePanel({ queue, onAnswerCaller, onSimulateInbound }: Vo
                 Wait: {formatTime(c.waitTime)}
               </span>
               <button
+                disabled={disableActions}
                 onClick={() => onAnswerCaller(c.phoneNumber, c.customerName)}
-                className="px-2.5 py-1 text-[9px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold"
+                className="px-2.5 py-1 text-[9px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Pickup
               </button>

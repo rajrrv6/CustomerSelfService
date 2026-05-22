@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { QAReview } from '@/types';
 import { Award, Plus, Sliders, CheckCircle, HelpCircle, MessageSquare } from 'lucide-react';
+import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
+import { SurveysTab } from '@/components/client-admin/operations/SurveysTab';
+
 
 export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) {
   const { qaReviews, setQaReviews, addAuditLog } = useApp();
@@ -37,6 +40,13 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
   };
 
   switch (activeSubScreen) {
+    case 'inbox':
+      return <AgentWorkspaceLayout activeSubScreen={activeSubScreen} />;
+
+    case 'surveys':
+      return <SurveysTab />;
+
+
     case 'qa_queue':
       return (
         <div className="space-y-6">

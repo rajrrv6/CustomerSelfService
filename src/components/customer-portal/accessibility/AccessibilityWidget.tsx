@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface AccessibilityWidgetProps {
   isOpen: boolean;
@@ -20,12 +22,15 @@ export function AccessibilityWidget({
   highContrast,
   setHighContrast
 }: AccessibilityWidgetProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   return (
-    <ModalWrapper isOpen={isOpen} onClose={onClose} title="Accessibility Toolbox" maxWidthClass="max-w-sm">
+    <ModalWrapper isOpen={isOpen} onClose={onClose} title={t.portal.accessibility.modalTitle} maxWidthClass="max-w-sm">
       <div className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
         {/* High Contrast Toggle */}
         <div className="flex justify-between items-center">
-          <span>High Contrast Palette</span>
+          <span>{t.portal.accessibility.highContrast}</span>
           <button
             type="button"
             onClick={() => setHighContrast(!highContrast)}
@@ -33,13 +38,13 @@ export function AccessibilityWidget({
               highContrast ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-350'
             }`}
           >
-            {highContrast ? 'Enabled' : 'Disabled'}
+            {highContrast ? t.portal.accessibility.enabled : t.portal.accessibility.disabled}
           </button>
         </div>
 
         {/* Font Size Selector */}
         <div>
-          <label className="block text-slate-500 dark:text-slate-400 mb-1.5">Text Magnification Level</label>
+          <label className="block text-slate-500 dark:text-slate-400 mb-1.5">{t.portal.accessibility.fontSizeLabel}</label>
           <div className="grid grid-cols-3 gap-2">
             {(['sm', 'base', 'lg'] as const).map((sz) => (
               <button
@@ -52,14 +57,14 @@ export function AccessibilityWidget({
                     : 'border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
-                {sz === 'sm' ? 'Small' : sz === 'lg' ? 'Large' : 'Normal'}
+                {sz === 'sm' ? t.portal.accessibility.fontSmall : sz === 'lg' ? t.portal.accessibility.fontLarge : t.portal.accessibility.fontNormal}
               </button>
             ))}
           </div>
         </div>
 
         <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-150 dark:border-slate-850 text-[10px] text-slate-450 dark:text-slate-400 font-normal leading-normal">
-          Keyboard Shortcuts: Use Tab to cycle between focus targets, and press Enter to select option buttons.
+          {t.portal.accessibility.keyboardHint}
         </div>
       </div>
     </ModalWrapper>

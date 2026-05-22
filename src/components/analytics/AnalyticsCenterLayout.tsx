@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/hooks/useAuth';
+import { translations } from '@/i18n/translations';
 import { ExecutiveDashboard } from './ExecutiveDashboard';
 import { SlaAnalytics } from './SlaAnalytics';
 import { QueueHeatmap } from './QueueHeatmap';
@@ -64,31 +65,33 @@ export default function AnalyticsCenterLayout() {
   // AI sub-tab state
   const [aiSubTab, setAiSubTab] = useState<'guardrails' | 'costs'>('guardrails');
 
+  const t = translations[lang];
+
   // Main Tabs array
   const mainTabs = [
     { 
       id: 'executive' as MainTabId, 
-      label: isRtl ? 'لوحة التحكم التنفيذية' : 'Executive Overview', 
+      label: t.analyticsCenter.layout.tabExecutive, 
       icon: <LayoutDashboard className="w-4 h-4" /> 
     },
     { 
       id: 'sla' as MainTabId, 
-      label: isRtl ? 'اتفاقيات مستوى الخدمة (SLA)' : 'SLA & CSAT/NPS', 
+      label: t.analyticsCenter.layout.tabSla, 
       icon: <Clock className="w-4 h-4" /> 
     },
     { 
       id: 'workforce' as MainTabId, 
-      label: isRtl ? 'الموظفين وقنوات الانتظار' : 'Workforce & Queues', 
+      label: t.analyticsCenter.layout.tabWorkforce, 
       icon: <Users className="w-4 h-4" /> 
     },
     { 
       id: 'ai' as MainTabId, 
-      label: isRtl ? 'مراقبة الذكاء الاصطناعي' : 'AI Observability', 
+      label: t.analyticsCenter.layout.tabAi, 
       icon: <Cpu className="w-4 h-4" /> 
     },
     { 
       id: 'integrations' as MainTabId, 
-      label: isRtl ? 'ربط الأنظمة والتكامل' : 'Integrations Observability', 
+      label: t.analyticsCenter.layout.tabIntegrations, 
       icon: <Link2 className="w-4 h-4" /> 
     }
   ].filter(tab => isAllowedTab(tab.id));
@@ -115,7 +118,7 @@ export default function AnalyticsCenterLayout() {
                 role="tab"
                 aria-selected={workforceSubTab === 'wallboard'}
               >
-                {isRtl ? 'شاشة الاتصالات المباشرة' : 'Live Call Wallboard'}
+                {t.analyticsCenter.layout.subWallboard}
               </button>
               <button
                 onClick={() => setWorkforceSubTab('performance')}
@@ -127,7 +130,7 @@ export default function AnalyticsCenterLayout() {
                 role="tab"
                 aria-selected={workforceSubTab === 'performance'}
               >
-                {isRtl ? 'أداء الموظفين والحرارة' : 'Workforce Performance & Heatmap'}
+                {t.analyticsCenter.layout.subPerformance}
               </button>
             </div>
             <div>
@@ -150,7 +153,7 @@ export default function AnalyticsCenterLayout() {
                 role="tab"
                 aria-selected={aiSubTab === 'guardrails'}
               >
-                {isRtl ? 'حواجز الحماية والموجهات' : 'Generative Guardrails & Prompts'}
+                {t.analyticsCenter.layout.subGuardrails}
               </button>
               <button
                 onClick={() => setAiSubTab('costs')}
@@ -162,7 +165,7 @@ export default function AnalyticsCenterLayout() {
                 role="tab"
                 aria-selected={aiSubTab === 'costs'}
               >
-                {isRtl ? 'تكاليف الرموز والبحث' : 'Token Costs & RAG Failures'}
+                {t.analyticsCenter.layout.subCosts}
               </button>
             </div>
             <div>
@@ -184,12 +187,10 @@ export default function AnalyticsCenterLayout() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-850 pb-5">
         <div className="space-y-1">
           <h2 className="text-lg font-black text-slate-900 dark:text-white leading-none">
-            {isRtl ? 'مركز التحليلات والمراقبة الشاملة' : 'Analytics & Observability Center'}
+            {t.analyticsCenter.layout.title}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            {isRtl
-              ? 'مراقبة أداء محادثات الذكاء الاصطناعي، المكالمات الهاتفية المباشرة، تكامل الأنظمة الخارجية، ومستوى الخدمة.'
-              : 'Real-time telemetry, agent queues capacity, generative guardrail logs, and API connector performance metrics.'}
+            {t.analyticsCenter.layout.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -198,7 +199,7 @@ export default function AnalyticsCenterLayout() {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </span>
           <span className="text-[10px] font-bold font-mono tracking-wider uppercase text-emerald-600 dark:text-emerald-400">
-            {isRtl ? 'اتصال القياس المباشر نشط' : 'LIVE TELEMETRY STREAM ACTIVE'}
+            {t.analyticsCenter.layout.liveStream}
           </span>
         </div>
       </div>

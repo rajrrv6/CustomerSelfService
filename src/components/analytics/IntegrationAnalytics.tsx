@@ -2,6 +2,8 @@ import React from 'react';
 import { SVGBarChart } from '@/components/dashboard/Charts';
 import { StatusIndicator } from './shared/StatusIndicator';
 import { Database, Link2, RefreshCw, AlertOctagon } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface IntegrationConnector {
   name: string;
@@ -19,6 +21,26 @@ const connectorsList: IntegrationConnector[] = [
 ];
 
 export function IntegrationAnalytics() {
+  const { lang } = useApp();
+  const t = translations[lang];
+
+  const getConnectorName = (name: string) => {
+    if (lang === 'ar') {
+      switch (name) {
+        case 'SAP ERP Logistics Sync': return 'مزامنة لوجستيات SAP ERP';
+        case 'Salesforce CRM Lead Pipeline': return 'تدفق عملاء Salesforce CRM';
+        case 'Twilio Voice Gateway SIP Trunk': return 'جذع SIP لبوابة صوت Twilio';
+        case 'Pinecone Vector DB Index': return 'فهرس قاعدة بيانات ناقلات Pinecone';
+        default: return name;
+      }
+    }
+    return name;
+  };
+
+  const weekdayLabels = lang === 'ar'
+    ? ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
   return (
     <div className="space-y-6 text-xs text-slate-800 dark:text-slate-200">
 
@@ -28,15 +50,18 @@ export function IntegrationAnalytics() {
           <div key={conn.name} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex justify-between items-start">
               <Link2 className="w-5 h-5 text-blue-500 bg-blue-50 dark:bg-blue-950/20 p-1 rounded-full shrink-0" />
-              <StatusIndicator status={conn.status} label={conn.status === 'online' ? 'Healthy' : 'Degraded'} />
+              <StatusIndicator 
+                status={conn.status} 
+                label={conn.status === 'online' ? t.analyticsCenter.integrations.healthy : t.analyticsCenter.integrations.degraded} 
+              />
             </div>
             <div>
-              <strong className="block font-bold text-slate-900 dark:text-white leading-tight">{conn.name}</strong>
+              <strong className="block font-bold text-slate-900 dark:text-white leading-tight">{getConnectorName(conn.name)}</strong>
               <span className="block text-[8px] text-slate-400 font-mono mt-0.5 truncate" title={conn.endpoint}>{conn.endpoint}</span>
             </div>
             <div className="flex justify-between items-center text-[10px] font-mono border-t border-slate-100 dark:border-slate-850 pt-2">
-              <span className="text-slate-450">Latency: <span className="font-bold text-slate-850 dark:text-slate-250">{conn.latencyMs}ms</span></span>
-              <span className="text-slate-450">Sacc: <span className="font-bold text-emerald-600 dark:text-emerald-450">{conn.successRate}%</span></span>
+              <span className="text-slate-450">{t.analyticsCenter.integrations.latency}: <span className="font-bold text-slate-850 dark:text-slate-250">{conn.latencyMs}ms</span></span>
+              <span className="text-slate-455">{t.analyticsCenter.integrations.successRate}: <span className="font-bold text-emerald-600 dark:text-emerald-450">{conn.successRate}%</span></span>
             </div>
           </div>
         ))}
@@ -47,8 +72,8 @@ export function IntegrationAnalytics() {
         <div className="lg:col-span-2">
           <SVGBarChart
             data={[2, 0, 1, 4, 3, 1, 0]}
-            labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
-            title="Webhook Delivery Failure Events (Weekly)"
+            labels={weekdayLabels}
+            title={t.analyticsCenter.integrations.webhookTitle}
             barColor="#f43f5e"
           />
         </div>
@@ -56,8 +81,8 @@ export function IntegrationAnalytics() {
         {/* Retry Queue metrics */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm flex flex-col justify-between" style={{ minHeight: '270px' }}>
           <div>
-            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">Retry Queue & Dead-Letters</h4>
-            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">Pending sync re-attempts using exponential backoff schedules.</p>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-none">{t.analyticsCenter.integrations.retryQueueTitle}</h4>
+            <p className="text-[10px] text-slate-500 dark:text-slate-455 mt-1">{t.analyticsCenter.integrations.retryQueueSubtitle}</p>
           </div>
 
           <div className="space-y-4.5 py-4">
@@ -67,8 +92,8 @@ export function IntegrationAnalytics() {
               <div className="flex items-center gap-2">
                 <RefreshCw className="w-5 h-5 text-blue-500 bg-blue-50 dark:bg-blue-950/20 p-1.5 rounded-full shrink-0" />
                 <div>
-                  <strong className="block font-bold text-slate-800 dark:text-slate-200">Active Retries</strong>
-                  <span className="text-[8px] text-slate-400">Attempts 1 to 5</span>
+                  <strong className="block font-bold text-slate-800 dark:text-slate-200">{t.analyticsCenter.integrations.activeRetries}</strong>
+                  <span className="text-[8px] text-slate-400">{t.analyticsCenter.integrations.attemptsRange}</span>
                 </div>
               </div>
               <span className="font-mono text-base font-black text-blue-650 dark:text-blue-400">3</span>
@@ -79,8 +104,8 @@ export function IntegrationAnalytics() {
               <div className="flex items-center gap-2">
                 <Database className="w-5 h-5 text-amber-500 bg-amber-50 dark:bg-amber-950/20 p-1.5 rounded-full shrink-0" />
                 <div>
-                  <strong className="block font-bold text-slate-800 dark:text-slate-200">Backoff Queue Hold</strong>
-                  <span className="text-[8px] text-slate-400">Delayed scheduled calls</span>
+                  <strong className="block font-bold text-slate-800 dark:text-slate-200">{t.analyticsCenter.integrations.backoffQueueHold}</strong>
+                  <span className="text-[8px] text-slate-400">{t.analyticsCenter.integrations.delayedCalls}</span>
                 </div>
               </div>
               <span className="font-mono text-base font-black text-amber-550 dark:text-amber-400">12</span>
@@ -91,17 +116,17 @@ export function IntegrationAnalytics() {
               <div className="flex items-center gap-2">
                 <AlertOctagon className="w-5 h-5 text-rose-500 bg-rose-50 dark:bg-rose-950/20 p-1.5 rounded-full shrink-0 animate-pulse" />
                 <div>
-                  <strong className="block font-bold text-slate-800 dark:text-slate-200 font-sans">Dead-Letter Queue (DLQ)</strong>
-                  <span className="text-[8px] text-slate-400">Failed completely (Needs audit)</span>
+                  <strong className="block font-bold text-slate-800 dark:text-slate-200 font-sans">{t.analyticsCenter.integrations.dlqTitle}</strong>
+                  <span className="text-[8px] text-slate-400">{t.analyticsCenter.integrations.dlqSubtitle}</span>
                 </div>
               </div>
-              <span className="font-mono text-base font-black text-rose-600 dark:text-rose-450">2</span>
+              <span className="font-mono text-base font-black text-rose-600 dark:text-rose-455">2</span>
             </div>
 
           </div>
 
           <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-905 rounded-2xl text-[9px] text-slate-400 text-center font-mono">
-            DLQ logs alert automatically to Slack #ops channel.
+            {t.analyticsCenter.integrations.dlqAlertHint}
           </div>
         </div>
       </div>

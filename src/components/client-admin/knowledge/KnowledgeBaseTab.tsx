@@ -5,9 +5,11 @@ import { useApp } from '@/context/AppContext';
 import { Brain, RefreshCw, AlertCircle } from 'lucide-react';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
+import { translations } from '@/i18n/translations';
 
 export function KnowledgeBaseTab() {
-  const { knowledgeSources, ingestionLogs, triggerIngestion } = useApp();
+  const { lang, knowledgeSources, ingestionLogs, triggerIngestion } = useApp();
+  const t = translations[lang];
 
   // Ingestion Sync Trigger state
   const [syncingId, setSyncingId] = useState<string | null>(null);
@@ -23,15 +25,17 @@ export function KnowledgeBaseTab() {
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="RAG Knowledge Ingestion"
-        description="Inject PDFs, sync Confluence wikis, modify chunking size, and track indexing databases."
+        title={t.clientAdmin.kb.title}
+        description={t.clientAdmin.kb.description}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sources list */}
         <div className="lg:col-span-2 space-y-4">
           <OperationalCard hoverEffect={false} className="p-5 space-y-4">
-            <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">Indexing Knowledge Sources</h3>
+            <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">
+              {t.clientAdmin.kb.indexingSources}
+            </h3>
             <div className="space-y-4">
               {knowledgeSources.map((src) => (
                 <div
@@ -39,16 +43,16 @@ export function KnowledgeBaseTab() {
                   className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 rounded-2xl hover:border-slate-205 dark:hover:border-slate-800 transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                      <Brain className="w-4.5 h-4.5" />
-                    </div>
+                     <div className="w-9 h-9 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                       <Brain className="w-4.5 h-4.5" />
+                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-slate-900 dark:text-white">{src.name}</h4>
                       <div className="flex gap-3 text-[10px] text-slate-450 mt-1 font-mono">
-                        <span>Chunks: <strong className="text-slate-700 dark:text-slate-350">{src.chunkCount}</strong></span>
-                        <span>Type: <strong className="uppercase">{src.type}</strong></span>
+                        <span>{t.clientAdmin.kb.chunks}: <strong className="text-slate-700 dark:text-slate-350">{src.chunkCount}</strong></span>
+                        <span>{t.clientAdmin.kb.type}: <strong className="uppercase">{src.type}</strong></span>
                         {src.sizeBytes ? (
-                          <span>Size: <strong>{(src.sizeBytes / 1000000).toFixed(2)} MB</strong></span>
+                          <span>{t.clientAdmin.kb.size}: <strong>{(src.sizeBytes / 1000000).toFixed(2)} MB</strong></span>
                         ) : null}
                       </div>
                     </div>
@@ -58,15 +62,15 @@ export function KnowledgeBaseTab() {
                     {src.status === 'syncing' ? (
                       <div className="flex items-center gap-1.5 text-blue-500 text-[10px] font-bold font-mono">
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>INDEXING...</span>
+                        <span>{t.clientAdmin.kb.indexing}</span>
                       </div>
                     ) : src.status === 'error' ? (
                       <div className="flex items-center gap-1.5 text-rose-500 text-[10px] font-bold font-mono">
                         <AlertCircle className="w-3.5 h-3.5" />
-                        <span>ERROR</span>
+                        <span>{t.clientAdmin.kb.error}</span>
                       </div>
                     ) : (
-                      <span className="text-[10px] text-slate-400 font-mono">Synced: {src.lastIngested}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{t.clientAdmin.kb.synced}: {src.lastIngested}</span>
                     )}
 
                     <button
@@ -74,7 +78,7 @@ export function KnowledgeBaseTab() {
                       onClick={() => handleSyncSource(src.id)}
                       className="px-3 py-1.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
                     >
-                      Sync
+                      {t.clientAdmin.kb.sync}
                     </button>
                   </div>
                 </div>
@@ -84,18 +88,24 @@ export function KnowledgeBaseTab() {
 
           {/* Chunking config */}
           <OperationalCard hoverEffect={false} className="p-5 space-y-4">
-            <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">Chunking & Embedding Configurations</h3>
+            <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">
+              {t.clientAdmin.kb.chunkingConfig}
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">
               <div>
-                <label className="block text-xs font-bold text-slate-450 uppercase font-mono mb-1.5">Embedding Model</label>
-                <select className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none text-slate-800 dark:text-slate-100">
+                <label className="block text-xs font-bold text-slate-450 uppercase font-mono mb-1.5">
+                  {t.clientAdmin.kb.embeddingModel}
+                </label>
+                <select className="w-full px-3 py-2 border border-slate-205 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none text-slate-800 dark:text-slate-100">
                   <option>text-embedding-3-small (1536-dim)</option>
                   <option>text-embedding-3-large (3072-dim)</option>
                   <option>Cohere Multilingual v3</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-450 uppercase font-mono mb-1.5">Overlap Size</label>
+                <label className="block text-xs font-bold text-slate-450 uppercase font-mono mb-1.5">
+                  {t.clientAdmin.kb.overlapSize}
+                </label>
                 <input
                   type="number"
                   defaultValue={128}
@@ -108,7 +118,9 @@ export function KnowledgeBaseTab() {
 
         {/* Ingestion logs timeline */}
         <OperationalCard hoverEffect={false} className="p-5 space-y-4 h-fit">
-          <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">Ingestion Audit Timeline</h3>
+          <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">
+            {t.clientAdmin.kb.auditTimeline}
+          </h3>
           <div className="space-y-3.5">
             {ingestionLogs.map((log) => (
               <div key={log.id} className="border-l-2 border-slate-100 dark:border-slate-800 pl-3.5 space-y-1 relative">

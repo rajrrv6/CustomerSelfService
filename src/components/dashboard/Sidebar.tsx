@@ -62,7 +62,7 @@ export function Sidebar({
           { id: 'cross_tenant_analytics', label: t.crossTenantAnalytics, icon: <TrendingUp className="w-4 h-4" /> },
           { id: 'vector_db', label: t.vectorDbStatus, icon: <Database className="w-4 h-4" /> },
           { id: 'sip_trunk', label: t.sipTrunkConfig, icon: <Phone className="w-4 h-4" /> },
-          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> }
+          { id: 'analytics_center', label: t.screens.analytics_center, icon: <BarChart2 className="w-4 h-4" /> }
         ];
 
       case 'client_admin':
@@ -73,62 +73,62 @@ export function Sidebar({
           { id: 'knowledge_base', label: t.knowledgeBase, icon: <Brain className="w-4 h-4" /> },
           { id: 'guardrails', label: t.safetyGuardrails, icon: <ShieldCheck className="w-4 h-4" /> },
           { id: 'channels', label: t.omnichannel, icon: <Layers className="w-4 h-4" /> },
-          { id: 'agents', label: 'Queues & Agents', icon: <Users className="w-4 h-4" /> },
+          { id: 'agents', label: t.screens.agents, icon: <Users className="w-4 h-4" /> },
           { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
-          { id: 'sla', label: 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
-          { id: 'surveys', label: t.analytics, icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> },
-          { id: 'deployments', label: 'Pipelines & A/B', icon: <Play className="w-4 h-4" /> },
+          { id: 'sla', label: t.screens.sla, icon: <Lock className="w-4 h-4" /> },
+          { id: 'surveys', label: t.screens.surveys, icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'analytics_center', label: t.screens.analytics_center, icon: <BarChart2 className="w-4 h-4" /> },
+          { id: 'deployments', label: t.screens.deployments, icon: <Play className="w-4 h-4" /> },
           { id: 'integrations', label: t.integrations, icon: <Database className="w-4 h-4" /> }
         ];
 
       case 'operations_manager':
         return [
           { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
-          { id: 'agents', label: 'Queues & Roster', icon: <Users className="w-4 h-4" /> },
-          { id: 'sla', label: 'SLA Tracking', icon: <Lock className="w-4 h-4" /> },
-          { id: 'surveys', label: 'CSAT Config', icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'integrations', label: 'CRM integration', icon: <Database className="w-4 h-4" /> },
-          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> }
+          { id: 'agents', label: t.screens.agents, icon: <Users className="w-4 h-4" /> },
+          { id: 'sla', label: t.screens.sla, icon: <Lock className="w-4 h-4" /> },
+          { id: 'surveys', label: t.screens.surveys, icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'integrations', label: t.integrations, icon: <Database className="w-4 h-4" /> },
+          { id: 'analytics_center', label: t.screens.analytics_center, icon: <BarChart2 className="w-4 h-4" /> }
         ];
 
       case 'qa_manager':
         return [
-          { id: 'qa_queue', label: 'QA Review Queue', icon: <Award className="w-4 h-4" /> },
-          { id: 'coaching', label: 'Agent Coaching', icon: <Users className="w-4 h-4" /> },
-          { id: 'inbox', label: 'Conversation Logs', icon: <Mail className="w-4 h-4" /> },
-          { id: 'surveys', label: 'Voice of Customer', icon: <TrendingUp className="w-4 h-4" /> }
+          { id: 'qa_queue', label: t.screens.qa_queue, icon: <Award className="w-4 h-4" /> },
+          { id: 'coaching', label: t.screens.coaching, icon: <Users className="w-4 h-4" /> },
+          { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
+          { id: 'surveys', label: t.screens.surveys, icon: <TrendingUp className="w-4 h-4" /> }
         ];
 
       case 'support_agent':
         return [
-          { id: 'agent_dashboard', label: t.dashboard, icon: <BarChart2 className="w-4 h-4" /> },
+          { id: 'agent_dashboard', label: t.screens.agent_dashboard, icon: <BarChart2 className="w-4 h-4" /> },
           { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
-          { id: 'tickets', label: t.tickets, icon: <FileText className="w-4 h-4" /> }
+          { id: 'tickets', label: t.screens.tickets, icon: <FileText className="w-4 h-4" /> }
         ];
 
       case 'supervisor':
         return [
-          { id: 'inbox', label: 'Live Monitoring', icon: <Mail className="w-4 h-4" /> },
-          { id: 'supervisor_monitor', label: 'Agent Whisper', icon: <Shield className="w-4 h-4" /> },
-          { id: 'workforce', label: 'Shift Scheduling', icon: <Calendar className="w-4 h-4" /> },
-          { id: 'sla', label: 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
-          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> }
+          { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
+          { id: 'supervisor_monitor', label: t.screens.supervisor_monitor, icon: <Shield className="w-4 h-4" /> },
+          { id: 'workforce', label: t.screens.workforce, icon: <Calendar className="w-4 h-4" /> },
+          { id: 'sla', label: t.screens.sla, icon: <Lock className="w-4 h-4" /> },
+          { id: 'analytics_center', label: t.screens.analytics_center, icon: <BarChart2 className="w-4 h-4" /> }
         ];
 
       case 'customer':
         return [
-          { id: 'customer_home', label: 'Helpdesk Home', icon: <HelpCircle className="w-4 h-4" /> },
-          { id: 'customer_kb', label: 'Knowledge Base', icon: <Brain className="w-4 h-4" /> },
-          { id: 'customer_ticket_submit', label: 'Submit Ticket', icon: <FileText className="w-4 h-4" /> },
-          { id: 'customer_my_tickets', label: 'My Tickets', icon: <Layers className="w-4 h-4" /> }
+          { id: 'customer_home', label: t.screens.customer_home, icon: <HelpCircle className="w-4 h-4" /> },
+          { id: 'customer_kb', label: t.screens.customer_kb, icon: <Brain className="w-4 h-4" /> },
+          { id: 'customer_ticket_submit', label: t.screens.customer_ticket_submit, icon: <FileText className="w-4 h-4" /> },
+          { id: 'customer_my_tickets', label: t.screens.customer_my_tickets, icon: <Layers className="w-4 h-4" /> }
         ];
 
       case 'viewer':
         return [
-          { id: 'surveys', label: 'CSAT Analytics', icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'sla', label: 'SLA Status', icon: <Lock className="w-4 h-4" /> },
-          { id: 'analytics_center', label: lang === 'ar' ? 'مركز المراقبة والتحليلات' : 'Analytics Center', icon: <BarChart2 className="w-4 h-4" /> }
+          { id: 'surveys', label: t.screens.surveys, icon: <TrendingUp className="w-4 h-4" /> },
+          { id: 'sla', label: t.screens.sla, icon: <Lock className="w-4 h-4" /> },
+          { id: 'analytics_center', label: t.screens.analytics_center, icon: <BarChart2 className="w-4 h-4" /> }
         ];
 
       default:
@@ -199,7 +199,7 @@ export function Sidebar({
         <div className="lg:hidden mb-3 rounded-2xl border border-slate-800/80 bg-slate-950/70 p-3 text-left">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
             <Globe className="h-3.5 w-3.5 text-blue-400" />
-            <span>{lang === 'ar' ? 'اللغة' : 'Language'}</span>
+            <span>{t.language}</span>
           </div>
           <div className="flex items-center gap-2">
             {(['en', 'ar'] as const).map((locale) => {

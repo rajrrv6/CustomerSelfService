@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Database, Play, CheckCircle, XCircle, RefreshCcw, Cpu } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 
 interface WorkflowInspectorProps {
   variables: Record<string, string>;
@@ -10,6 +12,9 @@ interface WorkflowInspectorProps {
 }
 
 export function WorkflowInspector({ variables, onUpdateVariable, traceHistory, className = '', variant = 'default' }: WorkflowInspectorProps) {
+  const { lang } = useApp();
+  const t = translations[lang];
+
   const [activeTab, setActiveTab] = useState<'variables' | 'regression'>('variables');
   const [testResults, setTestResults] = useState<Array<{ name: string; status: 'passed' | 'failed' | 'idle'; output: string }>>([
     { name: '1. VIP Branch Escalation Route', status: 'idle', output: 'Asserts route reaches RAG check when invoiceAmount > 1000.' },
@@ -93,7 +98,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory, c
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          Variables Context
+          {t.dialogFlow.inspector.variablesContext}
         </button>
         <button
           onClick={() => setActiveTab('regression')}
@@ -103,7 +108,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory, c
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          Regression Suite
+          {t.dialogFlow.inspector.regressionSuite}
         </button>
       </div>
 
@@ -112,7 +117,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory, c
         {activeTab === 'variables' ? (
           <div className="space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">Memory Register</span>
+              <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">{t.dialogFlow.inspector.memoryRegister}</span>
               <Database className="w-3.5 h-3.5 text-blue-500" />
             </div>
 
@@ -133,7 +138,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory, c
             {/* Trace History */}
             {traceHistory.length > 0 && (
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80 space-y-2">
-                <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider block">Live Trace Map</span>
+                <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider block">{t.dialogFlow.inspector.liveTraceMap}</span>
                 <div className="space-y-1 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-[9px] leading-relaxed">
                   {traceHistory.map((nodeId, idx) => (
                     <div key={idx} className="flex items-center gap-1 text-slate-500">
@@ -148,7 +153,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory, c
         ) : (
           <div className="space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">Assertions</span>
+              <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">{t.dialogFlow.inspector.assertions}</span>
               <Cpu className="w-3.5 h-3.5 text-violet-500" />
             </div>
 
@@ -157,7 +162,7 @@ export function WorkflowInspector({ variables, onUpdateVariable, traceHistory, c
               className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
             >
               <Play className="w-3.5 h-3.5" />
-              Run Assertion Suite
+              {t.dialogFlow.inspector.runAssertionSuite}
             </button>
 
             <div className="space-y-3 pt-2">

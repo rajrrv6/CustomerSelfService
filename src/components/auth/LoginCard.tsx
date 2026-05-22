@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Lock, Mail } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
 import { useAuth } from '@/hooks/useAuth';
 import type { ValidationResult } from '@/types/auth';
 
@@ -12,6 +13,7 @@ export function LoginCard() {
   const router = useRouter();
   const { login, status } = useAuth();
   const { lang } = useApp();
+  const t = translations[lang];
   const isRtl = lang === 'ar';
   const isLoading = status === 'loading';
 
@@ -32,7 +34,7 @@ export function LoginCard() {
         setErrors(result.errors);
         return;
       }
-      setFormError(isRtl ? 'تعذر تسجيل الدخول. حاول مرة أخرى.' : 'Unable to sign in. Please try again.');
+      setFormError(t.auth.loginError);
       return;
     }
 
@@ -44,7 +46,7 @@ export function LoginCard() {
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            {isRtl ? 'البريد الإلكتروني للمؤسسة' : 'Work email'}
+            {t.auth.workEmail}
           </label>
           <div className="relative">
             <Mail
@@ -58,7 +60,7 @@ export function LoginCard() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={isRtl ? 'you@company.com' : 'superadmin@mpaas.com'}
+              placeholder="you@company.com"
               className={`w-full py-2.5 rounded-xl border bg-slate-50 dark:bg-slate-950 text-sm font-mono transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 ${
                 isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'
               } ${errors.email ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800'}`}
@@ -76,13 +78,13 @@ export function LoginCard() {
         <div className="space-y-1.5">
           <div className="flex justify-between items-center gap-2">
             <label htmlFor="password" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-              {isRtl ? 'كلمة المرور' : 'Password'}
+              {t.auth.password}
             </label>
             <Link
               href="/login/forgot-password"
               className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
             >
-              {isRtl ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+              {t.auth.forgotPassword}
             </Link>
           </div>
           <div className="relative">
@@ -125,31 +127,22 @@ export function LoginCard() {
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-              {isRtl ? 'جاري التحقق...' : 'Authenticating...'}
+              {t.auth.authenticating}
             </>
           ) : (
-            isRtl ? 'متابعة إلى التحقق' : 'Continue to verification'
+            t.auth.continueToVerification
           )}
         </button>
       </form>
 
       <p className="mt-6 text-[11px] text-center text-slate-400 dark:text-slate-500 leading-relaxed">
-        {isRtl ? (
-          <>
-            تجريبي: <span className="font-mono">superadmin@</span> · <span className="font-mono">clientadmin@</span> ·{' '}
-            <span className="font-mono">agent@</span> · <span className="font-mono">customer@</span>
-          </>
-        ) : (
-          <>
-            Demo roles: <span className="font-mono">superadmin@</span>, <span className="font-mono">clientadmin@</span>,{' '}
-            <span className="font-mono">agent@</span>, <span className="font-mono">customer@</span> — MFA code{' '}
-            <span className="font-mono font-semibold">123456</span>
-          </>
-        )}
+        {t.auth.demoRoles} <span className="font-mono">superadmin@</span> · <span className="font-mono">clientadmin@</span> ·{' '}
+        <span className="font-mono">agent@</span> · <span className="font-mono">customer@</span>
+        {!isRtl && <> — MFA code <span className="font-mono font-semibold">123456</span></>}
       </p>
 
       <p className="mt-3 text-center text-xs text-slate-400 dark:text-slate-500">
-        {isRtl ? 'للاستخدام الداخلي ضمن بيئة الاختبار فقط' : 'For internal testing environment use only'}
+        {t.auth.internalUseOnly}
       </p>
     </div>
   );
