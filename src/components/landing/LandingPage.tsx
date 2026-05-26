@@ -103,7 +103,14 @@ export function LandingPage() {
                 href="/login"
                 className="inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xl shadow-blue-500/25 transition-all"
               >
-                {isRtl ? 'الدخول إلى مساحة العمل' : 'Enter secure workspace'}
+                {isRtl ? 'تسجيل دخول الموظفين' : 'Staff Secure Workspace'}
+                <ArrowRight className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} />
+              </Link>
+              <Link
+                href="/portal/public"
+                className="inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-850 dark:text-slate-100 font-bold transition-all shadow-sm"
+              >
+                {isRtl ? 'بوابة الخدمة الذاتية للزوار' : 'Guest Self-Service Portal'}
                 <ArrowRight className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} />
               </Link>
             </div>

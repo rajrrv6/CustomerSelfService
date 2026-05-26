@@ -4,12 +4,26 @@ import type { UserRole } from '@/types';
 import { AUTH_COOKIES } from '@/lib/auth/authStorage';
 import { canRoleAccessPath, getHomeRouteForRole } from '@/lib/auth/roleRouting';
 
-const PUBLIC_PATHS = ['/', '/login', '/login/mfa', '/demo-sandbox', '/access-denied'];
+const PUBLIC_PATHS = ['/', '/login', '/login/mfa', '/register', '/demo-sandbox', '/access-denied'];
 
-const PROTECTED_PREFIXES = ['/admin', '/tenant', '/workspace', '/portal'];
+const PUBLIC_PREFIXES = ['/kb', '/bot', '/callback', '/portal/public'];
+
+const PROTECTED_PREFIXES = [
+  '/admin',
+  '/tenant',
+  '/workspace',
+  '/portal/home',
+  '/portal/tickets',
+  '/portal/chat-history',
+  '/portal/profile',
+  '/portal/private',
+];
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return true;
+  }
+  return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 function isProtectedPath(pathname: string): boolean {
@@ -25,6 +39,12 @@ export function middleware(request: NextRequest) {
     pathname.includes('.')
   ) {
     return NextResponse.next();
+  }
+
+  if (pathname === '/portal') {
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = '/portal/home';
+    return NextResponse.redirect(homeUrl);
   }
 
   const isAuthenticated = request.cookies.get(AUTH_COOKIES.authenticated)?.value === '1';
@@ -43,6 +63,16 @@ export function middleware(request: NextRequest) {
       deniedUrl.pathname = '/access-denied';
       return NextResponse.redirect(deniedUrl);
     }
+  }
+
+  if (isAuthenticated && role && pathname.startsWith('/register')) {
+    if (pathname === '/register/success' && role === 'customer') {
+      return NextResponse.next();
+    }
+
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = getHomeRouteForRole(role);
+    return NextResponse.redirect(homeUrl);
   }
 
   if (isAuthenticated && role && pathname.startsWith('/login')) {

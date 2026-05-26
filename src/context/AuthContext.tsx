@@ -21,6 +21,7 @@ import {
   clearPendingLogin,
   clearSession,
   createSession,
+  readRegisteredRole,
   persistPendingLogin,
   persistSession,
   readPendingLogin,
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await delay(MOCK_API_DELAY_MS);
 
-    const inferredRole = inferRoleFromEmail(credentials.email);
+    const inferredRole = readRegisteredRole(credentials.email) ?? inferRoleFromEmail(credentials.email);
     const pending: PendingLogin = {
       email: credentials.email.trim().toLowerCase(),
       password: credentials.password,

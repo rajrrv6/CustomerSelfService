@@ -84,13 +84,15 @@ export function DialPad({ value, onChange, onKeyPress, onBackspace, onCall, disa
           onChange={(e) => onChange(e.target.value)}
           placeholder="Enter SIP number..."
           disabled={disabled}
-          className="bg-transparent border-none focus:ring-0 text-lg font-mono text-slate-800 dark:text-white font-bold w-full outline-none"
+          aria-label="SIP number input"
+          className="bg-transparent border-none focus:ring-0 text-lg font-mono text-slate-800 dark:text-white font-bold w-full focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         />
         {value.length > 0 && (
           <button
             onClick={onBackspace}
             disabled={disabled}
-            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-800"
+            aria-label="Backspace"
+            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           >
             <Delete className="w-5 h-5" />
           </button>
@@ -105,7 +107,8 @@ export function DialPad({ value, onChange, onKeyPress, onBackspace, onCall, disa
             type="button"
             disabled={disabled}
             onClick={() => handleKeyClick(k.num)}
-            className="w-14 h-14 rounded-full flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 active:scale-95 transition-all outline-none"
+            aria-label={`Dial ${k.num}`}
+            className="w-14 h-14 rounded-full flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           >
             <span className="text-base font-bold font-mono">{k.num}</span>
             <span className="text-[7px] text-slate-400 font-mono tracking-widest">{k.letters || '\u00A0'}</span>
@@ -117,7 +120,7 @@ export function DialPad({ value, onChange, onKeyPress, onBackspace, onCall, disa
       <button
         onClick={onCall}
         disabled={disabled || value.trim().length === 0}
-        className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-xl font-bold flex items-center justify-center gap-2 active:scale-98 transition-all"
+        className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-xl font-bold flex items-center justify-center gap-2 active:scale-98 transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none cursor-pointer"
       >
         <span>Call Destination</span>
       </button>

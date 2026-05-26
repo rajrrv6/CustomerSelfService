@@ -6,6 +6,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'llm_registry',
     'asr_tts_registry',
     'channels',
+    'nlu_governance',
     'cost_benchmarks',
     'cross_tenant_analytics',
     'vector_db',
@@ -63,6 +64,7 @@ export function getScreenTitle(screenId: string, t: TranslationKeys): string {
   const mapping: Record<string, string> = {
     llm_registry: t.llmRegistry,
     asr_tts_registry: t.asrTtsRegistry,
+    nlu_governance: t.nluGovernance,
     cost_benchmarks: t.costBenchmarks,
     cross_tenant_analytics: t.crossTenantAnalytics,
     vector_db: t.vectorDbStatus,

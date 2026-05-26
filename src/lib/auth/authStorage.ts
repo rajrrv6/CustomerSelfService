@@ -5,6 +5,7 @@ const SESSION_KEY = 'mpaas_auth_session';
 const PENDING_KEY = 'mpaas_pending_login';
 const AUTH_COOKIE = 'mpaas_authenticated';
 const ROLE_COOKIE = 'mpaas_role';
+const REGISTERED_ROLE_KEY = 'mpaas_registered_roles';
 
 const COOKIE_MAX_AGE_DAYS = 7;
 
@@ -17,6 +18,24 @@ function setCookie(name: string, value: string, maxAgeDays: number) {
 function clearCookie(name: string) {
   if (typeof document === 'undefined') return;
   document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+function readRegisteredRoles(): Record<string, UserRole> {
+  if (typeof window === 'undefined') return {};
+  const raw = localStorage.getItem(REGISTERED_ROLE_KEY);
+  if (!raw) return {};
+
+  try {
+    return JSON.parse(raw) as Record<string, UserRole>;
+  } catch {
+    localStorage.removeItem(REGISTERED_ROLE_KEY);
+    return {};
+  }
+}
+
+function writeRegisteredRoles(roles: Record<string, UserRole>) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(REGISTERED_ROLE_KEY, JSON.stringify(roles));
 }
 
 export function persistSession(session: AuthSession): void {
@@ -86,6 +105,22 @@ export function createSession(email: string, role: UserRole, displayName?: strin
     authenticatedAt: now.toISOString(),
     expiresAt: expires.toISOString(),
   };
+}
+
+export function persistRegisteredRole(email: string, role: UserRole): void {
+  if (typeof window === 'undefined') return;
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const registeredRoles = readRegisteredRoles();
+  registeredRoles[normalizedEmail] = role;
+  writeRegisteredRoles(registeredRoles);
+}
+
+export function readRegisteredRole(email: string): UserRole | null {
+  if (typeof window === 'undefined') return null;
+
+  const normalizedEmail = email.trim().toLowerCase();
+  return readRegisteredRoles()[normalizedEmail] ?? null;
 }
 
 /** Server/middleware-readable cookie names */

@@ -43,14 +43,15 @@ export function CobrowseModal({
         ) : (
           <>
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 mb-1.5">{t.portal.cobrowse.pinLabel}</label>
+              <label htmlFor="cobrowse-pin-input" className="block text-slate-500 dark:text-slate-400 mb-1.5">{t.portal.cobrowse.pinLabel}</label>
               <input
+                id="cobrowse-pin-input"
                 type="text"
                 required
                 placeholder="982-114"
                 value={cobrowsePin}
                 onChange={(e) => setCobrowsePin(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-250 dark:border-slate-800 bg-transparent rounded-xl text-center text-lg font-mono tracking-widest focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-100"
+                className="w-full px-3 py-2 border border-slate-250 dark:border-slate-800 bg-transparent rounded-xl text-center text-lg font-mono tracking-widest focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-800 dark:text-slate-100"
               />
             </div>
             <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer">

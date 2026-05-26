@@ -104,6 +104,7 @@ export function UnifiedInbox({
           return (
             <button
               key={tab.id}
+              data-testid={`inbox-tab-${tab.id}`}
               onClick={() => onChangeTab(tab.id as 'all' | 'whatsapp' | 'web' | 'email' | 'voice' | 'escalated')}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] font-bold transition-all ${
                 isActive

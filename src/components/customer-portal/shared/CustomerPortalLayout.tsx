@@ -316,6 +316,29 @@ To unlock your access:
     return () => clearInterval(interval);
   }, [chatStatus]);
 
+  useEffect(() => {
+    if (highContrast) {
+      document.body.classList.add('high-contrast-mode', 'accessibility-high-contrast');
+    } else {
+      document.body.classList.remove('high-contrast-mode', 'accessibility-high-contrast');
+    }
+    return () => {
+      document.body.classList.remove('high-contrast-mode', 'accessibility-high-contrast');
+    };
+  }, [highContrast]);
+
+  useEffect(() => {
+    document.body.classList.remove('portal-scale-sm', 'portal-scale-lg', 'accessibility-font-sm', 'accessibility-font-lg');
+    if (fontSize === 'sm') {
+      document.body.classList.add('portal-scale-sm', 'accessibility-font-sm');
+    } else if (fontSize === 'lg') {
+      document.body.classList.add('portal-scale-lg', 'accessibility-font-lg');
+    }
+    return () => {
+      document.body.classList.remove('portal-scale-sm', 'portal-scale-lg', 'accessibility-font-sm', 'accessibility-font-lg');
+    };
+  }, [fontSize]);
+
   const fontClass = fontSize === 'sm' ? 'text-[11px]' : fontSize === 'lg' ? 'text-[14px]' : 'text-[12px]';
 
   return (
@@ -353,6 +376,7 @@ To unlock your access:
 
           <button
             onClick={() => setShowAccessibilityWidget(true)}
+            data-testid="accessibility-options-btn"
             className="px-3.5 py-1.5 bg-blue-55 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-bold rounded-xl hover:bg-blue-100 font-mono"
           >
             {t.portal.homeHero.accessibilityOptions}
@@ -377,6 +401,7 @@ To unlock your access:
                 <Search className="absolute left-3.5 top-5 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
+                  data-testid="portal-search-input"
                   placeholder={t.portal.homeHero.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => {
@@ -404,6 +429,7 @@ To unlock your access:
               <button
                 type="button"
                 onClick={() => setActiveSubScreen('customer_order_refund')}
+                data-testid="order-refunds-btn"
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-blue-500 transition-all text-left space-y-2.5 shadow-sm"
               >
                 <ShieldCheck className="w-6 h-6 text-emerald-500" />

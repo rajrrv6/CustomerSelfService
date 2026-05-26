@@ -8,6 +8,7 @@ import { SuperAdminAnalyticsTab } from '../analytics/SuperAdminAnalyticsTab';
 import { VectorDbStatusTab } from '../vector-db/VectorDbStatusTab';
 import { SipTrunkConfigTab } from '../telephony/SipTrunkConfigTab';
 import { SuperAdminChannelsTab } from '../channels/SuperAdminChannelsTab';
+import { NluGovernanceTab } from '../nlu-governance/NluGovernanceTab';
 
 interface SuperAdminLayoutProps {
   activeSubScreen: string;
@@ -19,6 +20,8 @@ export function SuperAdminLayout({ activeSubScreen }: SuperAdminLayoutProps) {
       return <LlmRegistryTab />;
     case 'asr_tts_registry':
       return <AsrTtsRegistryTab />;
+    case 'nlu_governance':
+      return <NluGovernanceTab />;
     case 'cost_benchmarks':
     case 'cross_tenant_analytics':
       return <SuperAdminAnalyticsTab activeSubScreen={activeSubScreen} />;

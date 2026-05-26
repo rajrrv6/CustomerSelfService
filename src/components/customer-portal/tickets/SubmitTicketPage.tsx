@@ -56,29 +56,31 @@ export function SubmitTicketPage({
         <form onSubmit={handleTicketSubmit} className="space-y-5">
           {/* Subject */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+            <label htmlFor="ticket-subject-input-page" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
               {t.portal.tickets.incidentSubject} <span className="text-red-500">*</span>
             </label>
             <input
+              id="ticket-subject-input-page"
               type="text"
               required
               placeholder={t.portal.tickets.subjectPlaceholder}
               value={ticketTitle}
               onChange={(e) => setTicketTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-slate-850 dark:text-white placeholder:text-slate-350 text-sm"
+              className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-855 dark:text-white placeholder:text-slate-350 text-sm"
             />
           </div>
 
           {/* Category & Priority */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+              <label htmlFor="ticket-category-select-page" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
                 {t.portal.tickets.category} <span className="text-red-500">*</span>
               </label>
               <select
+                id="ticket-category-select-page"
                 value={ticketCategory}
                 onChange={(e) => setTicketCategory(e.target.value)}
-                className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-slate-850 dark:text-slate-200 text-sm cursor-pointer"
+                className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-850 dark:text-slate-200 text-sm cursor-pointer"
               >
                 <option value="Billing & Payments">{t.portal.tickets.categoryBilling}</option>
                 <option value="User Authentication">{t.portal.tickets.categoryAuth}</option>
@@ -87,13 +89,14 @@ export function SubmitTicketPage({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+              <label htmlFor="ticket-priority-select-page" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
                 {t.portal.tickets.priority} <span className="text-red-500">*</span>
               </label>
               <select
+                id="ticket-priority-select-page"
                 value={ticketPriority}
                 onChange={(e) => setTicketPriority(e.target.value as any)}
-                className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-slate-850 dark:text-slate-200 text-sm cursor-pointer"
+                className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-850 dark:text-slate-200 text-sm cursor-pointer"
               >
                 <option value="low">{t.portal.tickets.priorityLow}</option>
                 <option value="medium">{t.portal.tickets.priorityMedium}</option>
@@ -105,16 +108,17 @@ export function SubmitTicketPage({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+            <label htmlFor="ticket-desc-textarea-page" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
               {t.portal.tickets.issueLabelFull} <span className="text-red-500">*</span>
             </label>
             <textarea
+              id="ticket-desc-textarea-page"
               required
               rows={5}
               placeholder={t.portal.tickets.descPlaceholderFull}
               value={ticketDesc}
               onChange={(e) => setTicketDesc(e.target.value)}
-              className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-slate-850 dark:text-white placeholder:text-slate-350 text-sm resize-none"
+              className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-855 dark:text-white placeholder:text-slate-350 text-sm resize-none"
             />
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
               {t.portal.tickets.descHint}

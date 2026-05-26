@@ -10,9 +10,16 @@ interface AuthLayoutProps {
   title: string;
   subtitle?: string;
   badge?: string;
+  contentMaxWidthClassName?: string;
 }
 
-export function AuthLayout({ children, title, subtitle, badge }: AuthLayoutProps) {
+export function AuthLayout({
+  children,
+  title,
+  subtitle,
+  badge,
+  contentMaxWidthClassName = 'max-w-md',
+}: AuthLayoutProps) {
   const { lang, theme, setLang, setTheme } = useApp();
   const isRtl = lang === 'ar';
 
@@ -95,7 +102,7 @@ export function AuthLayout({ children, title, subtitle, badge }: AuthLayoutProps
       </header>
 
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
+        <div className={`w-full ${contentMaxWidthClassName}`}>
           <div className="text-center mb-8">
             {badge && (
               <span className="inline-block px-3 py-1 text-xs font-semibold text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 rounded-full mb-3">

@@ -134,11 +134,12 @@ export function RefundWizard({
               >
                 <h4 className="font-bold text-xs text-slate-850 dark:text-white uppercase font-mono">{t.portal.refunds.returnDetails}</h4>
                 <div>
-                  <label className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.reasonLabel}</label>
+                  <label htmlFor="refund-reason-select" className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.reasonLabel}</label>
                   <select
+                    id="refund-reason-select"
                     value={refundReason}
                     onChange={(e) => setRefundReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-350 dark:bg-slate-900"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-800 dark:text-slate-350 dark:bg-slate-900"
                   >
                     <option value="Damaged on Arrival">{t.portal.refunds.reasonDamaged}</option>
                     <option value="SLA Metrics breached">{t.portal.refunds.reasonSla}</option>
@@ -147,13 +148,14 @@ export function RefundWizard({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.attachmentLabel}</label>
+                  <label htmlFor="refund-attachment-input" className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.attachmentLabel}</label>
                   <input
+                    id="refund-attachment-input"
                     type="text"
                     placeholder="e.g. log_downtime_error.txt"
                     value={refundAttachment}
                     onChange={(e) => setRefundAttachment(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-slate-800 dark:text-white"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-800 dark:text-white"
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
