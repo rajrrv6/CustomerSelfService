@@ -34,6 +34,7 @@ export function AccessibilityWidget({
           <button
             type="button"
             onClick={() => setHighContrast(!highContrast)}
+            data-testid="high-contrast-toggle"
             className={`px-3 py-1.5 rounded-xl font-bold transition-colors ${
               highContrast ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-350'
             }`}
@@ -51,6 +52,7 @@ export function AccessibilityWidget({
                 key={sz}
                 type="button"
                 onClick={() => setFontSize(sz)}
+                data-testid={`font-size-${sz}`}
                 className={`py-1.5 rounded-xl border font-bold capitalize transition-all ${
                   fontSize === sz
                     ? 'border-blue-650 text-blue-600 bg-blue-500/10 dark:border-blue-500 dark:text-blue-400'

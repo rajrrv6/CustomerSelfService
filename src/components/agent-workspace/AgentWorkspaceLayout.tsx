@@ -513,7 +513,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
         
         {/* Active capacity status */}
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1">
+          <span data-testid="capacity-meter" className="flex items-center gap-1">
             <Flame className="w-4 h-4 text-orange-500 shrink-0" />
             <span>{t.agentWorkspace.aux.capacityMeter}</span>
             <span className="font-mono text-slate-800 dark:text-slate-200">{conversations.filter(c => c.status === 'active').length}/4 {t.agentWorkspace.aux.active}</span>
@@ -654,6 +654,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                     <button
                       type="button"
                       onClick={openDialer}
+                      data-testid="open-dialer-btn"
                       className="flex shrink-0 items-center justify-center gap-1.5 self-stretch rounded-xl bg-blue-600 px-4 py-2.5 font-bold text-white shadow-sm hover:bg-blue-700 sm:self-auto"
                     >
                       <PhoneCall className="h-4 w-4 animate-bounce" />

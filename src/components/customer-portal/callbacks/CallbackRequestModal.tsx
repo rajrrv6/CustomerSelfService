@@ -31,23 +31,25 @@ export function CallbackRequestModal({
     <ModalWrapper isOpen={isOpen} onClose={onClose} title={t.portal.callback.modalTitle} maxWidthClass="max-w-sm">
       <form onSubmit={handleScheduleCallback} className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
         <div>
-          <label className="block text-slate-500 dark:text-slate-400 mb-1.5">{t.portal.callback.phoneLabel}</label>
+          <label htmlFor="callback-phone-input" className="block text-slate-500 dark:text-slate-400 mb-1.5">{t.portal.callback.phoneLabel}</label>
           <input
+            id="callback-phone-input"
             type="text"
             required
             placeholder="+966 50 123 4567"
             value={callbackPhone}
             onChange={(e) => setCallbackPhone(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-850 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 font-mono text-slate-800 dark:text-slate-100"
+            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-850 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none font-mono text-slate-800 dark:text-slate-100"
           />
         </div>
 
         <div>
-          <label className="block text-slate-500 dark:text-slate-400 mb-1.5">{t.portal.callback.timeLabel}</label>
+          <label htmlFor="callback-time-select" className="block text-slate-500 dark:text-slate-400 mb-1.5">{t.portal.callback.timeLabel}</label>
           <select
+            id="callback-time-select"
             value={callbackTime}
             onChange={(e) => setCallbackTime(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-slate-800 dark:text-slate-350 dark:bg-slate-900"
+            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-800 dark:text-slate-355 dark:bg-slate-900"
           >
             <option value="As soon as possible">{t.portal.callback.timeSoonest}</option>
             <option value="Morning">{t.portal.callback.timeMorning}</option>

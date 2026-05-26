@@ -19,21 +19,47 @@ export const ROUTE_ROLE_ACCESS: Record<string, UserRole[]> = {
   '/portal': ['customer'],
 };
 
-const EMAIL_ROLE_PATTERNS: { pattern: RegExp; role: UserRole }[] = [
-  { pattern: /^superadmin@/i, role: 'super_admin' },
-  { pattern: /^clientadmin@/i, role: 'client_admin' },
-  { pattern: /^agent@/i, role: 'support_agent' },
-  { pattern: /^customer@/i, role: 'customer' },
-  { pattern: /^operations@/i, role: 'operations_manager' },
-  { pattern: /^qa@/i, role: 'qa_manager' },
-  { pattern: /^supervisor@/i, role: 'supervisor' },
-  { pattern: /^viewer@/i, role: 'viewer' },
-];
+const MOCK_STAFF_REGISTRY: Record<string, UserRole> = {
+  // @company.com (used in E2E tests)
+  'superadmin@company.com': 'super_admin',
+  'clientadmin@company.com': 'client_admin',
+  'agent@company.com': 'support_agent',
+  'operations@company.com': 'operations_manager',
+  'qa@company.com': 'qa_manager',
+  'supervisor@company.com': 'supervisor',
+  'viewer@company.com': 'viewer',
+  'customer@company.com': 'customer',
+
+  // @mpaas.com
+  'superadmin@mpaas.com': 'super_admin',
+  'clientadmin@mpaas.com': 'client_admin',
+  'agent@mpaas.com': 'support_agent',
+  'operations@mpaas.com': 'operations_manager',
+  'qa@mpaas.com': 'qa_manager',
+  'supervisor@mpaas.com': 'supervisor',
+  'viewer@mpaas.com': 'viewer',
+  'customer@mpaas.com': 'customer',
+
+  // Legacy exact shortcut prefixes (to support test and demo utility triggers)
+  'superadmin@': 'super_admin',
+  'clientadmin@': 'client_admin',
+  'agent@': 'support_agent',
+  'customer@': 'customer',
+  'operations@': 'operations_manager',
+  'qa@': 'qa_manager',
+  'supervisor@': 'supervisor',
+  'viewer@': 'viewer',
+};
 
 export function inferRoleFromEmail(email: string): UserRole {
   const normalized = email.trim().toLowerCase();
-  const match = EMAIL_ROLE_PATTERNS.find(({ pattern }) => pattern.test(normalized));
-  return match?.role ?? 'client_admin';
+  
+  if (normalized in MOCK_STAFF_REGISTRY) {
+    return MOCK_STAFF_REGISTRY[normalized];
+  }
+
+  // Unrecognized corporate logins default to customer to prevent security escalation.
+  return 'customer';
 }
 
 export function getHomeRouteForRole(role: UserRole): string {

@@ -58,6 +58,7 @@ export function Sidebar({
           { id: 'llm_registry', label: t.llmRegistry, icon: <Brain className="w-4 h-4" /> },
           { id: 'asr_tts_registry', label: t.asrTtsRegistry, icon: <Radio className="w-4 h-4" /> },
           { id: 'channels', label: t.omnichannel, icon: <Layers className="w-4 h-4" /> },
+          { id: 'nlu_governance', label: t.nluGovernance, icon: <ShieldCheck className="w-4 h-4" /> },
           { id: 'cost_benchmarks', label: t.costBenchmarks, icon: <BarChart2 className="w-4 h-4" /> },
           { id: 'cross_tenant_analytics', label: t.crossTenantAnalytics, icon: <TrendingUp className="w-4 h-4" /> },
           { id: 'vector_db', label: t.vectorDbStatus, icon: <Database className="w-4 h-4" /> },
@@ -177,6 +178,7 @@ export function Sidebar({
             return (
               <button
                 key={item.id}
+                data-testid={`sidebar-item-${item.id}`}
                 onClick={() => setActiveScreen(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 text-start ${
                   isActive

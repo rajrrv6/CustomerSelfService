@@ -50,8 +50,9 @@ export function OtpAuth({
             {t.portal.refunds.otpEmailInstructions}
           </p>
           <div>
-            <label className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.corporateEmail}</label>
+            <label htmlFor="otp-email-input" className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.corporateEmail}</label>
             <input
+              id="otp-email-input"
               type="email"
               required
               placeholder="david.miller@yahoo.com"
@@ -60,7 +61,7 @@ export function OtpAuth({
                 setLookupEmail(e.target.value);
                 setOtpError(null);
               }}
-              className="w-full px-3.5 py-2 border border-slate-250 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550 text-slate-800 dark:text-white"
+              className="w-full px-3.5 py-2 border border-slate-250 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none text-slate-800 dark:text-white"
             />
           </div>
           <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer">
@@ -73,8 +74,9 @@ export function OtpAuth({
             {t.portal.refunds.otpCodeInstructions.replace('{email}', lookupEmail)}
           </p>
           <div>
-            <label className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.verificationCode}</label>
+            <label htmlFor="otp-code-input" className="block text-slate-450 dark:text-slate-400 mb-1.5">{t.portal.refunds.verificationCode}</label>
             <input
+              id="otp-code-input"
               type="text"
               required
               maxLength={4}
@@ -84,7 +86,7 @@ export function OtpAuth({
                 setLookupOtp(e.target.value);
                 setOtpError(null);
               }}
-              className="w-full px-3.5 py-2 border border-slate-250 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550 font-mono text-center text-lg tracking-widest text-slate-800 dark:text-white"
+              className="w-full px-3.5 py-2 border border-slate-250 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none font-mono text-center text-lg tracking-widest text-slate-800 dark:text-white"
             />
           </div>
           <button type="submit" className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer">

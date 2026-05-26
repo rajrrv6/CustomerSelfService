@@ -133,6 +133,22 @@ export function LoginCard() {
             t.auth.continueToVerification
           )}
         </button>
+
+        <div className="flex flex-col items-center gap-2 pt-1 text-center sm:flex-row sm:justify-between sm:items-center sm:text-start">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            {t.auth.registerPrompt}
+          </p>
+          <Link
+            href="/register"
+            className={`inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:focus-visible:ring-offset-slate-900 ${
+              isRtl
+                ? 'text-right text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40'
+                : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40'
+            }`}
+          >
+            {t.auth.createAccount}
+          </Link>
+        </div>
       </form>
 
       <p className="mt-6 text-[11px] text-center text-slate-400 dark:text-slate-500 leading-relaxed">

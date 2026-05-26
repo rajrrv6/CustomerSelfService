@@ -18,9 +18,16 @@ import {
   Sparkles, 
   Calendar, 
   SlidersHorizontal,
-  ThumbsUp,
   ThumbsDown,
-  Clock
+  Clock,
+  Download,
+  Settings,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  User,
+  FileText,
+  ThumbsUp
 } from 'lucide-react';
 
 export function SurveysTab() {
@@ -30,6 +37,12 @@ export function SurveysTab() {
   // Filters State
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'whatsapp' | 'web' | 'voice' | 'email'>('all');
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
+  const [activeDrilldown, setActiveDrilldown] = useState<string | null>(null);
+
+  const toggleRow = (id: string) => {
+    setExpandedRows(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
+  };
 
   const dict = {
     en: {
@@ -72,7 +85,19 @@ export function SurveysTab() {
       colTime: 'Completed',
       positive: 'Positive',
       neutral: 'Neutral',
-      negative: 'Negative'
+      negative: 'Negative',
+      alertTitle: 'Email SMTP Gateway Latency Anomaly Detected',
+      alertDesc: 'Average delivery time exceeded 120s threshold. Routing fallback to secondary SES cluster active.',
+      syncNow: 'Sync Now',
+      exportCSV: 'Export CSV',
+      configThresholds: 'Survey Trigger Settings',
+      crmHistory: 'CRM Ticket Routing History',
+      assignedAgent: 'Assigned Agent:',
+      resolutionTime: 'Resolution Time:',
+      supervisorNotes: 'Supervisor Notes:',
+      drilldownTitle: 'Channel Volume & SLA Breakdown',
+      drilldownVolume: 'Hourly Volume',
+      drilldownSla: 'SLA Adherence'
     },
     ar: {
       timeRangeLabel: 'النطاق الزمني',
@@ -114,7 +139,19 @@ export function SurveysTab() {
       colTime: 'تم الإكمال',
       positive: 'إيجابي',
       neutral: 'محايد',
-      negative: 'سلبي'
+      negative: 'سلبي',
+      alertTitle: 'اكتشاف شذوذ في زمن انتقال بوابة البريد الإلكتروني SMTP',
+      alertDesc: 'تجاوز متوسط وقت التسليم المهلة (120 ثانية). تم تفعيل التوجيه الاحتياطي لعنقود SES الثانوي.',
+      syncNow: 'مزامنة الآن',
+      exportCSV: 'تصدير CSV',
+      configThresholds: 'إعدادات المشغلات',
+      crmHistory: 'سجل توجيه تذكرة CRM',
+      assignedAgent: 'الوكيل المعين:',
+      resolutionTime: 'وقت الحل:',
+      supervisorNotes: 'ملاحظات المشرف:',
+      drilldownTitle: 'تحليل حجم القناة ومستوى الخدمة',
+      drilldownVolume: 'الحجم بالساعة',
+      drilldownSla: 'الالتزام بمستوى الخدمة'
     }
   };
 
@@ -199,13 +236,13 @@ export function SurveysTab() {
 
   // Mock surveys completed
   const mockSurveys = [
-    { id: 'srv-1', ticketId: 'TCK-892', name: 'Juliana Carter', channel: 'email', csat: 5, sentiment: 'success', comment: lang === 'ar' ? 'تم حل مشكلة مزامنة إيصال الدفع بسرعة. خدمة ممتازة.' : 'The payment receipt sync problem was solved quickly. Excellent tier-1 support.', date: '2 hours ago' },
-    { id: 'srv-2', ticketId: 'TCK-776', name: 'Amina Al-Fayed', channel: 'whatsapp', csat: 5, sentiment: 'success', comment: 'تحديث عنوان التوصيل وتعديل الفاتورة الضريبية تم في ثوانٍ معدودة. شكراً للمساعدة السريعة!', date: '4 hours ago' },
-    { id: 'srv-3', ticketId: 'TCK-998', name: 'David Miller', channel: 'web', csat: 4, sentiment: 'success', comment: lang === 'ar' ? 'تم تحويلي للوكيل بسرعة. خدمة استرداد الأموال كانت مؤتمتة وسريعة.' : 'Redirected to Nadia quickly. The return refund exception on my damaged unit was automated.', date: '1 day ago' },
-    { id: 'srv-4', ticketId: 'TCK-102', name: 'Marcus Aurelius', channel: 'voice', csat: 2, sentiment: 'error', comment: lang === 'ar' ? 'تأخرت مزامنة بوابة الدفع وتجاوزت الوقت المحدد للدعم.' : 'OAuth token validation error locked my account. Breached SLA timeline twice.', date: '1 day ago' },
-    { id: 'srv-5', ticketId: 'TCK-432', name: 'Sarah Connor', channel: 'whatsapp', csat: 5, sentiment: 'success', comment: lang === 'ar' ? 'التحقق من سياسة الاسترجاع كان سهلاً جداً عبر الواتساب.' : 'Quickly verified return policy rules. Best support experience via WhatsApp!', date: '2 days ago' },
-    { id: 'srv-6', ticketId: 'TCK-512', name: 'Ahmed Al-Shehri', channel: 'web', csat: 3, sentiment: 'warning', comment: 'المحادثة جيدة ولكن استغرق الرد وقتاً أطول من المتوقع بانتظار المشرف.', date: '3 days ago' },
-    { id: 'srv-7', ticketId: 'TCK-621', name: 'Liam Bennett', channel: 'email', csat: 1, sentiment: 'error', comment: lang === 'ar' ? 'فشل النظام في مزامنة بوابة المستندات وتأخر الدعم لأيام.' : 'SLA resolution deadline breached. ERP database took two days to sync accounts.', date: '4 days ago' }
+    { id: 'srv-1', ticketId: 'TCK-892', name: 'Juliana Carter', channel: 'email', csat: 5, sentiment: 'success', comment: lang === 'ar' ? 'تم حل مشكلة مزامنة إيصال الدفع بسرعة. خدمة ممتازة.' : 'The payment receipt sync problem was solved quickly. Excellent tier-1 support.', date: '2 hours ago', agent: 'Nadia Vance', resolutionTime: '14 mins', notes: 'First contact resolution achieved.' },
+    { id: 'srv-2', ticketId: 'TCK-776', name: 'Amina Al-Fayed', channel: 'whatsapp', csat: 5, sentiment: 'success', comment: 'تحديث عنوان التوصيل وتعديل الفاتورة الضريبية تم في ثوانٍ معدودة. شكراً للمساعدة السريعة!', date: '4 hours ago', agent: 'AI Bot (Farah)', resolutionTime: 'Auto-resolved', notes: 'Automated intent matching via WhatsApp.' },
+    { id: 'srv-3', ticketId: 'TCK-998', name: 'David Miller', channel: 'web', csat: 4, sentiment: 'success', comment: lang === 'ar' ? 'تم تحويلي للوكيل بسرعة. خدمة استرداد الأموال كانت مؤتمتة وسريعة.' : 'Redirected to Nadia quickly. The return refund exception on my damaged unit was automated.', date: '1 day ago', agent: 'Marcus Webb', resolutionTime: '45 mins', notes: 'Escalated from bot to tier 2 for manual override.' },
+    { id: 'srv-4', ticketId: 'TCK-102', name: 'Marcus Aurelius', channel: 'voice', csat: 2, sentiment: 'error', comment: lang === 'ar' ? 'تأخرت مزامنة بوابة الدفع وتجاوزت الوقت المحدد للدعم.' : 'OAuth token validation error locked my account. Breached SLA timeline twice.', date: '1 day ago', agent: 'Unassigned (Queue)', resolutionTime: 'Overdue (4 hrs)', notes: 'SLA breached due to API latency spikes.' },
+    { id: 'srv-5', ticketId: 'TCK-432', name: 'Sarah Connor', channel: 'whatsapp', csat: 5, sentiment: 'success', comment: lang === 'ar' ? 'التحقق من سياسة الاسترجاع كان سهلاً جداً عبر الواتساب.' : 'Quickly verified return policy rules. Best support experience via WhatsApp!', date: '2 days ago', agent: 'AI Bot (Farah)', resolutionTime: 'Auto-resolved', notes: 'Processed via RAG knowledge base.' },
+    { id: 'srv-6', ticketId: 'TCK-512', name: 'Ahmed Al-Shehri', channel: 'web', csat: 3, sentiment: 'warning', comment: 'المحادثة جيدة ولكن استغرق الرد وقتاً أطول من المتوقع بانتظار المشرف.', date: '3 days ago', agent: 'Lila Chen', resolutionTime: '1 hr 15 mins', notes: 'Supervisor consultation required for billing waiver.' },
+    { id: 'srv-7', ticketId: 'TCK-621', name: 'Liam Bennett', channel: 'email', csat: 1, sentiment: 'error', comment: lang === 'ar' ? 'فشل النظام في مزامنة بوابة المستندات وتأخر الدعم لأيام.' : 'SLA resolution deadline breached. ERP database took two days to sync accounts.', date: '4 days ago', agent: 'Ahmed Tariq', resolutionTime: '2.5 Days', notes: 'Escalated to engineering due to SAP sync failure.' }
   ];
 
   const filteredSurveys = mockSurveys.filter(s => selectedChannel === 'all' || s.channel === selectedChannel);
@@ -246,6 +283,19 @@ export function SurveysTab() {
         description={t.clientAdmin.surveys.description}
       />
 
+      {/* Anomaly Alert Banner */}
+      <div className="flex items-start sm:items-center justify-between gap-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 p-4 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="bg-amber-100 dark:bg-amber-900/40 p-2 rounded-xl text-amber-600 dark:text-amber-500">
+            <AlertTriangle className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-amber-900 dark:text-amber-500">{d.alertTitle}</h4>
+            <p className="text-[10px] text-amber-700 dark:text-amber-600/80 mt-0.5">{d.alertDesc}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Control Filter Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-sm">
         <div className="flex flex-wrap items-center gap-4">
@@ -280,8 +330,19 @@ export function SurveysTab() {
           </div>
         </div>
 
-        <div className="text-[10px] font-mono font-bold text-slate-400">
-          Showing {totalResponses} total survey logs
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold rounded-lg transition-colors">
+            <RefreshCw className="w-3.5 h-3.5" />
+            {d.syncNow}
+          </button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold rounded-lg transition-colors">
+            <Download className="w-3.5 h-3.5" />
+            {d.exportCSV}
+          </button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-lg transition-colors border border-blue-200 dark:border-blue-800">
+            <Settings className="w-3.5 h-3.5" />
+            {d.configThresholds}
+          </button>
         </div>
       </div>
 
@@ -355,35 +416,56 @@ export function SurveysTab() {
           <div className="space-y-3.5 pt-2">
             {channelStats.map((cs) => {
               const isSelected = selectedChannel === cs.id;
+              const isDrilledDown = activeDrilldown === cs.id;
               return (
-                <div 
-                  key={cs.id} 
-                  className={`space-y-1 p-2 rounded-xl border transition-all ${
-                    isSelected 
-                      ? 'border-blue-500 bg-blue-500/5 dark:bg-blue-950/20' 
-                      : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-950/50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1 rounded-lg ${cs.bgClass} shrink-0`}>
-                        {cs.icon}
+                <div key={cs.id} className="space-y-2">
+                  <div 
+                    onClick={() => setActiveDrilldown(isDrilledDown ? null : cs.id)}
+                    className={`space-y-1 p-2 rounded-xl border transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'border-blue-500 bg-blue-500/5 dark:bg-blue-950/20' 
+                        : isDrilledDown
+                        ? 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50'
+                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-950/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1 rounded-lg ${cs.bgClass} shrink-0`}>
+                          {cs.icon}
+                        </div>
+                        <span className="font-bold text-slate-700 dark:text-slate-350">{cs.name}</span>
                       </div>
-                      <span className="font-bold text-slate-700 dark:text-slate-350">{cs.name}</span>
+                      <div className="text-right font-mono font-black text-slate-900 dark:text-white">
+                        {cs.score} <span className="text-[9px] font-normal text-slate-400">/ 5.0</span>
+                      </div>
                     </div>
-                    <div className="text-right font-mono font-black text-slate-900 dark:text-white">
-                      {cs.score} <span className="text-[9px] font-normal text-slate-400">/ 5.0</span>
+                    <div className="flex items-center gap-3">
+                      <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${cs.colorClass}`}
+                          style={{ width: `${cs.percent}%` }}
+                        />
+                      </div>
+                      <span className="font-mono text-[9px] font-bold text-slate-400">{cs.percent}%</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="h-1.5 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${cs.colorClass}`}
-                        style={{ width: `${cs.percent}%` }}
-                      />
+                  
+                  {isDrilledDown && (
+                    <div className="ml-4 pl-4 border-l-2 border-slate-200 dark:border-slate-800 py-2 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-slate-500 font-bold">{d.drilldownVolume}:</span>
+                        <span className="font-mono text-slate-900 dark:text-white font-bold">{Math.floor(Math.random() * 200 + 50)} req/hr</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-slate-500 font-bold">{d.drilldownSla}:</span>
+                        <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">9{Math.floor(Math.random() * 8 + 1)}.%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-lg p-2 flex items-center justify-center gap-1 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Explore Deep Metrics</span>
+                      </div>
                     </div>
-                    <span className="font-mono text-[9px] font-bold text-slate-400">{cs.percent}%</span>
-                  </div>
+                  )}
                 </div>
               );
             })}
@@ -440,25 +522,74 @@ export function SurveysTab() {
 
         <EnterpriseTable headers={tableHeaders} empty={filteredSurveys.length === 0} emptyTitle="No surveys logged" emptyDesc="No responses matched this channel filter.">
           {filteredSurveys.map((srv) => (
-            <tr key={srv.id} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-950/10 font-normal">
-              <td className="px-6 py-4 font-bold text-blue-600 dark:text-blue-400 font-mono">{srv.ticketId}</td>
-              <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{srv.name}</td>
-              <td className="px-6 py-4">
-                {getChannelBadge(srv.channel)}
-              </td>
-              <td className="px-6 py-4">
-                {renderStars(srv.csat)}
-              </td>
-              <td className="px-6 py-4">
-                <Badge type={srv.sentiment}>
-                  {srv.sentiment === 'success' ? d.positive : srv.sentiment === 'warning' ? d.neutral : d.negative}
-                </Badge>
-              </td>
-              <td className="px-6 py-4 text-slate-600 dark:text-slate-350 leading-relaxed max-w-sm font-medium">
-                {srv.comment}
-              </td>
-              <td className="px-6 py-4 font-mono font-bold text-slate-400">{srv.date}</td>
-            </tr>
+            <React.Fragment key={srv.id}>
+              <tr 
+                onClick={() => toggleRow(srv.id)}
+                className={`border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-950/10 font-normal cursor-pointer transition-colors ${expandedRows.includes(srv.id) ? 'bg-slate-50/50 dark:bg-slate-950/10' : ''}`}
+              >
+                <td className="px-6 py-4 font-bold text-blue-600 dark:text-blue-400 font-mono flex items-center gap-2">
+                  {expandedRows.includes(srv.id) ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                  {srv.ticketId}
+                </td>
+                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{srv.name}</td>
+                <td className="px-6 py-4">
+                  {getChannelBadge(srv.channel)}
+                </td>
+                <td className="px-6 py-4">
+                  {renderStars(srv.csat)}
+                </td>
+                <td className="px-6 py-4">
+                  <Badge type={srv.sentiment}>
+                    {srv.sentiment === 'success' ? d.positive : srv.sentiment === 'warning' ? d.neutral : d.negative}
+                  </Badge>
+                </td>
+                <td className="px-6 py-4 text-slate-600 dark:text-slate-350 leading-relaxed max-w-sm font-medium">
+                  {srv.comment}
+                </td>
+                <td className="px-6 py-4 font-mono font-bold text-slate-400">{srv.date}</td>
+              </tr>
+              {expandedRows.includes(srv.id) && (
+                <tr className="bg-slate-50/30 dark:bg-slate-900/20 border-b border-slate-100 dark:border-slate-850">
+                  <td colSpan={7} className="px-10 py-5">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                        <FileText className="w-3.5 h-3.5" />
+                        {d.crmHistory}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg text-blue-500 mt-0.5">
+                            <User className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-bold block">{d.assignedAgent}</span>
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">{srv.agent}</span>
+                          </div>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
+                          <div className="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg text-emerald-500 mt-0.5">
+                            <Clock className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-bold block">{d.resolutionTime}</span>
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">{srv.resolutionTime}</span>
+                          </div>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
+                          <div className="bg-purple-50 dark:bg-purple-900/20 p-2 rounded-lg text-purple-500 mt-0.5">
+                            <MessageSquare className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-bold block">{d.supervisorNotes}</span>
+                            <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">{srv.notes}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </EnterpriseTable>
       </div>

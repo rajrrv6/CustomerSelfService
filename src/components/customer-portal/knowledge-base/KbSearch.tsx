@@ -4,6 +4,7 @@ import React from 'react';
 import { ArrowLeft, ThumbsUp } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
+import { EmptyState } from '@/components/shared/EmptyState';
 
 interface Article {
   id: string;
@@ -95,9 +96,25 @@ export function KbSearch({
 
           <div className="space-y-3.5">
             {filteredArticles.length === 0 ? (
-              <div className="text-center py-10 text-slate-405">
-                <span>{t.portal.kbSearch.noResults}</span>
-              </div>
+              <EmptyState
+                title={t.portal.kbSearch.noResults}
+                description={
+                  lang === 'ar'
+                    ? 'يرجى مراجعة معايير التصفية الخاصة بك أو تهجئة البحث والمحاولة مرة أخرى.'
+                    : 'Please check your filtering criteria or search spelling and try again.'
+                }
+                action={
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setKbCategoryFilter('All');
+                    }}
+                    className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-slate-700 dark:text-slate-350"
+                  >
+                    {lang === 'ar' ? 'إعادة تعيين الفلاتر والبحث' : 'Reset Filters & Search'}
+                  </button>
+                }
+              />
             ) : (
               filteredArticles.map((art) => (
                 <div
