@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useApp } from '@/context/AppContext';
+import { useUIStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
 import { translations } from '@/i18n/translations';
 import {
   Sparkles,
@@ -47,7 +48,9 @@ export function Sidebar({
   onCloseMobile?: () => void;
   isRtl?: boolean;
 }) {
-  const { role, lang, setLang } = useApp();
+  const role = useAuthStore((s) => s.role);
+  const lang = useUIStore((s) => s.lang);
+  const setLang = useUIStore((s) => s.setLang);
   const t = translations[lang];
 
   // Helper to compile sidebar options based on role

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState } from 'react';
 import {
   UserRole,
   LLMModel,
@@ -32,9 +32,17 @@ import {
   mockAgents,
   mockQAReviews,
   mockSLARules,
-  mockAuditLogs,
   mockCallLogs
 } from '../data/mockData';
+
+// ─── Zustand stores (Sprint 1 migration) ───────────────────────────────────
+// lang, theme, role, and auditLogs have been moved to typed Zustand stores.
+// AppContext reads from them via selectors so all existing useApp() consumers
+// continue to work unchanged (compatibility shim pattern).
+// See docs/decisions/adr-001-zustand-migration.md for the ownership map.
+import { useUIStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useNotificationsStore } from '@/stores/notificationsStore';
 
 interface AppContextType {
   role: UserRole;
@@ -43,7 +51,7 @@ interface AppContextType {
   setLang: (lang: 'en' | 'ar') => void;
   theme: 'light' | 'dark' | 'system';
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
-  
+
   // Stateful Data
   llmModels: LLMModel[];
   setLlmModels: React.Dispatch<React.SetStateAction<LLMModel[]>>;
@@ -70,6 +78,7 @@ interface AppContextType {
   slaRules: SLARule[];
   setSlaRules: React.Dispatch<React.SetStateAction<SLARule[]>>;
   auditLogs: AuditLog[];
+  /** @deprecated Use addAuditLog directly. Kept for backward-compat. */
   setAuditLogs: React.Dispatch<React.SetStateAction<AuditLog[]>>;
   callLogs: CallLog[];
   setCallLogs: React.Dispatch<React.SetStateAction<CallLog[]>>;
@@ -78,7 +87,7 @@ interface AppContextType {
   sendMessage: (conversationId: string, text: string, sender: 'customer' | 'agent' | 'bot' | 'system', name: string) => void;
   createBot: (bot: Omit<Bot, 'id' | 'createdAt' | 'activeSessions' | 'deflectionRate'>) => void;
   createTicket: (ticket: Omit<Ticket, 'id' | 'createdAt' | 'slaBreachTime' | 'messages'>) => void;
-  addAuditLog: (action: string, status: 'success' | 'failed') => void;
+  addAuditLog: (action: string, status?: 'success' | 'failed') => void;
   triggerBotResponse: (conversationId: string, userText: string) => void;
   triggerIngestion: (sourceId: string) => void;
 }
@@ -86,56 +95,36 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<UserRole>('client_admin');
-  const [lang, setLangState] = useState<'en' | 'ar'>('en');
-  const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>('dark');
+  // ─── Cross-feature shared state — delegated to Zustand stores ────────────
+  // These slices are consumed by 20–40 files across all portals.
+  // Components that subscribe with narrow selectors (e.g. useUIStore(s => s.lang))
+  // will only re-render when that specific field changes.
+  // Components still using useApp() go through this shim and receive the same values.
+  const lang = useUIStore((s) => s.lang);
+  const setLang = useUIStore((s) => s.setLang);
+  const theme = useUIStore((s) => s.theme);
+  const setTheme = useUIStore((s) => s.setTheme);
 
-  // Load state from localStorage on client side
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedRole = localStorage.getItem('role') as UserRole;
-      if (storedRole) setRoleState(storedRole);
+  const role = useAuthStore((s) => s.role);
+  const setRole = useAuthStore((s) => s.setRole);
 
-      const storedLang = localStorage.getItem('lang') as 'en' | 'ar';
-      if (storedLang) {
-        setLangState(storedLang);
-        document.documentElement.dir = storedLang === 'ar' ? 'rtl' : 'ltr';
-        document.documentElement.lang = storedLang;
-      }
+  const auditLogs = useNotificationsStore((s) => s.auditLogs);
+  const _addAuditLog = useNotificationsStore((s) => s.addAuditLog);
 
-      const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system';
-      if (storedTheme) {
-        setThemeState(storedTheme);
-      }
-    }
-  }, []);
+  // Wrap addAuditLog to automatically inject current role label.
+  // This avoids a circular dependency between notificationsStore and authStore.
+  const addAuditLog = useCallback(
+    (action: string, status: 'success' | 'failed' = 'success') => {
+      const roleLabel = role.toUpperCase().replace('_', ' ');
+      _addAuditLog(action, status, roleLabel);
+    },
+    [role, _addAuditLog]
+  );
 
-  const resolveTheme = (themeValue: 'light' | 'dark' | 'system') => {
-    if (themeValue === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-
-    return themeValue;
-  };
-
-  const setRole = (newRole: UserRole) => {
-    setRoleState(newRole);
-    localStorage.setItem('role', newRole);
-  };
-
-  const setLang = (newLang: 'en' | 'ar') => {
-    setLangState(newLang);
-    localStorage.setItem('lang', newLang);
-    document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = newLang;
-  };
-
-  const setTheme = (newTheme: 'light' | 'dark' | 'system') => {
-    setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
-
-  // State for all entity lists
+  // ─── Feature-scoped entity state — stays in AppContext ───────────────────
+  // These slices are consumed within a single feature area (e.g. BotsTab,
+  // NLU tabs, Super Admin tabs). They are not cross-feature shared state and
+  // do not benefit from Zustand isolation at this stage.
   const [llmModels, setLlmModels] = useState<LLMModel[]>(mockLLMModels);
   const [asrProviders, setAsrProviders] = useState<ASRTTSProvider[]>(mockASRTTSProviders);
   const [channels, setChannels] = useState<Channel[]>(mockChannels);
@@ -148,51 +137,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [agents, setAgents] = useState<Agent[]>(mockAgents);
   const [qaReviews, setQaReviews] = useState<QAReview[]>(mockQAReviews);
   const [slaRules, setSlaRules] = useState<SLARule[]>(mockSLARules);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(mockAuditLogs);
+  // auditLogs delegated to notificationsStore — kept in interface for compatibility
   const [callLogs, setCallLogs] = useState<CallLog[]>(mockCallLogs);
 
-  // Sync tailwind dark mode class
-  useEffect(() => {
-    const root = window.document.documentElement;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const applyTheme = () => {
-      const resolvedTheme = resolveTheme(theme);
-      root.classList.remove('light', 'dark');
-      root.classList.add(resolvedTheme);
-      root.style.colorScheme = resolvedTheme;
-    };
-
-    applyTheme();
-
-    if (theme !== 'system') {
-      return;
-    }
-
-    const handleSystemThemeChange = () => {
-      applyTheme();
-    };
-
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange);
-    };
-  }, [theme]);
-
-  // Actions implementations
-  const addAuditLog = (action: string, status: 'success' | 'failed' = 'success') => {
-    const newLog: AuditLog = {
-      id: `aud-${Date.now()}`,
-      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      user: 'active.user@mpaas.com',
-      role: role.toUpperCase().replace('_', ' '),
-      action,
-      ipAddress: '192.168.10.150',
-      status
-    };
-    setAuditLogs((prev) => [newLog, ...prev]);
-  };
+  // ─── Actions ─────────────────────────────────────────────────────────────
 
   const sendMessage = (conversationId: string, text: string, sender: 'customer' | 'agent' | 'bot' | 'system', name: string) => {
     const newMessage: Message = {
@@ -241,7 +189,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } else if (lower.includes('مشكلة') || lower.includes('خطأ')) {
           responseText = 'يؤسفني سماع ذلك. لقد قمت بالتحقق من سجلات الخدمة الخاصة بك. سأقوم بتمرير المحادثة إلى وكيل دعم مباشر الآن لحل المشكلة فوراً.';
           setTimeout(() => {
-            // Auto transfer to Liam
             setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, status: 'active', agentId: 'agent-1' } : c));
             sendMessage(conversationId, 'Farah AI transferred the chat to Agent Liam Bennett.', 'system', 'System');
           }, 1500);
@@ -256,7 +203,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } else if (lower.includes('broken') || lower.includes('issue') || lower.includes('fail')) {
           responseText = 'I apologize for the issue. Let me route you to a live support representative immediately.';
           setTimeout(() => {
-            // Auto transfer to Liam
             setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, status: 'active', agentId: 'agent-1' } : c));
             sendMessage(conversationId, 'Farah AI transferred the chat to Agent Liam Bennett.', 'system', 'System');
           }, 1500);
@@ -306,7 +252,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const logId = `log-${Date.now()}`;
     const srcName = knowledgeSources.find((s) => s.id === sourceId)?.name || 'Knowledge Source';
-    
+
     // Add pending log
     const newLog: IngestionLog = {
       id: logId,
@@ -388,7 +334,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         slaRules,
         setSlaRules,
         auditLogs,
-        setAuditLogs,
+        // setAuditLogs is kept for interface compatibility only.
+        // Actual mutations go through addAuditLog which writes to notificationsStore.
+        setAuditLogs: (() => {}) as React.Dispatch<React.SetStateAction<AuditLog[]>>,
         callLogs,
         setCallLogs,
         sendMessage,

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useUIStore } from '@/stores/uiStore';
+import { useNotificationsStore } from '@/stores/notificationsStore';
 import { translations } from '@/i18n/translations';
 import { UnifiedInbox } from './UnifiedInbox';
 import { ConversationPanel } from './ConversationPanel';
@@ -11,12 +13,12 @@ import { TransferModal } from './TransferModal';
 import { ConferenceModal } from './ConferenceModal';
 import { WrapupModal } from './WrapupModal';
 
-// Telephony Hooks
-import { useCallState } from '@/hooks/useCallState';
-import type { ActiveCall } from '@/hooks/useCallState';
-import { useDialer } from '@/hooks/useDialer';
-import { useVoiceQueue } from '@/hooks/useVoiceQueue';
-import { useSupervisorVoice } from '@/hooks/useSupervisorVoice';
+// Composed hooks
+import { useVoiceState, type PendingCallIntent, type ActiveCall } from '@/hooks/useVoiceState';
+import { useQueueMetrics } from '@/hooks/useQueueMetrics';
+import { useInboxFilters } from '@/hooks/useInboxFilters';
+import { useRenderProfiler } from '@/hooks/useRenderProfiler';
+import { WorkspaceAuxToolbar } from './WorkspaceAuxToolbar';
 
 // Telephony Components
 import { VoiceDialer } from '../voice/VoiceDialer';
@@ -33,45 +35,46 @@ import { conversationsSeed } from '@/data/seed/conversationsSeed';
 import { customer360Seed } from '@/data/seed/customer360Seed';
 import { queueSeed } from '@/data/seed/queueSeed';
 import { agentMetricsSeed, shiftScheduleSeed } from '@/data/seed/agentMetricsSeed';
-import { callHistorySeed, CallHistoryItem } from '@/data/seed/callHistorySeed';
+import { callHistorySeed } from '@/data/seed/callHistorySeed';
 
 import { Clock, Flame, PhoneCall, History, Users, MessageSquare, Shield, Inbox, UserCircle } from 'lucide-react';
 import { MobileSheet } from '@/components/responsive/MobileSheet';
 import { MobileTabs } from '@/components/responsive/MobileTabs';
 
-type PendingCallIntent =
-  | { type: 'outbound'; number: string; name: string }
-  | { type: 'queue_accept'; phoneNumber: string; name: string }
-  | { type: 'restore_held'; heldCall: ActiveCall };
-
 export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScreen: string }) {
-  const {
-    lang,
-    addAuditLog,
-    agents
-  } = useApp();
+  useRenderProfiler('AgentWorkspaceLayout');
+  // Narrow Zustand selectors
+  const lang = useUIStore((s) => s.lang);
+  const addAuditLog = useNotificationsStore((s) => s.addAuditLog);
+
+  // Feature-scoped state still from AppContext (agents only used in TransferModal)
+  const { agents } = useApp();
   const t = translations[lang];
 
-  // Active workspace states
+  // Active workspace states (local state scoped to AgentWorkspaceLayout)
   const [conversations, setConversations] = useState(conversationsSeed);
   const [activeChatId, setActiveChatId] = useState<string>('conv-102');
-  const [activeTab, setActiveTab] = useState<'all' | 'whatsapp' | 'web' | 'email' | 'voice' | 'escalated'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedQueue, setSelectedQueue] = useState('q-all');
 
-  // AUX state
-  const [auxStatus, setAuxStatus] = useState<'online' | 'busy' | 'away' | 'break'>('online');
-  const [auxSeconds, setAuxSeconds] = useState(0);
+  // Inbox filters (tab, search, queue) — extracted hook
+  const {
+    activeTab,
+    setActiveTab,
+    searchQuery,
+    setSearchQuery,
+    selectedQueue,
+    setSelectedQueue,
+  } = useInboxFilters(conversations);
 
-  // Call History Local State
-  const [callHistory, setCallHistory] = useState<CallHistoryItem[]>(callHistorySeed);
+  // AUX timer + queue metrics — extracted hook
+  const {
+    auxStatus,
+    auxSeconds,
+    handleAuxStatusChange,
+    formatAuxTime,
+    activeConversationCount,
+  } = useQueueMetrics();
 
-  const addCallToHistory = (newCall: CallHistoryItem) => {
-    setCallHistory((prev) => [newCall, ...prev]);
-    addAuditLog(`Saved voice call session to history: ${newCall.phoneNumber}`, 'success');
-  };
-
-  // Telephony custom hooks
+  // All 4 telephony hooks composed — extracted hook
   const {
     call,
     setCall,
@@ -84,11 +87,8 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     toggleHold,
     toggleRecording,
     submitDisposition,
-    formatDuration
-  } = useCallState(addCallToHistory);
-
-  const {
-    isOpen: isDialerOpen,
+    formatDuration,
+    isDialerOpen,
     dialInput,
     setDialInput,
     openDialer,
@@ -96,23 +96,23 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     dialPadKeyPress,
     backspaceInput,
     clearDialInput,
-    setDialTarget
-  } = useDialer();
-
-  const {
+    setDialTarget,
     queue,
     dequeueCall,
-    simulateInboundQueuedCall
-  } = useVoiceQueue();
-
-  const {
-    mode: supervisorMode,
+    simulateInboundQueuedCall,
+    supervisorMode,
     whisperHint,
     silentMonitor,
     whisperCoach,
     bargeIn,
-    stopMonitoring
-  } = useSupervisorVoice();
+    stopMonitoring,
+    callHistory,
+    addCallToHistory,
+    parkedHeldCall,
+    setParkedHeldCall,
+    hasConflictingActiveCall,
+    hasActiveVoiceCall,
+  } = useVoiceState(addAuditLog, callHistorySeed);
 
   // Voice Sub-tabs state
   const [voiceTab, setVoiceTab] = useState<'history' | 'queue' | 'voicemail' | 'supervisor'>('history');
@@ -137,9 +137,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     return () => clearTimeout(timer);
   }, [auxStatus, call, queue, receiveInbound, dequeueCall, addAuditLog]);
 
-  const hasConflictingActiveCall = Boolean(
-    call && (call.status === 'active' || call.status === 'held' || call.status === 'connecting' || call.status === 'ringing')
-  );
+
 
   const executePendingCallIntent = (intent: PendingCallIntent) => {
     autoFocusActiveCallRef.current = true;
@@ -252,7 +250,6 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   const [showWrapupModal, setShowWrapupModal] = useState(false);
   const [showCallConflictModal, setShowCallConflictModal] = useState(false);
   const [pendingCallIntent, setPendingCallIntent] = useState<PendingCallIntent | null>(null);
-  const [parkedHeldCall, setParkedHeldCall] = useState<ActiveCall | null>(null);
   const [summaryText, setSummaryText] = useState<string | null>(null);
   const activeCallPanelRef = useRef<HTMLDivElement | null>(null);
   const autoFocusActiveCallRef = useRef(false);
@@ -275,25 +272,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     'Liam, verify user\'s API credentials mapping on ORD-998. Key validation logs showed authentication credentials mismatch.'
   );
 
-  // AUX timer tick
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAuxSeconds(prev => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
-  const handleAuxStatusChange = (status: 'online' | 'busy' | 'away' | 'break') => {
-    setAuxStatus(status);
-    setAuxSeconds(0);
-    addAuditLog(`Agent Liam changed AUX status to ${status.toUpperCase()}`, 'success');
-  };
-
-  const formatAuxTime = (sec: number) => {
-    const mins = Math.floor(sec / 60);
-    const secs = sec % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   // Find active chat & customer info
   const activeChat = conversations.find((c) => c.id === activeChatId) || conversations[0];
@@ -423,9 +402,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     );
   };
 
-  const hasActiveVoiceCall = Boolean(
-    call && (call.status === 'active' || call.status === 'connecting' || call.status === 'held' || call.status === 'disposition')
-  );
+
   const showReturnToCallDock = (hasActiveVoiceCall || Boolean(parkedHeldCall)) && activeTab !== 'voice';
 
   const handleReturnToActiveCall = () => {
@@ -509,42 +486,15 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     <div className="relative min-w-0 flex flex-col min-h-[calc(100dvh-8rem)] rounded-3xl border border-slate-200 bg-slate-50/95 shadow-sm overflow-x-hidden dark:border-slate-800 dark:bg-slate-900">
       
       {/* Top Auxiliary break toolbar */}
-      <div className="flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-slate-200 bg-slate-50/80 px-3 py-2 text-[11px] font-bold text-slate-600 dark:border-slate-800 dark:bg-slate-950/20 dark:text-slate-300 sm:px-5 sm:py-0 sm:h-12 sm:flex-nowrap">
-        
-        {/* Active capacity status */}
-        <div className="flex items-center gap-3">
-          <span data-testid="capacity-meter" className="flex items-center gap-1">
-            <Flame className="w-4 h-4 text-orange-500 shrink-0" />
-            <span>{t.agentWorkspace.aux.capacityMeter}</span>
-            <span className="font-mono text-slate-800 dark:text-slate-200">{conversations.filter(c => c.status === 'active').length}/4 {t.agentWorkspace.aux.active}</span>
-          </span>
-        </div>
-
-        {/* Break state controls */}
-        <div className="flex items-center gap-3">
-          <span className="text-slate-500 dark:text-slate-400 uppercase font-mono text-[9px]">{t.agentWorkspace.aux.breakState}</span>
-          <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-300 dark:border-slate-700 text-[10px] font-bold">
-            {(['online', 'away', 'break'] as const).map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => handleAuxStatusChange(st)}
-                className={`px-2.5 py-1 rounded transition-all capitalize ${
-                  auxStatus === st ? 'bg-slate-50 dark:bg-slate-900 text-blue-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {st === 'online' ? t.agentWorkspace.aux.online : st === 'away' ? t.agentWorkspace.aux.away : t.agentWorkspace.aux.break}
-              </button>
-            ))}
-          </div>
-          
-          <span className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-            <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-            <span>{t.agentWorkspace.aux.duration}</span>
-            <span className="text-slate-800 dark:text-white font-bold">{formatAuxTime(auxSeconds)}</span>
-          </span>
-        </div>
-      </div>
+      <WorkspaceAuxToolbar
+        auxStatus={auxStatus}
+        onAuxStatusChange={(status) => handleAuxStatusChange(status, addAuditLog)}
+        auxSeconds={auxSeconds}
+        formatAuxTime={formatAuxTime}
+        activeConversationCount={activeConversationCount}
+        conversations={conversations}
+        lang={lang}
+      />
 
       {/* Main split-pane content — desktop: 3-col; mobile: primary work + sheets */}
       <div className={`flex min-h-0 flex-1 flex-col overflow-x-hidden lg:flex-row ${showReturnToCallDock ? 'pb-28 sm:pb-32 lg:pb-24' : ''}`}>

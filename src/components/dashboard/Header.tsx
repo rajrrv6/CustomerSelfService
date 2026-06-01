@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useUIStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useNotificationsStore } from '@/stores/notificationsStore';
 import { translations } from '@/i18n/translations';
 import {
   Bell,
@@ -30,7 +32,13 @@ export function Header({
   onOpenAuditLogs: () => void;
   onOpenMenu: () => void;
 }) {
-  const { role, setRole, lang, setLang, theme, setTheme, auditLogs } = useApp();
+  const role = useAuthStore((s) => s.role);
+  const setRole = useAuthStore((s) => s.setRole);
+  const lang = useUIStore((s) => s.lang);
+  const setLang = useUIStore((s) => s.setLang);
+  const theme = useUIStore((s) => s.theme);
+  const setTheme = useUIStore((s) => s.setTheme);
+  const auditLogs = useNotificationsStore((s) => s.auditLogs);
   const t = translations[lang];
 
   const [showRoleMenu, setShowRoleMenu] = useState(false);

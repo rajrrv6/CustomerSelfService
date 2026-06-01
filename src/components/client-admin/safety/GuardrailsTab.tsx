@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   ShieldCheck, 
   Sliders, 
@@ -24,6 +24,8 @@ import { OperationalCard } from '@/components/shared/OperationalCard';
 import { Badge } from '@/components/shared/BadgeSystem';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
+import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface TopicCategory {
   id: string;
@@ -223,6 +225,79 @@ export function GuardrailsTab() {
     }
   ]);
   const [auditFilter, setAuditFilter] = useState('');
+
+  // Column definitions for EnterpriseTable in Audit Logs tab
+  const auditColumns = useMemo<ColumnDef<SafetyAuditLog>[]>(() => [
+    {
+      accessorKey: 'timestamp',
+      header: isRtl ? 'طابع الوقت' : 'Timestamp',
+      cell: ({ row }) => (
+        <span className="font-mono text-[10px] text-slate-400 whitespace-nowrap">
+          {row.original.timestamp}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'type',
+      header: isRtl ? 'نوع الحدث' : 'Event Type',
+      cell: ({ row }) => (
+        <span className="font-bold text-slate-800 dark:text-slate-200">
+          {isRtl ? row.original.typeAr : row.original.type}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'inputSnippet',
+      header: isRtl ? 'المدخل للتحليل' : 'Analyzed Dialog Input',
+      cell: ({ row }) => (
+        <span className="text-slate-500 dark:text-slate-450 max-w-[180px] truncate block" title={row.original.inputSnippet}>
+          {row.original.inputSnippet}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'maskedSnippet',
+      header: isRtl ? 'المخرج المصفى' : 'Redacted Output Log',
+      cell: ({ row }) => (
+        <span className="text-slate-500 dark:text-slate-450 font-mono max-w-[180px] truncate block" title={row.original.maskedSnippet}>
+          {row.original.maskedSnippet}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'action',
+      header: isRtl ? 'الإجراء المتخذ' : 'Action Enforced',
+      cell: ({ row }) => (
+        <span className="font-semibold text-blue-600 dark:text-blue-400">
+          {isRtl ? row.original.actionAr : row.original.action}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'severity',
+      header: isRtl ? 'الخطورة' : 'Severity',
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <Badge type={row.original.severity === 'critical' ? 'error' : row.original.severity === 'warning' ? 'warning' : 'info'}>
+            {row.original.severity.toUpperCase()}
+          </Badge>
+        </div>
+      ),
+    }
+  ], [isRtl]);
+
+  const auditFilterOptions = useMemo(() => [
+    {
+      columnId: 'severity',
+      label: isRtl ? 'الخطورة' : 'Severity',
+      options: [
+        { label: isRtl ? 'كل المستويات' : 'All Severities', value: '' },
+        { label: 'INFO', value: 'info' },
+        { label: 'WARNING', value: 'warning' },
+        { label: 'CRITICAL', value: 'critical' },
+      ],
+    },
+  ], [isRtl]);
 
   // --- FUNCTIONS FOR TOPICS ---
   const handleAddBlockedWord = (e: React.FormEvent) => {
@@ -1110,61 +1185,16 @@ export function GuardrailsTab() {
             <h4 className="font-bold text-[11px] text-slate-450 dark:text-slate-500 uppercase tracking-wider font-mono shrink-0">
               {isRtl ? 'سجل التدقيق الأمني للسياسات وحماية البيانات' : 'Security Policy Compliance & Audit Trail'}
             </h4>
-
-            <div className="relative max-w-xs w-full">
-              <Search className="absolute top-2.5 start-3 w-4 h-4 text-slate-500" />
-              <input
-                type="text"
-                placeholder={isRtl ? 'البحث في سجل التدقيق...' : 'Filter safety events...'}
-                value={auditFilter}
-                onChange={(e) => setAuditFilter(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl ps-9 pe-4 py-2 text-xs font-semibold text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-            <table className="w-full text-start border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-bold uppercase border-b border-slate-200 dark:border-slate-800/80 font-mono">
-                  <th className="px-4 py-3 text-start font-bold">{isRtl ? 'طابع الوقت' : 'Timestamp'}</th>
-                  <th className="px-4 py-3 text-start font-bold">{isRtl ? 'نوع الحدث' : 'Event Type'}</th>
-                  <th className="px-4 py-3 text-start font-bold">{isRtl ? 'المدخل للتحليل' : 'Analyzed Dialog Input'}</th>
-                  <th className="px-4 py-3 text-start font-bold">{isRtl ? 'المخرج المصفى' : 'Redacted Output Log'}</th>
-                  <th className="px-4 py-3 text-start font-bold">{isRtl ? 'الإجراء المتخذ' : 'Action Enforced'}</th>
-                  <th className="px-4 py-3 text-center font-bold">{isRtl ? 'الخطورة' : 'Severity'}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 font-sans">
-                {filteredAuditLogs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-slate-500 font-mono text-[10px] font-bold">
-                      {isRtl ? 'لم يتم العثور على أحداث حظر أو خرق مطابقة.' : 'No security compliance logs match search criteria.'}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAuditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition-colors">
-                      <td className="px-4 py-3.5 font-mono text-[10px] text-slate-400 whitespace-nowrap">{log.timestamp}</td>
-                      <td className="px-4 py-3.5 font-bold text-slate-800 dark:text-slate-200">{isRtl ? log.typeAr : log.type}</td>
-                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 max-w-[180px] truncate" title={log.inputSnippet}>
-                        {log.inputSnippet}
-                      </td>
-                      <td className="px-4 py-3.5 text-slate-500 dark:text-slate-400 font-mono max-w-[180px] truncate" title={log.maskedSnippet}>
-                        {log.maskedSnippet}
-                      </td>
-                      <td className="px-4 py-3.5 font-semibold text-blue-600 dark:text-blue-400">{isRtl ? log.actionAr : log.action}</td>
-                      <td className="px-4 py-3.5 text-center">
-                        <Badge type={log.severity === 'critical' ? 'error' : log.severity === 'warning' ? 'warning' : 'info'}>
-                          {log.severity.toUpperCase()}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <EnterpriseTable
+            data={auditLogs}
+            columns={auditColumns}
+            lang={lang}
+            filterOptions={auditFilterOptions}
+            emptyMessage={isRtl ? 'لم يتم العثور على أحداث حظر أو خرق مطابقة.' : 'No security compliance logs match search criteria.'}
+            searchPlaceholder={isRtl ? 'البحث في سجل التدقيق...' : 'Filter safety events...'}
+          />
         </div>
       )}
     </div>

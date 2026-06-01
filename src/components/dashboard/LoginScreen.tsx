@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { useApp } from '@/context/AppContext';
+import { useUIStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
 import { UserRole } from '@/types';
 import { Shield, Sparkles, User, Database, Settings, ShieldAlert, Cpu, HeartHandshake } from 'lucide-react';
 
@@ -14,7 +15,11 @@ interface Persona {
 }
 
 export function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const { setRole, setLang, lang, theme, setTheme } = useApp();
+  const setRole = useAuthStore((s) => s.setRole);
+  const lang = useUIStore((s) => s.lang);
+  const setLang = useUIStore((s) => s.setLang);
+  const theme = useUIStore((s) => s.theme);
+  const setTheme = useUIStore((s) => s.setTheme);
 
   const personas: Persona[] = [
     {

@@ -90,3 +90,30 @@ Every major feature release or refinement requires updating:
 * `docs/checkpoints/` with validation criteria logs.
 * `docs/plans/` for subsequent architectural integrations.
 * `docs/decisions/` for significant ADR updates.
+
+---
+
+## 9. State Management Architecture
+To prevent "God Context" performance bottlenecks and unnecessary component re-renders:
+* **Zustand for Cross-Feature State**: Only migrate state that is truly shared across multiple decoupled features (e.g., `lang`, `theme` in `uiStore`, `role` in `authStore`, `auditLogs` in `notificationsStore`).
+* **Feature-Scoped State in Context**: Feature-specific data (e.g. `conversations` for the Agent Workspace, `bots` for the BotsTab) must remain in localized context providers or localized state unless explicit cross-feature sharing is required.
+* **Ephemeral UI State is Local**: Wizard steps, active tabs, dialog dialpad inputs, and voice call session-lived states must stay as local `useState` within the owning component or localized custom hook (e.g., `useVoiceState`, `useQueueMetrics`).
+* **Strict Selector Pattern**: When consuming a Zustand store, always use narrow field selectors to avoid subscribing to unrelated changes:
+  ```typescript
+  // CORRECT: Subscribes only to lang
+  const lang = useUIStore((s) => s.lang);
+
+  // INCORRECT: Causes re-renders on any store update
+  const { lang, theme } = useUIStore();
+  ```
+
+---
+
+## 10. Enterprise Table System
+For clean scalability and UI consistency, follow these table guidelines:
+* **Composable Sub-Components**: Do not write monolothic custom tables. Break search, visibility, pagination, and action controls into small, decoupled components managed by the core `EnterpriseTable` orchestrator.
+* **Strict Separation of Concerns**: Keep parent feature tabs in control of data fetching and row action definitions (ColumnDefs). The shared table layout components must remain pure presentation shells.
+* **Dynamic Mirroring & RTL**: Support dynamic English/Arabic i18n, setting `dir="rtl"` in layouts automatically based on the language context.
+* **Sticky Headers**: Set high-precision z-indices (`z-20`) for header columns to prevent overlaps from sidebar menus or modals.
+
+

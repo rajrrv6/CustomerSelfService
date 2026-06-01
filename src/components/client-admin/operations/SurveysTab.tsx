@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SVGDonutChart, SVGLineChart } from '@/components/dashboard/Charts';
 import { SectionHeader } from '@/components/shared/SectionHeader';
-import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
+import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
 import { Badge } from '@/components/shared/BadgeSystem';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
+import { ColumnDef } from '@tanstack/react-table';
 import { 
   TrendingUp, 
   Star, 
@@ -18,13 +19,10 @@ import {
   Sparkles, 
   Calendar, 
   SlidersHorizontal,
-  ThumbsDown,
   Clock,
   Download,
   Settings,
   RefreshCw,
-  ChevronDown,
-  ChevronUp,
   User,
   FileText,
   ThumbsUp
@@ -37,12 +35,7 @@ export function SurveysTab() {
   // Filters State
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'whatsapp' | 'web' | 'voice' | 'email'>('all');
-  const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [activeDrilldown, setActiveDrilldown] = useState<string | null>(null);
-
-  const toggleRow = (id: string) => {
-    setExpandedRows(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
-  };
 
   const dict = {
     en: {
@@ -245,17 +238,9 @@ export function SurveysTab() {
     { id: 'srv-7', ticketId: 'TCK-621', name: 'Liam Bennett', channel: 'email', csat: 1, sentiment: 'error', comment: lang === 'ar' ? 'فشل النظام في مزامنة بوابة المستندات وتأخر الدعم لأيام.' : 'SLA resolution deadline breached. ERP database took two days to sync accounts.', date: '4 days ago', agent: 'Ahmed Tariq', resolutionTime: '2.5 Days', notes: 'Escalated to engineering due to SAP sync failure.' }
   ];
 
-  const filteredSurveys = mockSurveys.filter(s => selectedChannel === 'all' || s.channel === selectedChannel);
-
-  const tableHeaders = [
-    d.colTicket,
-    d.colCustomer,
-    d.colChannel,
-    d.colCsat,
-    d.colSentiment,
-    d.colComment,
-    d.colTime
-  ];
+  const filteredSurveys = useMemo(() => {
+    return mockSurveys.filter(s => selectedChannel === 'all' || s.channel === selectedChannel);
+  }, [selectedChannel, mockSurveys]);
 
   const renderStars = (rating: number) => {
     return (
@@ -274,6 +259,107 @@ export function SurveysTab() {
     if (ch === 'email') return <Badge type="billing">{d.email}</Badge>;
     if (ch === 'voice') return <Badge type="info">{d.voice}</Badge>;
     return <Badge type="neutral">{d.web}</Badge>;
+  };
+
+  // 1. Column configuration for TanStack Table
+  const columns = useMemo<ColumnDef<typeof mockSurveys[0]>[]>(() => [
+    {
+      accessorKey: 'ticketId',
+      header: d.colTicket,
+      cell: ({ row }) => (
+        <span className="font-bold text-blue-600 dark:text-blue-400 font-mono">
+          {row.original.ticketId}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'name',
+      header: d.colCustomer,
+      cell: ({ row }) => (
+        <span className="font-bold text-slate-900 dark:text-white">
+          {row.original.name}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'channel',
+      header: d.colChannel,
+      cell: ({ row }) => getChannelBadge(row.original.channel),
+    },
+    {
+      accessorKey: 'csat',
+      header: d.colCsat,
+      cell: ({ row }) => renderStars(row.original.csat),
+    },
+    {
+      accessorKey: 'sentiment',
+      header: d.colSentiment,
+      cell: ({ row }) => (
+        <Badge type={row.original.sentiment}>
+          {row.original.sentiment === 'success' ? d.positive : row.original.sentiment === 'warning' ? d.neutral : d.negative}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'comment',
+      header: d.colComment,
+      cell: ({ row }) => (
+        <span className="text-slate-600 dark:text-slate-350 leading-relaxed max-w-sm font-medium block truncate" title={row.original.comment}>
+          {row.original.comment}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'date',
+      header: d.colTime,
+      cell: ({ row }) => (
+        <span className="font-mono font-bold text-slate-400">
+          {row.original.date}
+        </span>
+      ),
+    }
+  ], [lang, d]);
+
+  // 2. Lightweight details subcomponent inside row expansion
+  const renderSubComponent = ({ row }: { row: any }) => {
+    const srv = row.original;
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-450">
+          <FileText className="w-3.5 h-3.5" />
+          {d.crmHistory}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg text-blue-500 mt-0.5 animate-in zoom-in-75 duration-200">
+              <User className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-500 font-bold block">{d.assignedAgent}</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">{srv.agent}</span>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg text-emerald-500 mt-0.5 animate-in zoom-in-75 duration-200">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-500 font-bold block">{d.resolutionTime}</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">{srv.resolutionTime}</span>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-2 rounded-lg text-purple-500 mt-0.5 animate-in zoom-in-75 duration-200">
+              <MessageSquare className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-500 font-bold block">{d.supervisorNotes}</span>
+              <span className="text-[10px] font-medium text-slate-650 dark:text-slate-400 leading-relaxed">{srv.notes}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -305,7 +391,7 @@ export function SurveysTab() {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value as any)}
-              className="rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500"
+              className="rounded-lg border border-slate-350 dark:border-slate-850 bg-slate-50 dark:bg-slate-950 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
             >
               <option value="7d">{d.range7d}</option>
               <option value="30d">{d.range30d}</option>
@@ -319,7 +405,7 @@ export function SurveysTab() {
             <select
               value={selectedChannel}
               onChange={(e) => setSelectedChannel(e.target.value as any)}
-              className="rounded-lg border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500"
+              className="rounded-lg border border-slate-350 dark:border-slate-855 bg-slate-50 dark:bg-slate-950 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
             >
               <option value="all">{d.allChannels}</option>
               <option value="whatsapp">{d.whatsapp}</option>
@@ -331,15 +417,15 @@ export function SurveysTab() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold rounded-lg transition-colors">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold rounded-lg transition-colors cursor-pointer">
             <RefreshCw className="w-3.5 h-3.5" />
             {d.syncNow}
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold rounded-lg transition-colors">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold rounded-lg transition-colors cursor-pointer">
             <Download className="w-3.5 h-3.5" />
             {d.exportCSV}
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-lg transition-colors border border-blue-200 dark:border-blue-800">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-105 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-lg transition-colors border border-blue-200 dark:border-blue-800 cursor-pointer">
             <Settings className="w-3.5 h-3.5" />
             {d.configThresholds}
           </button>
@@ -520,78 +606,16 @@ export function SurveysTab() {
           <p className="text-[10px] text-slate-400 mt-1">{d.recentLogsSubtitle}</p>
         </div>
 
-        <EnterpriseTable headers={tableHeaders} empty={filteredSurveys.length === 0} emptyTitle="No surveys logged" emptyDesc="No responses matched this channel filter.">
-          {filteredSurveys.map((srv) => (
-            <React.Fragment key={srv.id}>
-              <tr 
-                onClick={() => toggleRow(srv.id)}
-                className={`border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-950/10 font-normal cursor-pointer transition-colors ${expandedRows.includes(srv.id) ? 'bg-slate-50/50 dark:bg-slate-950/10' : ''}`}
-              >
-                <td className="px-6 py-4 font-bold text-blue-600 dark:text-blue-400 font-mono flex items-center gap-2">
-                  {expandedRows.includes(srv.id) ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
-                  {srv.ticketId}
-                </td>
-                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{srv.name}</td>
-                <td className="px-6 py-4">
-                  {getChannelBadge(srv.channel)}
-                </td>
-                <td className="px-6 py-4">
-                  {renderStars(srv.csat)}
-                </td>
-                <td className="px-6 py-4">
-                  <Badge type={srv.sentiment}>
-                    {srv.sentiment === 'success' ? d.positive : srv.sentiment === 'warning' ? d.neutral : d.negative}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4 text-slate-600 dark:text-slate-350 leading-relaxed max-w-sm font-medium">
-                  {srv.comment}
-                </td>
-                <td className="px-6 py-4 font-mono font-bold text-slate-400">{srv.date}</td>
-              </tr>
-              {expandedRows.includes(srv.id) && (
-                <tr className="bg-slate-50/30 dark:bg-slate-900/20 border-b border-slate-100 dark:border-slate-850">
-                  <td colSpan={7} className="px-10 py-5">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-400">
-                        <FileText className="w-3.5 h-3.5" />
-                        {d.crmHistory}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
-                          <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg text-blue-500 mt-0.5">
-                            <User className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-500 font-bold block">{d.assignedAgent}</span>
-                            <span className="text-xs font-bold text-slate-900 dark:text-white">{srv.agent}</span>
-                          </div>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
-                          <div className="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg text-emerald-500 mt-0.5">
-                            <Clock className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-500 font-bold block">{d.resolutionTime}</span>
-                            <span className="text-xs font-bold text-slate-900 dark:text-white">{srv.resolutionTime}</span>
-                          </div>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-start gap-3">
-                          <div className="bg-purple-50 dark:bg-purple-900/20 p-2 rounded-lg text-purple-500 mt-0.5">
-                            <MessageSquare className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-500 font-bold block">{d.supervisorNotes}</span>
-                            <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">{srv.notes}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
-          ))}
-        </EnterpriseTable>
+        <EnterpriseTable
+          data={filteredSurveys}
+          columns={columns}
+          lang={lang}
+          renderSubComponent={renderSubComponent}
+          emptyMessage="No surveys logged"
+          emptySubMessage="No responses matched this channel filter."
+          enableSearch={true}
+          searchPlaceholder="Search feedback logs..."
+        />
       </div>
     </div>
   );

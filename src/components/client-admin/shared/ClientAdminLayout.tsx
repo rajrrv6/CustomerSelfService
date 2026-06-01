@@ -1,20 +1,33 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { BotsTab } from '../bots/BotsTab';
+
+// Lightweight tabs imported eagerly
 import { IntentsList } from '../nlu/IntentsList';
-import { DialogFlowLayout } from '@/components/dialog-builder/DialogFlowLayout';
 import { KnowledgeBaseTab } from '../knowledge/KnowledgeBaseTab';
 import { GuardrailsTab } from '../safety/GuardrailsTab';
 import { ChannelsTab } from '../channels/ChannelsTab';
 import { QueuesRosterTab } from '../operations/QueuesRosterTab';
 import { SlaTab } from '../operations/SlaTab';
 import { LifecycleTab } from '../lifecycle/LifecycleTab';
-import { IntegrationsDashboard } from '@/components/integrations/IntegrationsDashboard';
 import { SurveysTab } from '../operations/SurveysTab';
 import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
-import { TrainingTab } from '../training/TrainingTab';
+
+// Heavy tabs imported lazily
+const BotsTab = lazy(() => import('../bots/BotsTab').then(m => ({ default: m.BotsTab })));
+const DialogFlowLayout = lazy(() => import('@/components/dialog-builder/DialogFlowLayout').then(m => ({ default: m.DialogFlowLayout })));
+const IntegrationsDashboard = lazy(() => import('@/components/integrations/IntegrationsDashboard').then(m => ({ default: m.IntegrationsDashboard })));
+const TrainingTab = lazy(() => import('../training/TrainingTab').then(m => ({ default: m.TrainingTab })));
+
+function TabFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500 animate-pulse">
+      <div className="w-8 h-8 rounded-full border-4 border-blue-500 border-t-transparent animate-spin mb-3" />
+      <span className="text-xs font-semibold font-mono tracking-wider uppercase">Loading module...</span>
+    </div>
+  );
+}
 
 interface ClientAdminLayoutProps {
   activeSubScreen: string;
@@ -23,11 +36,19 @@ interface ClientAdminLayoutProps {
 export function ClientAdminLayout({ activeSubScreen }: ClientAdminLayoutProps) {
   switch (activeSubScreen) {
     case 'bots':
-      return <BotsTab />;
+      return (
+        <Suspense fallback={<TabFallback />}>
+          <BotsTab />
+        </Suspense>
+      );
     case 'intents':
       return <IntentsList />;
     case 'dialog_flow':
-      return <DialogFlowLayout />;
+      return (
+        <Suspense fallback={<TabFallback />}>
+          <DialogFlowLayout />
+        </Suspense>
+      );
     case 'knowledge_base':
       return <KnowledgeBaseTab />;
     case 'guardrails':
@@ -43,11 +64,19 @@ export function ClientAdminLayout({ activeSubScreen }: ClientAdminLayoutProps) {
     case 'deployments':
       return <LifecycleTab />;
     case 'integrations':
-      return <IntegrationsDashboard />;
+      return (
+        <Suspense fallback={<TabFallback />}>
+          <IntegrationsDashboard />
+        </Suspense>
+      );
     case 'surveys':
       return <SurveysTab />;
     case 'training':
-      return <TrainingTab />;
+      return (
+        <Suspense fallback={<TabFallback />}>
+          <TrainingTab />
+        </Suspense>
+      );
     default:
       return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">

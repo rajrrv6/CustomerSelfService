@@ -6,7 +6,8 @@ import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Badge } from '@/components/shared/BadgeSystem';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
 import { DrawerWrapper } from '@/components/shared/DrawerWrapper';
-import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
+import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
+import { ColumnDef } from '@tanstack/react-table';
 import {
   MessageSquare, Globe, Mail, Phone, Radio, Camera, Send,
   Zap, Clock, Bot, ToggleLeft, ToggleRight, Settings,
@@ -55,6 +56,79 @@ export function ChannelsTab() {
     { id: '1', date: '2026-05-24 10:45', user: 'admin@mp-core.ai', action: 'Changed theme color to #2563eb' },
     { id: '2', date: '2026-05-18 16:20', user: 'system_auto', action: 'Updated Arabic greeting text' },
   ]);
+
+  const templateColumns = React.useMemo<ColumnDef<typeof INITIAL_TEMPLATES[0]>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: d.colTplName || 'Template Name',
+      cell: ({ row }) => (
+        <span className="font-bold font-mono text-slate-905 dark:text-white">
+          {row.original.name}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'category',
+      header: d.colCategory || 'Category',
+      cell: ({ row }) => (
+        <span className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-[10px] text-slate-600 dark:text-slate-400">
+          {row.original.category}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'lang',
+      header: d.colLanguage || 'Language',
+      cell: ({ row }) => (
+        <span className="text-slate-500 font-mono font-bold text-[10px]">
+          {row.original.lang}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'usage',
+      header: d.colUsage || 'Usage',
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-600 dark:text-slate-400 font-semibold">
+          {row.original.usage.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'successRate',
+      header: d.colSuccessRate || 'Success Rate',
+      cell: ({ row }) => (
+        <span className={`font-mono font-bold ${row.original.successRate === '0%' ? 'text-slate-400' : 'text-emerald-500'}`}>
+          {row.original.successRate}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: d.colStatusLabel || 'Status',
+      cell: ({ row }) => (
+        <Badge type={statusBadgeType(row.original.status)}>
+          {row.original.status === 'approved' ? d.approved : row.original.status === 'pending' ? d.pending : d.rejected}
+        </Badge>
+      ),
+    },
+    {
+      id: 'actions',
+      header: d.preview || 'Preview',
+      cell: ({ row }) => (
+        <button
+          onClick={() => handlePreviewTemplate(row.original)}
+          data-testid={`preview-template-${row.original.name}`}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold bg-emerald-500/10 hover:bg-emerald-500 hover:text-white text-emerald-600 dark:text-emerald-400 rounded-lg transition-all cursor-pointer"
+        >
+          <Eye className="w-3.5 h-3.5" />
+          {d.preview}
+        </button>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ], [d, lang]);
 
   const handleSaveWidgetConfigs = () => {
     addAuditLog('Saved web chat widget configurations successfully.', 'success');
@@ -389,40 +463,14 @@ export function ChannelsTab() {
           <p className="text-[11px] text-slate-400 mt-0.5">{d.waTemplateDesc}</p>
         </div>
 
-        <EnterpriseTable headers={templateTableHeaders} empty={false} emptyTitle="" emptyDesc="">
-          {templates.map((tpl, i) => (
-            <tr key={i} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/60 dark:hover:bg-slate-800/20 text-[11px]">
-              <td className="px-5 py-3.5 font-bold font-mono text-slate-900 dark:text-white">{tpl.name}</td>
-              <td className="px-5 py-3.5">
-                <span className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-[10px] text-slate-600 dark:text-slate-400">
-                  {tpl.category}
-                </span>
-              </td>
-              <td className="px-5 py-3.5 text-slate-500 font-mono font-bold text-[10px]">{tpl.lang}</td>
-              <td className="px-5 py-3.5 font-mono text-slate-600 dark:text-slate-400 font-semibold">{tpl.usage.toLocaleString()}</td>
-              <td className="px-5 py-3.5">
-                <span className={`font-mono font-bold ${tpl.successRate === '0%' ? 'text-slate-400' : 'text-emerald-500'}`}>
-                  {tpl.successRate}
-                </span>
-              </td>
-              <td className="px-5 py-3.5">
-                <Badge type={statusBadgeType(tpl.status)}>
-                  {tpl.status === 'approved' ? d.approved : tpl.status === 'pending' ? d.pending : d.rejected}
-                </Badge>
-              </td>
-              <td className="px-5 py-3.5">
-                <button
-                  onClick={() => handlePreviewTemplate(tpl)}
-                  data-testid={`preview-template-${tpl.name}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold bg-emerald-500/10 hover:bg-emerald-500 hover:text-white text-emerald-600 dark:text-emerald-400 rounded-lg transition-all"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  {d.preview}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </EnterpriseTable>
+        <EnterpriseTable
+          data={templates}
+          columns={templateColumns}
+          lang={lang}
+          enableSearch={true}
+          searchPlaceholder={lang === 'ar' ? 'البحث عن القوالب...' : 'Search WhatsApp templates...'}
+          enableColumnVisibility={false}
+        />
       </div>
 
       {/* ══════════════════════════════════════════════════════════════

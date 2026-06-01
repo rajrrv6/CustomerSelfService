@@ -3,14 +3,26 @@
 import React, { useState } from 'react';
 import { Brain, TrendingUp, HelpCircle, AlertCircle, Layers, CheckCircle2, ChevronRight, Activity, Plus, ShieldAlert, Cpu } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useUIStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useNotificationsStore } from '@/stores/notificationsStore';
+import { useRenderProfiler } from '@/hooks/useRenderProfiler';
 import { translations } from '@/i18n/translations';
 import { UnansweredQueriesTab, UnansweredQuery } from './UnansweredQueriesTab';
 import { SuggestedClustersTab, Cluster } from './SuggestedClustersTab';
 import { IntentGenerationWizard } from './IntentGenerationWizard';
 
 export function TrainingTab() {
-  const { lang, role, intents, setIntents, addAuditLog } = useApp();
+  useRenderProfiler('TrainingTab');
+  // Narrow Zustand selectors — only re-renders when lang, role, or addAuditLog changes
+  const lang = useUIStore((s) => s.lang);
+  const role = useAuthStore((s) => s.role);
+  const addAuditLog = useNotificationsStore((s) => s.addAuditLog);
   const t = translations[lang];
+
+  // Feature-scoped state — intents list belongs to the NLU training feature area
+  const { intents, setIntents } = useApp();
+
   const [activeSubTab, setActiveSubTab] = useState<'queries' | 'clusters'>('queries');
   const isReadOnly = role === 'qa_manager';
 

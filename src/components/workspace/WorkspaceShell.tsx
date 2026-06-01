@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApp } from '@/context/AppContext';
+import { useUIStore } from '@/stores/uiStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useNotificationsStore } from '@/stores/notificationsStore';
 import { useAuth } from '@/hooks/useAuth';
 import { translations } from '@/i18n/translations';
 import { Sidebar } from '@/components/dashboard/Sidebar';
@@ -30,7 +32,9 @@ interface WorkspaceShellProps {
 }
 
 export function WorkspaceShell({ initialScreen }: WorkspaceShellProps) {
-  const { role, lang, auditLogs } = useApp();
+  const role = useAuthStore((s) => s.role);
+  const lang = useUIStore((s) => s.lang);
+  const auditLogs = useNotificationsStore((s) => s.auditLogs);
   const { logout, user } = useAuth();
   const defaultScreen = initialScreen ?? ROLE_DEFAULT_SCREEN[role];
 

@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
 import { 
   Users, 
   Clock, 
@@ -26,6 +28,18 @@ import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
 import { Badge } from '@/components/shared/BadgeSystem';
 import { translations } from '@/i18n/translations';
+
+// Form architecture integrations
+import { useForm, type Resolver } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { queueSchema, agentSchema, QueueFormValues, AgentFormValues } from '@/lib/forms/schemas/routingSchemas';
+import { defaultQueueConfig, defaultAgentConfig } from '@/lib/forms/formDefaults';
+import { FormModal } from '@/components/shared/forms/FormModal';
+import { FormShell } from '@/components/shared/forms/FormShell';
+import { FormActions } from '@/components/shared/forms/FormActions';
+import { TextInputField } from '@/components/shared/forms/TextInputField';
+import { SelectField } from '@/components/shared/forms/SelectField';
+import { FormValidationSummary } from '@/components/shared/forms/FormValidationSummary';
 
 interface QueueItem {
   id: string;
@@ -115,12 +129,166 @@ export function QueuesRosterTab() {
   // Queue CRUD form states
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [editingQueueId, setEditingQueueId] = useState<string | null>(null);
-  const [queueNameEn, setQueueNameEn] = useState('');
-  const [queueNameAr, setQueueNameAr] = useState('');
-  const [queueMaxWait, setQueueMaxWait] = useState(3);
-  const [queueSlaTarget, setQueueSlaTarget] = useState(90);
-  const [queuePriority, setQueuePriority] = useState(5);
-  const [queueOverflow, setQueueOverflow] = useState<'vip_redirect' | 'trigger_callback' | 'voicemail' | 'secondary_pool'>('trigger_callback');
+
+  const queueForm = useForm<QueueFormValues>({
+    resolver: zodResolver(queueSchema) as Resolver<QueueFormValues>,
+    defaultValues: defaultQueueConfig(),
+  });
+
+  // Columns for Queues EnterpriseTable
+  const queueColumns = useMemo<ColumnDef<QueueItem>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: isRtl ? 'اسم طابور الخدمة' : 'Queue Name',
+      cell: ({ row }) => (
+        <div>
+          <span className="font-bold text-slate-800 dark:text-slate-200">
+            {isRtl ? row.original.nameAr : row.original.nameEn}
+          </span>
+          <span className="text-[10px] text-slate-450 dark:text-slate-500 font-mono block mt-0.5">
+            ID: {row.original.id}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'maxWaitTimeMins',
+      header: isRtl ? 'الانتظار الأقصى' : 'Max Wait Limit',
+      cell: ({ row }) => (
+        <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+          {row.original.maxWaitTimeMins}m
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'slaTargetPercent',
+      header: isRtl ? 'هدف الـ SLA' : 'SLA Target',
+      cell: ({ row }) => (
+        <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+          {row.original.slaTargetPercent}%
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'priorityWeight',
+      header: isRtl ? 'وزن الأولوية' : 'Priority Weight',
+      cell: ({ row }) => (
+        <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+          {row.original.priorityWeight}/10
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'overflowRule',
+      header: isRtl ? 'استراتيجية الفائض' : 'Overflow Strategy',
+      cell: ({ row }) => (
+        <span className="font-mono font-bold text-blue-650 dark:text-blue-400 uppercase text-[10px]">
+          {row.original.overflowRule.replace('_', ' ')}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <div className="text-right">{isRtl ? 'إجراءات' : 'Actions'}</div>,
+      cell: ({ row }) => {
+        const q = row.original;
+        return (
+          <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => handleOpenQueueEdit(q)}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-blue-500 transition-colors cursor-pointer"
+            >
+              <Edit className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => handleDeleteQueue(q.id)}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-red-500 hover:text-red-400 transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    }
+  ], [isRtl]);
+
+  // Columns for Agent Roster EnterpriseTable
+  const agentColumns = useMemo<ColumnDef<typeof agents[0]>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: isRtl ? 'الاسم والبريد' : 'Agent Details',
+      cell: ({ row }) => {
+        const agent = row.original;
+        return (
+          <div className="flex items-center gap-3">
+            <img
+              src={agent.avatarUrl}
+              alt={agent.name}
+              className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800 shrink-0"
+            />
+            <div>
+              <h4 className="font-bold text-xs text-slate-800 dark:text-white leading-tight">{agent.name}</h4>
+              <span className="text-[10px] text-slate-450 font-mono block mt-0.5">{agent.email}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'maxChatsCount',
+      header: isRtl ? 'الحد الأقصى للمحادثات' : 'Max Chats',
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-700 dark:text-slate-350">
+          {row.original.maxChatsCount}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'csatScore',
+      header: 'CSAT',
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-700 dark:text-slate-350 font-bold">
+          {row.original.csatScore}%
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'resolvedTicketsCount',
+      header: isRtl ? 'التذاكر المحلولة' : 'Resolved',
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-700 dark:text-slate-350 font-bold">
+          {row.original.resolvedTicketsCount}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <div className="text-right">{isRtl ? 'إجراءات' : 'Actions'}</div>,
+      cell: ({ row }) => {
+        const agent = row.original;
+        return (
+          <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => handleOpenAgentEdit(agent)}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-blue-500 transition-colors cursor-pointer"
+            >
+              <Edit className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => handleDeleteAgent(agent.id)}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-red-500 hover:text-red-400 transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    }
+  ], [isRtl]);
 
   // --- STATE FOR ROUTING RULES ---
   const [routingRules, setRoutingRules] = useState<RoutingRule[]>([
@@ -156,10 +324,11 @@ export function QueuesRosterTab() {
   // --- STATE FOR AGENT ROSTER & CRUD ---
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
-  const [agentName, setAgentName] = useState('');
-  const [agentEmail, setAgentEmail] = useState('');
-  const [agentMaxChats, setAgentMaxChats] = useState(4);
-  const [agentShift, setAgentShift] = useState('Morning (08:00 - 16:00 AST)');
+
+  const agentForm = useForm<AgentFormValues>({
+    resolver: zodResolver(agentSchema) as Resolver<AgentFormValues>,
+    defaultValues: defaultAgentConfig(),
+  });
   // Agent skills assignments state maps agent.id -> list of skills
   const [agentSkillsMap, setAgentSkillsMap] = useState<Record<string, string[]>>({
     'agent-1': ['Billing', 'Arabic Language'],
@@ -201,62 +370,56 @@ export function QueuesRosterTab() {
   // --- FUNCTIONS: QUEUES CRUD ---
   const handleOpenQueueCreate = () => {
     setEditingQueueId(null);
-    setQueueNameEn('');
-    setQueueNameAr('');
-    setQueueMaxWait(3);
-    setQueueSlaTarget(90);
-    setQueuePriority(5);
-    setQueueOverflow('trigger_callback');
+    queueForm.reset(defaultQueueConfig());
     setIsQueueModalOpen(true);
   };
 
   const handleOpenQueueEdit = (q: QueueItem) => {
     setEditingQueueId(q.id);
-    setQueueNameEn(q.nameEn);
-    setQueueNameAr(q.nameAr);
-    setQueueMaxWait(q.maxWaitTimeMins);
-    setQueueSlaTarget(q.slaTargetPercent);
-    setQueuePriority(q.priorityWeight);
-    setQueueOverflow(q.overflowRule);
+    queueForm.reset({
+      nameEn: q.nameEn,
+      nameAr: q.nameAr,
+      maxWaitTimeMins: q.maxWaitTimeMins,
+      slaTargetPercent: q.slaTargetPercent,
+      priorityWeight: q.priorityWeight,
+      overflowRule: q.overflowRule,
+    });
     setIsQueueModalOpen(true);
   };
 
-  const handleSaveQueue = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!queueNameEn.trim() || !queueNameAr.trim()) return;
-
+  const onQueueSubmit = (values: QueueFormValues) => {
     if (editingQueueId) {
       // Edit mode
       setQueuesList(queuesList.map(q => {
         if (q.id === editingQueueId) {
           return {
             ...q,
-            nameEn: queueNameEn.trim(),
-            nameAr: queueNameAr.trim(),
-            maxWaitTimeMins: queueMaxWait,
-            slaTargetPercent: queueSlaTarget,
-            priorityWeight: queuePriority,
-            overflowRule: queueOverflow
+            nameEn: values.nameEn.trim(),
+            nameAr: values.nameAr.trim(),
+            maxWaitTimeMins: values.maxWaitTimeMins,
+            slaTargetPercent: values.slaTargetPercent,
+            priorityWeight: values.priorityWeight,
+            overflowRule: values.overflowRule
           };
         }
         return q;
       }));
-      addAuditLog(`Updated operations queue: ${queueNameEn}`, 'success');
+      addAuditLog(`Updated operations queue: ${values.nameEn}`, 'success');
     } else {
       // Create mode
       const newQueue: QueueItem = {
         id: `q-${Date.now()}`,
-        nameEn: queueNameEn.trim(),
-        nameAr: queueNameAr.trim(),
-        maxWaitTimeMins: queueMaxWait,
-        slaTargetPercent: queueSlaTarget,
-        priorityWeight: queuePriority,
-        overflowRule: queueOverflow,
+        nameEn: values.nameEn.trim(),
+        nameAr: values.nameAr.trim(),
+        maxWaitTimeMins: values.maxWaitTimeMins,
+        slaTargetPercent: values.slaTargetPercent,
+        priorityWeight: values.priorityWeight,
+        overflowRule: values.overflowRule,
         activeAgentsCount: 0,
         waitingChatsCount: 0
       };
       setQueuesList([...queuesList, newQueue]);
-      addAuditLog(`Created new support queue: ${queueNameEn}`, 'success');
+      addAuditLog(`Created new support queue: ${values.nameEn}`, 'success');
     }
     setIsQueueModalOpen(false);
   };
@@ -282,52 +445,47 @@ export function QueuesRosterTab() {
   // --- FUNCTIONS: AGENT roster CRUD ---
   const handleOpenAgentCreate = () => {
     setEditingAgentId(null);
-    setAgentName('');
-    setAgentEmail('');
-    setAgentMaxChats(4);
-    setAgentShift('Morning (08:00 - 16:00 AST)');
+    agentForm.reset(defaultAgentConfig());
     setIsAgentModalOpen(true);
   };
 
   const handleOpenAgentEdit = (agent: typeof agents[0]) => {
     setEditingAgentId(agent.id);
-    setAgentName(agent.name);
-    setAgentEmail(agent.email);
-    setAgentMaxChats(agent.maxChatsCount);
-    // Find current shift
-    setAgentShift('Morning (08:00 - 16:00 AST)');
+    agentForm.reset({
+      name: agent.name,
+      email: agent.email,
+      maxChatsCount: agent.maxChatsCount,
+      shift: 'Morning',
+    });
     setIsAgentModalOpen(true);
   };
 
-  const handleSaveAgent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!agentName.trim() || !agentEmail.trim()) return;
-
+  const onAgentSubmit = (values: AgentFormValues) => {
     if (editingAgentId) {
       // Edit
       setAgents(agents.map(a => {
         if (a.id === editingAgentId) {
           return {
             ...a,
-            name: agentName.trim(),
-            email: agentEmail.trim(),
-            maxChatsCount: agentMaxChats
+            name: values.name.trim(),
+            email: values.email.trim(),
+            maxChatsCount: values.maxChatsCount
           };
         }
         return a;
       }));
-      addAuditLog(`Updated roster details for agent: ${agentName}`, 'success');
+      addAuditLog(`Updated roster details for agent: ${values.name}`, 'success');
     } else {
       // Create
       const newAgentId = `agent-${Date.now()}`;
       const newAgent = {
         id: newAgentId,
-        name: agentName.trim(),
+        name: values.name.trim(),
         avatarUrl: `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 999999)}?w=120&h=120&fit=crop&crop=faces`,
-        email: agentEmail.trim(),
+        email: values.email.trim(),
         status: 'offline' as const,
         activeChatsCount: 0,
-        maxChatsCount: agentMaxChats,
+        maxChatsCount: values.maxChatsCount,
         csatScore: 90 + Math.floor(Math.random() * 10),
         resolvedTicketsCount: 0,
         lastActive: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -337,7 +495,7 @@ export function QueuesRosterTab() {
         ...agentSkillsMap,
         [newAgentId]: ['Billing'] // default skill
       });
-      addAuditLog(`Created new team roster account: ${agentName}`, 'success');
+      addAuditLog(`Created new team roster account: ${values.name}`, 'success');
     }
     setIsAgentModalOpen(false);
   };
@@ -573,170 +731,103 @@ export function QueuesRosterTab() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {queuesList.map((q) => (
-              <OperationalCard key={q.id} className="p-5 flex flex-col justify-between gap-4 border-l-4 border-l-blue-500">
-                <div className="flex justify-between items-start gap-4">
-                  <div>
-                    <h4 className="font-bold text-xs text-slate-800 dark:text-white">
-                      {isRtl ? q.nameAr : q.nameEn}
-                    </h4>
-                    <span className="text-[10px] text-slate-450 dark:text-slate-500 font-mono block mt-0.5">
-                      {isRtl ? `معرّف الطابور: ${q.id}` : `Queue ID: ${q.id}`}
-                    </span>
-                  </div>
+          <EnterpriseTable
+            data={queuesList}
+            columns={queueColumns}
+            lang={lang}
+            enableSearch={true}
+            searchPlaceholder={isRtl ? 'البحث عن طابور الخدمة...' : 'Search support queues...'}
+            enableColumnVisibility={false}
+          />
 
-                  <div className="flex gap-1.5 shrink-0">
-                    <button
-                      onClick={() => handleOpenQueueEdit(q)}
-                      className="text-slate-400 hover:text-blue-500 p-1.5 hover:bg-blue-500/10 rounded-lg transition-all"
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteQueue(q.id)}
-                      className="text-red-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-lg transition-all"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 dark:border-slate-800/80 text-[10px] font-semibold text-slate-500">
-                  <div className="space-y-1">
-                    <span>{isRtl ? 'هدف الـ SLA للرد:' : 'SLA Target:'}</span>
-                    <strong className="text-slate-800 dark:text-slate-200 font-mono block text-xs">{q.slaTargetPercent}%</strong>
-                  </div>
-                  <div className="space-y-1">
-                    <span>{isRtl ? 'الحد الأقصى للانتظار:' : 'Max Wait Limit:'}</span>
-                    <strong className="text-slate-800 dark:text-slate-200 font-mono block text-xs">{q.maxWaitTimeMins}m</strong>
-                  </div>
-                  <div className="space-y-1">
-                    <span>{isRtl ? 'وزن الأولوية:' : 'Priority Weight:'}</span>
-                    <strong className="text-slate-800 dark:text-slate-200 font-mono block text-xs">{q.priorityWeight}/10</strong>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 text-[10px] font-bold font-mono">
-                  <span className="text-slate-400 uppercase">
-                    {isRtl ? 'قاعدة الفائض عند الضغط:' : 'Overflow Strategy:'}
-                  </span>
-                  <span className="text-blue-400 uppercase">
-                    {q.overflowRule.replace('_', ' ')}
-                  </span>
-                </div>
-              </OperationalCard>
-            ))}
-          </div>
-
-          {/* Queue CRUD Modal Popup Dialog */}
-          {isQueueModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-xl">
-                <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                  <h3 className="font-bold text-sm text-white">
-                    {editingQueueId ? (isRtl ? 'تعديل إعدادات الطابور' : 'Edit Support Queue') : (isRtl ? 'إنشاء طابور جديد' : 'Configure New Support Queue')}
-                  </h3>
-                  <button onClick={() => setIsQueueModalOpen(false)} className="text-slate-400 hover:text-white">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleSaveQueue} className="space-y-4 text-xs">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'الاسم الإنجليزي:' : 'Queue Name (EN):'}</label>
-                      <input
-                        type="text"
-                        required
-                        value={queueNameEn}
-                        onChange={(e) => setQueueNameEn(e.target.value)}
-                        placeholder="e.g. Risk & Audit Express"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'الاسم العربي:' : 'Queue Name (AR):'}</label>
-                      <input
-                        type="text"
-                        required
-                        value={queueNameAr}
-                        onChange={(e) => setQueueNameAr(e.target.value)}
-                        placeholder="مثال: طابور المخاطر والتدقيق"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-end"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'الانتظار (دقيقة):' : 'Max Wait (Mins):'}</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={30}
-                        value={queueMaxWait}
-                        onChange={(e) => setQueueMaxWait(parseInt(e.target.value))}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'مستهدف الـ SLA:' : 'SLA Target %:'}</label>
-                      <input
-                        type="number"
-                        min={50}
-                        max={100}
-                        value={queueSlaTarget}
-                        onChange={(e) => setQueueSlaTarget(parseInt(e.target.value))}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'الأولوية (1-10):' : 'Priority Weight:'}</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={queuePriority}
-                        onChange={(e) => setQueuePriority(parseInt(e.target.value))}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'قاعدة فائض الحالات:' : 'Overflow Redirection Rule:'}</label>
-                    <select
-                      value={queueOverflow}
-                      onChange={(e) => setQueueOverflow(e.target.value as any)}
-                      className="w-full bg-slate-955 border border-slate-800 rounded-xl px-2.5 py-2 text-slate-300 focus:outline-none"
-                    >
-                      <option value="vip_redirect">{isRtl ? 'توجيه لقناة كبار العملاء VIP' : 'Forward to VIP Express Line'}</option>
-                      <option value="trigger_callback">{isRtl ? 'تفعيل جدولة الاتصال التلقائي' : 'Trigger Automated Callback Request'}</option>
-                      <option value="voicemail">{isRtl ? 'تحويل للبريد الصوتي للشركة' : 'Route to Corporate Voicemail Box'}</option>
-                      <option value="secondary_pool">{isRtl ? 'تحويل للمجموعة الاحتياطية' : 'Route to Secondary Support Pool'}</option>
-                    </select>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsQueueModalOpen(false)}
-                      className="border border-slate-800 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                    >
-                      {isRtl ? 'إلغاء' : 'Cancel'}
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                    >
-                      {isRtl ? 'حفظ وتأكيد' : 'Save Changes'}
-                    </button>
-                  </div>
-                </form>
+          <FormModal
+            isOpen={isQueueModalOpen}
+            onClose={() => setIsQueueModalOpen(false)}
+            isDirty={queueForm.formState.isDirty}
+            title={editingQueueId ? (isRtl ? 'تعديل إعدادات الطابور' : 'Edit Support Queue') : (isRtl ? 'إنشاء طابور جديد' : 'Configure New Support Queue')}
+            maxWidthClass="max-w-lg"
+            lang={lang}
+            footer={
+              <FormActions
+                onCancel={() => setIsQueueModalOpen(false)}
+                submitLabel={isRtl ? 'حفظ وتأكيد' : 'Save Changes'}
+                cancelLabel={isRtl ? 'إلغاء' : 'Cancel'}
+                isSubmitting={queueForm.formState.isSubmitting}
+                lang={lang}
+              />
+            }
+          >
+            <FormShell methods={queueForm} onSubmit={onQueueSubmit} className="space-y-4">
+              <FormValidationSummary errors={queueForm.formState.errors} lang={lang} />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <TextInputField
+                  id="queueNameEn"
+                  label={isRtl ? 'الاسم الإنجليزي:' : 'Queue Name (EN):'}
+                  placeholder="e.g. Risk & Audit Express"
+                  required
+                  error={queueForm.formState.errors.nameEn?.message}
+                  lang={lang}
+                  {...queueForm.register('nameEn')}
+                />
+                <TextInputField
+                  id="queueNameAr"
+                  label={isRtl ? 'الاسم العربي:' : 'Queue Name (AR):'}
+                  placeholder="مثال: طابور المخاطر والتدقيق"
+                  required
+                  error={queueForm.formState.errors.nameAr?.message}
+                  lang={lang}
+                  className="text-end"
+                  {...queueForm.register('nameAr')}
+                />
               </div>
-            </div>
-          )}
+
+              <div className="grid grid-cols-3 gap-3">
+                <TextInputField
+                  id="queueMaxWait"
+                  type="number"
+                  label={isRtl ? 'الانتظار (دقيقة):' : 'Max Wait (Mins):'}
+                  required
+                  error={queueForm.formState.errors.maxWaitTimeMins?.message}
+                  lang={lang}
+                  {...queueForm.register('maxWaitTimeMins')}
+                />
+                <TextInputField
+                  id="queueSlaTarget"
+                  type="number"
+                  label={isRtl ? 'مستهدف الـ SLA %:' : 'SLA Target %:'}
+                  required
+                  error={queueForm.formState.errors.slaTargetPercent?.message}
+                  lang={lang}
+                  {...queueForm.register('slaTargetPercent')}
+                />
+                <TextInputField
+                  id="queuePriority"
+                  type="number"
+                  label={isRtl ? 'الأولوية (1-10):' : 'Priority Weight:'}
+                  required
+                  error={queueForm.formState.errors.priorityWeight?.message}
+                  lang={lang}
+                  {...queueForm.register('priorityWeight')}
+                />
+              </div>
+
+              <SelectField
+                id="queueOverflow"
+                label={isRtl ? 'قاعدة فائض الحالات:' : 'Overflow Redirection Rule:'}
+                required
+                options={[
+                  { value: 'vip_redirect', label: isRtl ? 'توجيه لقناة كبار العملاء VIP' : 'Forward to VIP Express Line' },
+                  { value: 'trigger_callback', label: isRtl ? 'تفعيل جدولة الاتصال التلقائي' : 'Trigger Automated Callback Request' },
+                  { value: 'voicemail', label: isRtl ? 'تحويل للبريد الصوتي للشركة' : 'Route to Corporate Voicemail Box' },
+                  { value: 'secondary_pool', label: isRtl ? 'تحويل للمجموعة الاحتياطية' : 'Route to Secondary Support Pool' },
+                ]}
+                error={queueForm.formState.errors.overflowRule?.message}
+                lang={lang}
+                {...queueForm.register('overflowRule')}
+              />
+            </FormShell>
+          </FormModal>
         </div>
       )}
 
@@ -810,40 +901,14 @@ export function QueuesRosterTab() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Roster list */}
             <div className="lg:col-span-6 space-y-4">
-              {agents.map((agent) => (
-                <OperationalCard key={agent.id} className="p-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={agent.avatarUrl}
-                      alt={agent.name}
-                      className="w-10 h-10 rounded-full object-cover shrink-0 ring-2 ring-slate-100 dark:ring-slate-800"
-                    />
-                    
-                    <div>
-                      <h4 className="font-bold text-xs text-slate-800 dark:text-white leading-tight">{agent.name}</h4>
-                      <span className="text-[10px] text-slate-450 font-mono block mt-0.5">{agent.email}</span>
-                      <span className="text-[9px] text-slate-400 block font-semibold mt-0.5">
-                        {isRtl ? 'الوردية: نوبة العمل الصباحية' : 'Shift: Morning Support Shift'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      onClick={() => handleOpenAgentEdit(agent)}
-                      className="text-slate-400 hover:text-blue-500 p-1.5 hover:bg-blue-500/10 rounded-lg transition-all"
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAgent(agent.id)}
-                      className="text-red-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-lg transition-all"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </OperationalCard>
-              ))}
+              <EnterpriseTable
+                data={agents}
+                columns={agentColumns}
+                lang={lang}
+                enableSearch={true}
+                searchPlaceholder={isRtl ? 'البحث في فريق العمل...' : 'Search roster...'}
+                enableColumnVisibility={false}
+              />
             </div>
 
             {/* Dynamic Skills matrix table */}
@@ -903,89 +968,74 @@ export function QueuesRosterTab() {
           </div>
 
           {/* Agent Create / Edit Modal popup dialog */}
-          {isAgentModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-xl animate-fade-in">
-                <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                  <h3 className="font-bold text-sm text-white">
-                    {editingAgentId ? (isRtl ? 'تعديل ملف الوكيل' : 'Edit Agent Profile') : (isRtl ? 'إضافة وكيل دعم فني جديد' : 'Configure New Agent Roster Record')}
-                  </h3>
-                  <button onClick={() => setIsAgentModalOpen(false)} className="text-slate-400 hover:text-white">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+          <FormModal
+            isOpen={isAgentModalOpen}
+            onClose={() => setIsAgentModalOpen(false)}
+            isDirty={agentForm.formState.isDirty}
+            title={editingAgentId ? (isRtl ? 'تعديل ملف الوكيل' : 'Edit Agent Profile') : (isRtl ? 'إضافة وكيل دعم فني جديد' : 'Configure New Agent Roster Record')}
+            maxWidthClass="max-w-md"
+            lang={lang}
+            footer={
+              <FormActions
+                onCancel={() => setIsAgentModalOpen(false)}
+                submitLabel={isRtl ? 'حفظ وتثبيت' : 'Save Changes'}
+                cancelLabel={isRtl ? 'إلغاء' : 'Cancel'}
+                isSubmitting={agentForm.formState.isSubmitting}
+                lang={lang}
+              />
+            }
+          >
+            <FormShell methods={agentForm} onSubmit={onAgentSubmit} className="space-y-4">
+              <FormValidationSummary errors={agentForm.formState.errors} lang={lang} />
 
-                <form onSubmit={handleSaveAgent} className="space-y-4 text-xs">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'الاسم الكامل:' : 'Agent Full Name:'}</label>
-                    <input
-                      type="text"
-                      required
-                      value={agentName}
-                      onChange={(e) => setAgentName(e.target.value)}
-                      placeholder="e.g. Nadia Vance"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none"
-                    />
-                  </div>
+              <TextInputField
+                id="agentName"
+                label={isRtl ? 'الاسم الكامل:' : 'Agent Full Name:'}
+                placeholder="e.g. Nadia Vance"
+                required
+                error={agentForm.formState.errors.name?.message}
+                lang={lang}
+                {...agentForm.register('name')}
+              />
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'البريد الإلكتروني للعمل:' : 'Work Email Address:'}</label>
-                    <input
-                      type="email"
-                      required
-                      value={agentEmail}
-                      onChange={(e) => setAgentEmail(e.target.value)}
-                      placeholder="nadia@company.com"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none"
-                    />
-                  </div>
+              <TextInputField
+                id="agentEmail"
+                type="email"
+                label={isRtl ? 'البريد الإلكتروني للعمل:' : 'Work Email Address:'}
+                placeholder="nadia@company.com"
+                required
+                error={agentForm.formState.errors.email?.message}
+                lang={lang}
+                {...agentForm.register('email')}
+              />
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'الحد الأقصى للمحادثات:' : 'Max Concurrency Limit:'}</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={agentMaxChats}
-                        onChange={(e) => setAgentMaxChats(parseInt(e.target.value))}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200"
-                      />
-                    </div>
+              <div className="grid grid-cols-2 gap-3">
+                <TextInputField
+                  id="agentMaxChats"
+                  type="number"
+                  label={isRtl ? 'الحد الأقصى للمحادثات:' : 'Max Concurrency Limit:'}
+                  required
+                  error={agentForm.formState.errors.maxChatsCount?.message}
+                  lang={lang}
+                  {...agentForm.register('maxChatsCount')}
+                />
 
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block">{isRtl ? 'نوبة العمل (الوردية):' : 'Active Shift Shift:'}</label>
-                      <select
-                        value={agentShift}
-                        onChange={(e) => setAgentShift(e.target.value)}
-                        className="w-full bg-slate-955 border border-slate-800 rounded-xl px-2.5 py-2 text-slate-350 focus:outline-none"
-                      >
-                        <option value="Morning">{isRtl ? 'الصباحية' : 'Morning Shift'}</option>
-                        <option value="Evening">{isRtl ? 'المسائية' : 'Evening Shift'}</option>
-                        <option value="Night">{isRtl ? 'الليلية' : 'Night Shift'}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAgentModalOpen(false)}
-                      className="border border-slate-800 hover:bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                    >
-                      {isRtl ? 'إلغاء' : 'Cancel'}
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                    >
-                      {isRtl ? 'حفظ وتثبيت' : 'Save Changes'}
-                    </button>
-                  </div>
-                </form>
+                <SelectField
+                  id="agentShift"
+                  label={isRtl ? 'نوبة العمل (الوردية):' : 'Active Shift:'}
+                  required
+                  options={[
+                    { value: 'Morning', label: isRtl ? 'الصباحية' : 'Morning Shift' },
+                    { value: 'Evening', label: isRtl ? 'المسائية' : 'Evening Shift' },
+                    { value: 'Night', label: isRtl ? 'الليلية' : 'Night Shift' },
+                  ]}
+                  error={agentForm.formState.errors.shift?.message}
+                  lang={lang}
+                  {...agentForm.register('shift')}
+                />
               </div>
-            </div>
-          )}
+            </FormShell>
+          </FormModal>
         </div>
       )}
 

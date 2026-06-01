@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { SectionHeader } from '@/components/shared/SectionHeader';
-import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
+import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
+import { ColumnDef } from '@tanstack/react-table';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
 import { Badge } from '@/components/shared/BadgeSystem';
 import {
@@ -117,6 +118,206 @@ export function SuperAdminChannelsTab() {
     { label: d.queueThroughput, value: `${avgThroughput} msg/s`, icon: <Zap className="w-5 h-5 text-amber-500" />, bg: 'bg-amber-500/10', trend: 'Avg across all channels', trendUp: true },
     { label: d.aiAutomationRate, value: `${aiRate}%`, icon: <Bot className="w-5 h-5 text-sky-500" />, bg: 'bg-sky-500/10', trend: `${aiChannels} of 10 channels`, trendUp: true },
   ];
+
+  const channelColumns = React.useMemo<ColumnDef<typeof CHANNELS[0]>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: d.colChannel || 'Channel',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <div className={`p-1.5 rounded-lg ${row.original.iconBg}`}>{row.original.icon}</div>
+          <span className="font-bold text-slate-900 dark:text-white">{row.original.name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'provider',
+      header: d.colProvider || 'Provider',
+      cell: ({ row }) => (
+        <span className="text-slate-500 dark:text-slate-400 max-w-[160px] truncate block font-semibold">
+          {row.original.provider}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: d.colStatus || 'Status',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${row.original.status === 'operational' ? 'bg-emerald-500 animate-pulse' : row.original.status === 'degraded' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+          <Badge type={statusBadgeType(row.original.status)}>{row.original.status}</Badge>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'region',
+      header: d.colRegion || 'Region',
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-500 dark:text-slate-400 text-[10px]">
+          {row.original.region}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'aiEnabled',
+      header: d.colAI || 'AI Enabled',
+      cell: ({ row }) => (
+        row.original.aiEnabled ? (
+          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+            <Bot className="w-3 h-3" />
+            {lang === 'ar' ? 'مفعّل' : 'Yes'}
+          </span>
+        ) : (
+          <span className="text-slate-400 font-semibold">{lang === 'ar' ? 'لا' : 'No'}</span>
+        )
+      ),
+    },
+    {
+      accessorKey: 'routingPolicy',
+      header: d.colRouting || 'Routing Policy',
+      cell: ({ row }) => (
+        <span className="text-slate-600 dark:text-slate-400 truncate block max-w-[160px]" title={row.original.routingPolicy}>
+          {row.original.routingPolicy}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'failover',
+      header: d.colFailover || 'Failover',
+      cell: ({ row }) => (
+        <span className="text-slate-500">
+          {row.original.failover}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'lastSync',
+      header: d.colLastSync || 'Last Sync',
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-400 text-[10px]">
+          {row.original.lastSync}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: d.colActions || 'Actions',
+      cell: ({ row }) => (
+        <button
+          onClick={() => openChannelConfig(row.original)}
+          data-testid={`configure-channel-${row.original.id}`}
+          className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
+        >
+          <Settings className="w-3 h-3" />
+          {d.configure}
+        </button>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ], [d, lang]);
+
+  const providerColumns = React.useMemo<ColumnDef<typeof PROVIDERS[0]>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: d.colProviderName || 'Provider Name',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${row.original.logoBg}`}>
+            <Key className={`w-3.5 h-3.5 ${row.original.logoColor}`} />
+          </div>
+          <span className="font-bold text-slate-900 dark:text-white">{row.original.name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'authType',
+      header: d.colAuthType || 'Auth Type',
+      cell: ({ row }) => (
+        <span className="text-slate-500 dark:text-slate-400 font-semibold">
+          {row.original.authType}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'apiKey',
+      header: d.colApiKey || 'API Key',
+      cell: ({ row }) => (
+        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 max-w-[120px] truncate block">
+          {row.original.apiKey}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'webhook',
+      header: d.colWebhook || 'Webhook URL',
+      cell: ({ row }) => (
+        <span className="font-mono text-[10px] text-blue-600 dark:text-blue-400 max-w-[160px] truncate block">
+          {row.original.webhook}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'environment',
+      header: d.colEnvironment || 'Environment',
+      cell: ({ row }) => (
+        <span className={`font-bold ${row.original.environment === 'live' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+          {row.original.environment === 'live' ? '● Live' : '● Sandbox'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'failover',
+      header: d.colFailoverProv || 'Failover',
+      cell: ({ row }) => (
+        <span className="text-slate-600 dark:text-slate-400 font-semibold">
+          {row.original.failover}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'region',
+      header: d.colRegionProv || 'Region',
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-400 text-[10px]">
+          {row.original.region.split(' ')[0]}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'syncStatus',
+      header: d.colSyncStatus || 'Sync Status',
+      cell: ({ row }) => (
+        <Badge type={statusBadgeType(row.original.syncStatus)}>
+          {row.original.syncStatus}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'lastValidated',
+      header: d.colLastValidated || 'Last Validated',
+      cell: ({ row }) => (
+        <span className="font-mono text-slate-400 text-[10px]">
+          {row.original.lastValidated}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: d.colActions || 'Actions',
+      cell: ({ row }) => (
+        <button
+          onClick={() => openProviderConfig(row.original)}
+          className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors cursor-pointer"
+        >
+          <Key className="w-3 h-3" />
+          {d.viewCredentials}
+        </button>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ], [d, lang]);
 
   return (
     <div className="space-y-10 text-xs text-slate-800 dark:text-slate-200">
@@ -248,44 +449,14 @@ export function SuperAdminChannelsTab() {
             <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">{d.catalogTableTitle}</h4>
             <p className="text-[11px] text-slate-400 mt-0.5">{d.catalogTableDesc}</p>
           </div>
-          <EnterpriseTable headers={catalogTableHeaders} empty={false} emptyTitle="" emptyDesc="">
-            {CHANNELS.map(ch => (
-              <tr key={ch.id} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/60 dark:hover:bg-slate-800/20 text-[11px]">
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg ${ch.iconBg}`}>{ch.icon}</div>
-                    <span className="font-bold text-slate-900 dark:text-white">{ch.name}</span>
-                  </div>
-                </td>
-                <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 max-w-[160px] truncate">{ch.provider}</td>
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${ch.status === 'operational' ? 'bg-emerald-500 animate-pulse' : ch.status === 'degraded' ? 'bg-amber-500' : 'bg-slate-400'}`} />
-                    <Badge type={statusBadgeType(ch.status)}>{ch.status}</Badge>
-                  </div>
-                </td>
-                <td className="px-5 py-3.5 font-mono text-slate-500 dark:text-slate-400 text-[10px]">{ch.region}</td>
-                <td className="px-5 py-3.5">
-                  {ch.aiEnabled
-                    ? <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold"><Bot className="w-3 h-3" />{lang === 'ar' ? 'مفعّل' : 'Yes'}</span>
-                    : <span className="text-slate-400 font-semibold">{lang === 'ar' ? 'لا' : 'No'}</span>
-                  }
-                </td>
-                <td className="px-5 py-3.5 text-slate-600 dark:text-slate-400 max-w-[160px] truncate">{ch.routingPolicy}</td>
-                <td className="px-5 py-3.5 text-slate-500">{ch.failover}</td>
-                <td className="px-5 py-3.5 font-mono text-slate-400 text-[10px]">{ch.lastSync}</td>
-                <td className="px-5 py-3.5">
-                  <button
-                    onClick={() => openChannelConfig(ch)}
-                    data-testid={`configure-channel-${ch.id}`}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                  >
-                    <Settings className="w-3 h-3" />{d.configure}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </EnterpriseTable>
+          <EnterpriseTable
+            data={CHANNELS}
+            columns={channelColumns}
+            lang={lang}
+            enableSearch={true}
+            searchPlaceholder={lang === 'ar' ? 'البحث عن القنوات...' : 'Search omnichannel channels...'}
+            enableColumnVisibility={false}
+          />
         </div>
       </div>
 
@@ -388,42 +559,14 @@ export function SuperAdminChannelsTab() {
             <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">{d.providerIntegrationsTitle}</h4>
             <p className="text-[11px] text-slate-400 mt-0.5">{d.providerIntegrationsDesc}</p>
           </div>
-          <EnterpriseTable headers={credTableHeaders} empty={false} emptyTitle="" emptyDesc="">
-            {PROVIDERS.map(prov => (
-              <tr key={prov.id} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/60 dark:hover:bg-slate-800/20 text-[11px]">
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${prov.logoBg}`}>
-                      <Key className={`w-3.5 h-3.5 ${prov.logoColor}`} />
-                    </div>
-                    <span className="font-bold text-slate-900 dark:text-white">{prov.name}</span>
-                  </div>
-                </td>
-                <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">{prov.authType}</td>
-                <td className="px-5 py-3.5 font-mono text-[10px] text-slate-500 dark:text-slate-400 max-w-[120px] truncate">{prov.apiKey}</td>
-                <td className="px-5 py-3.5 font-mono text-[10px] text-blue-600 dark:text-blue-400 max-w-[160px] truncate">{prov.webhook}</td>
-                <td className="px-5 py-3.5">
-                  <span className={`font-bold ${prov.environment === 'live' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                    {prov.environment === 'live' ? '● Live' : '● Sandbox'}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5 text-slate-600 dark:text-slate-400 font-semibold">{prov.failover}</td>
-                <td className="px-5 py-3.5 font-mono text-slate-400 text-[10px]">{prov.region.split(' ')[0]}</td>
-                <td className="px-5 py-3.5">
-                  <Badge type={statusBadgeType(prov.syncStatus)}>{prov.syncStatus}</Badge>
-                </td>
-                <td className="px-5 py-3.5 font-mono text-slate-400 text-[10px]">{prov.lastValidated}</td>
-                <td className="px-5 py-3.5">
-                  <button
-                    onClick={() => openProviderConfig(prov)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                  >
-                    <Key className="w-3 h-3" />{d.viewCredentials}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </EnterpriseTable>
+          <EnterpriseTable
+            data={PROVIDERS}
+            columns={providerColumns}
+            lang={lang}
+            enableSearch={true}
+            searchPlaceholder={lang === 'ar' ? 'البحث عن المزودين...' : 'Search credentials...'}
+            enableColumnVisibility={false}
+          />
         </div>
       </div>
 

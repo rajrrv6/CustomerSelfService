@@ -1,14 +1,27 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { HelpCircle } from 'lucide-react';
+
+// Lightweight tabs imported eagerly
 import { LlmRegistryTab } from '../llm-registry/LlmRegistryTab';
 import { AsrTtsRegistryTab } from '../speech-providers/AsrTtsRegistryTab';
-import { SuperAdminAnalyticsTab } from '../analytics/SuperAdminAnalyticsTab';
-import { VectorDbStatusTab } from '../vector-db/VectorDbStatusTab';
 import { SipTrunkConfigTab } from '../telephony/SipTrunkConfigTab';
 import { SuperAdminChannelsTab } from '../channels/SuperAdminChannelsTab';
 import { NluGovernanceTab } from '../nlu-governance/NluGovernanceTab';
+
+// Heavy tabs imported lazily
+const SuperAdminAnalyticsTab = lazy(() => import('../analytics/SuperAdminAnalyticsTab').then(m => ({ default: m.SuperAdminAnalyticsTab })));
+const VectorDbStatusTab = lazy(() => import('../vector-db/VectorDbStatusTab').then(m => ({ default: m.VectorDbStatusTab })));
+
+function TabFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500 animate-pulse">
+      <div className="w-8 h-8 rounded-full border-4 border-blue-500 border-t-transparent animate-spin mb-3" />
+      <span className="text-xs font-semibold font-mono tracking-wider uppercase">Loading module...</span>
+    </div>
+  );
+}
 
 interface SuperAdminLayoutProps {
   activeSubScreen: string;
@@ -24,9 +37,17 @@ export function SuperAdminLayout({ activeSubScreen }: SuperAdminLayoutProps) {
       return <NluGovernanceTab />;
     case 'cost_benchmarks':
     case 'cross_tenant_analytics':
-      return <SuperAdminAnalyticsTab activeSubScreen={activeSubScreen} />;
+      return (
+        <Suspense fallback={<TabFallback />}>
+          <SuperAdminAnalyticsTab activeSubScreen={activeSubScreen} />
+        </Suspense>
+      );
     case 'vector_db':
-      return <VectorDbStatusTab />;
+      return (
+        <Suspense fallback={<TabFallback />}>
+          <VectorDbStatusTab />
+        </Suspense>
+      );
     case 'sip_trunk':
       return <SipTrunkConfigTab />;
     case 'channels':

@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, Archive, AlertTriangle, MessageCircle, FileText, X, Plus, Sparkles, CheckSquare, Square } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Archive, AlertTriangle, MessageCircle, FileText, X, Plus, Sparkles } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Badge } from '@/components/shared/BadgeSystem';
+import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
+import { ColumnDef } from '@tanstack/react-table';
+import { BulkAction } from '@/components/shared/table/TableBulkActions';
 
 export interface UnansweredQuery {
   id: string;
@@ -34,23 +37,10 @@ export function UnansweredQueriesTab({
   isReadOnly = false
 }: UnansweredQueriesTabProps) {
   const { lang, intents, setIntents, addAuditLog } = useApp();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedQuery, setSelectedQuery] = useState<UnansweredQuery | null>(null);
-  
-  // Bulk selection state
-  const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [selectedIntentForAdd, setSelectedIntentForAdd] = useState<string | null>(null);
 
-  // Filters logic
-  const filteredQueries = queries.filter(q => {
-    const matchesSearch = q.text.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          q.suggestedCluster.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || q.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Action: Single Ignore
+  // Single Action: Ignore
   const handleIgnore = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isReadOnly) return;
@@ -58,7 +48,7 @@ export function UnansweredQueriesTab({
     addAuditLog(`Ignored unmatched query ID: ${id}`, 'success');
   };
 
-  // Action: Single Archive
+  // Single Action: Archive
   const handleArchive = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isReadOnly) return;
@@ -67,7 +57,7 @@ export function UnansweredQueriesTab({
     if (selectedQuery?.id === id) setSelectedQuery(null);
   };
 
-  // Action: Single Escalate
+  // Single Action: Escalate
   const handleEscalate = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isReadOnly) return;
@@ -99,220 +89,192 @@ export function UnansweredQueriesTab({
     }
   };
 
-  // Bulk actions
-  const handleToggleCheckAll = () => {
-    if (checkedIds.length === filteredQueries.length) {
-      setCheckedIds([]);
-    } else {
-      setCheckedIds(filteredQueries.map(q => q.id));
+  // 1. Column definitions for EnterpriseTable
+  const columns = useMemo<ColumnDef<UnansweredQuery>[]>(() => [
+    {
+      accessorKey: 'text',
+      header: lang === 'ar' ? 'نص الاستفسار' : 'Query Text',
+      cell: ({ row }) => (
+        <span className="font-semibold text-slate-800 dark:text-white max-w-xs truncate block" title={row.original.text}>
+          {row.original.text}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'lang',
+      header: lang === 'ar' ? 'اللغة' : 'Language',
+      cell: ({ row }) => (
+        <div className="text-center font-bold text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">
+          {row.original.lang}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'frequency',
+      header: lang === 'ar' ? 'التكرار' : 'Freq',
+      cell: ({ row }) => (
+        <div className="text-center font-mono font-bold text-slate-700 dark:text-slate-350">
+          {row.original.frequency}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'lastSeen',
+      header: lang === 'ar' ? 'آخر ظهور' : 'Last Seen',
+      cell: ({ row }) => (
+        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-450">
+          {row.original.lastSeen}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'confidence',
+      header: lang === 'ar' ? 'مؤشر الثقة' : 'Confidence',
+      cell: ({ row }) => {
+        const val = row.original.confidence;
+        const color = val < 0.5
+          ? 'text-rose-500 bg-rose-500/10 font-bold'
+          : val < 0.8
+            ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10 font-bold'
+            : 'text-emerald-500 bg-emerald-500/10 font-bold';
+        return (
+          <div className="text-center">
+            <span className={`px-1.5 py-0.5 rounded font-mono text-[10px] ${color}`}>
+              {Math.round(val * 100)}%
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'suggestedCluster',
+      header: lang === 'ar' ? 'المجموعة المقترحة' : 'Cluster',
+      cell: ({ row }) => (
+        <span className="font-mono text-[11px] text-slate-550 dark:text-slate-450">
+          #{row.original.suggestedCluster}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: lang === 'ar' ? 'الحالة' : 'Status',
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <Badge type={
+            row.original.status === 'Published' ? 'success' :
+            row.original.status === 'Intent Created' ? 'billing' :
+            row.original.status === 'Clustered' ? 'info' :
+            row.original.status === 'Reviewed' ? 'warning' : 'neutral'
+          }>
+            {row.original.status}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <div className="text-right">{lang === 'ar' ? 'إجراءات' : 'Actions'}</div>,
+      cell: ({ row }) => {
+        const q = row.original;
+        return (
+          <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => onOpenWizard(q.suggestedCluster, [q.text], 'billing')}
+              disabled={isReadOnly || q.status === 'Published'}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent rounded-lg text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors cursor-pointer"
+              title={lang === 'ar' ? 'إنشاء نية' : 'Create Intent'}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => handleIgnore(q.id, e)}
+              disabled={isReadOnly || q.status === 'Published'}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent rounded-lg text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 transition-colors cursor-pointer"
+              title={lang === 'ar' ? 'تجاهل' : 'Ignore'}
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <button
+              onClick={(e) => handleArchive(q.id, e)}
+              disabled={isReadOnly}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent rounded-lg text-slate-400 hover:text-slate-650 dark:hover:text-slate-300 transition-colors cursor-pointer"
+              title={lang === 'ar' ? 'أرشفة' : 'Archive'}
+            >
+              <Archive className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
     }
-  };
+  ], [lang, isReadOnly, onOpenWizard]);
 
-  const handleToggleCheck = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (checkedIds.includes(id)) {
-      setCheckedIds(checkedIds.filter(item => item !== id));
-    } else {
-      setCheckedIds([...checkedIds, id]);
+  // 2. Select filter configurations
+  const filterOptions = useMemo(() => [
+    {
+      columnId: 'status',
+      label: lang === 'ar' ? 'الحالة' : 'Status',
+      options: [
+        { label: lang === 'ar' ? 'كل الحالات' : 'All Statuses', value: '' },
+        { label: 'New', value: 'New' },
+        { label: 'Reviewed', value: 'Reviewed' },
+        { label: 'Clustered', value: 'Clustered' },
+        { label: 'Intent Created', value: 'Intent Created' },
+        { label: 'Published', value: 'Published' },
+      ],
+    },
+  ], [lang]);
+
+  // 3. Bulk actions configurations
+  const bulkActions = useMemo<BulkAction<UnansweredQuery>[]>(() => [
+    {
+      id: 'merge',
+      label: lang === 'ar' ? 'إنشاء نية مدمجة' : 'Merge & Create Intent',
+      icon: Sparkles,
+      variant: 'primary',
+      onClick: (selectedRows) => {
+        if (selectedRows.length < 2) return;
+        const primary = selectedRows[0];
+        const clusterName = primary.suggestedCluster || 'merged_intent_cluster';
+        const mergedUtterances = selectedRows.map(r => r.text);
+        onOpenWizard(clusterName, mergedUtterances, 'billing');
+      },
+    },
+    {
+      id: 'archive',
+      label: lang === 'ar' ? 'أرشفة المحدد' : 'Bulk Archive',
+      icon: Archive,
+      variant: 'danger',
+      requiresConfirmation: true,
+      confirmTitle: lang === 'ar' ? 'تأكيد الأرشفة الجماعية' : 'Confirm Bulk Archive',
+      confirmMessage: lang === 'ar'
+        ? 'هل أنت متأكد من أرشفة كل الاستفسارات المحددة؟'
+        : 'Are you sure you want to archive all selected unanswered queries?',
+      onClick: (selectedRows) => {
+        const ids = selectedRows.map(r => r.id);
+        setQueries(prev => prev.filter(q => !ids.includes(q.id)));
+        addAuditLog(`Bulk archived ${ids.length} unmatched queries`, 'success');
+        if (selectedQuery && ids.includes(selectedQuery.id)) {
+          setSelectedQuery(null);
+        }
+      },
     }
-  };
-
-  const handleBulkArchive = () => {
-    if (isReadOnly || checkedIds.length === 0) return;
-    setQueries(prev => prev.filter(q => !checkedIds.includes(q.id)));
-    addAuditLog(`Bulk archived ${checkedIds.length} unmatched queries`, 'success');
-    setCheckedIds([]);
-  };
-
-  const handleBulkMerge = () => {
-    if (isReadOnly || checkedIds.length < 2) return;
-    // Find checking items
-    const items = queries.filter(q => checkedIds.includes(q.id));
-    const primary = items[0];
-    
-    // Create new merged cluster name
-    const clusterName = primary.suggestedCluster || 'merged_intent_cluster';
-    const mergedUtterances = items.map(i => i.text);
-
-    onOpenWizard(clusterName, mergedUtterances, 'billing');
-    setCheckedIds([]);
-  };
+  ], [lang, onOpenWizard, setQueries, addAuditLog, selectedQuery]);
 
   return (
     <div className="space-y-4">
-      {/* Search & Filter Header */}
-      <div className="flex flex-col md:flex-row gap-3 justify-between items-center bg-white dark:bg-slate-900 p-4 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400 dark:text-slate-500 rtl:right-3.5 rtl:left-auto" />
-          <input
-            type="text"
-            placeholder={lang === 'ar' ? 'بحث عن استفسار أو مجموعة...' : 'Search unmatched query or cluster...'}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-transparent border border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rtl:pr-10 rtl:pl-4 transition-colors"
-          />
-        </div>
-
-        <div className="flex gap-2.5 w-full md:w-auto">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:outline-none rounded-xl text-xs text-slate-700 dark:text-slate-300 w-full md:w-40"
-          >
-            <option value="all">{lang === 'ar' ? 'كل الحالات' : 'All Statuses'}</option>
-            <option value="New">New</option>
-            <option value="Reviewed">Reviewed</option>
-            <option value="Clustered">Clustered</option>
-            <option value="Intent Created">Intent Created</option>
-            <option value="Published">Published</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Bulk Control Bar */}
-      {checkedIds.length > 0 && (
-        <div className="flex justify-between items-center bg-blue-500/10 border border-blue-500/20 p-3 rounded-xl animate-fade-in">
-          <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold font-mono">
-            {checkedIds.length} {lang === 'ar' ? 'استفسارات محددة' : 'queries selected'}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={handleBulkMerge}
-              disabled={isReadOnly || checkedIds.length < 2}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 text-white font-bold rounded-xl text-[10px] cursor-pointer transition-colors flex items-center gap-1"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{lang === 'ar' ? 'إنشاء نية مدمجة' : 'Merge & Create Intent'}</span>
-            </button>
-            <button
-              onClick={handleBulkArchive}
-              disabled={isReadOnly}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-[10px] cursor-pointer transition-colors flex items-center gap-1"
-            >
-              <Archive className="w-3.5 h-3.5" />
-              <span>{lang === 'ar' ? 'أرشفة المحدد' : 'Bulk Archive'}</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Table Data Grid */}
-      <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-sm">
-        <table className="w-full text-start text-xs border-collapse">
-          <thead>
-            <tr className="bg-slate-50 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 text-slate-550 dark:text-slate-400 font-bold uppercase text-[9px] font-mono">
-              <th className="p-3 text-start w-10">
-                <button onClick={handleToggleCheckAll} className="text-slate-400 hover:text-slate-650 cursor-pointer">
-                  {checkedIds.length === filteredQueries.length && filteredQueries.length > 0 ? (
-                    <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  ) : (
-                    <Square className="w-4 h-4" />
-                  )}
-                </button>
-              </th>
-              <th className="p-3.5 text-start">{lang === 'ar' ? 'نص الاستفسار' : 'Query Text'}</th>
-              <th className="p-3.5 text-center">{lang === 'ar' ? 'اللغة' : 'Language'}</th>
-              <th className="p-3.5 text-center">{lang === 'ar' ? 'التكرار' : 'Freq'}</th>
-              <th className="p-3.5 text-start">{lang === 'ar' ? 'آخر ظهور' : 'Last Seen'}</th>
-              <th className="p-3.5 text-center">{lang === 'ar' ? 'مؤشر الثقة' : 'Confidence'}</th>
-              <th className="p-3.5 text-start">{lang === 'ar' ? 'المجموعة المقترحة' : 'Cluster'}</th>
-              <th className="p-3.5 text-center">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
-              <th className="p-3.5 text-end">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredQueries.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="p-12 text-center text-slate-500 font-medium italic">
-                  {lang === 'ar' ? 'لا يوجد استفسارات تطابق البحث والفلترة حالياً.' : 'No unanswered queries matched your current filters.'}
-                </td>
-              </tr>
-            ) : (
-              filteredQueries.map((q) => {
-                const isChecked = checkedIds.includes(q.id);
-                const scoreColor =
-                  q.confidence < 0.5
-                    ? 'text-rose-500 font-bold bg-rose-500/10'
-                    : q.confidence < 0.8
-                      ? 'text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10'
-                      : 'text-emerald-500 font-bold bg-emerald-500/10';
-
-                return (
-                  <tr
-                    key={q.id}
-                    onClick={() => setSelectedQuery(q)}
-                    className={`hover:bg-slate-50/50 dark:hover:bg-slate-950/40 cursor-pointer transition-colors ${
-                      isChecked ? 'bg-blue-500/10 dark:bg-blue-950/20' : ''
-                    } ${selectedQuery?.id === q.id ? 'bg-slate-100/50 dark:bg-slate-850/50' : ''}`}
-                  >
-                    <td className="p-3 text-center" onClick={(e) => handleToggleCheck(q.id, e)}>
-                      <button className="text-slate-400 hover:text-slate-650 cursor-pointer">
-                        {isChecked ? <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <Square className="w-4 h-4" />}
-                      </button>
-                    </td>
-                    <td className="p-3.5 font-medium text-slate-800 dark:text-white max-w-xs truncate" title={q.text}>
-                      {q.text}
-                    </td>
-                    <td className="p-3.5 text-center text-slate-500 dark:text-slate-450 uppercase font-bold text-[10px] font-mono">
-                      {q.lang}
-                    </td>
-                    <td className="p-3.5 text-center font-bold text-slate-700 dark:text-slate-350 font-mono">
-                      {q.frequency}
-                    </td>
-                    <td className="p-3.5 text-slate-500 dark:text-slate-450 font-mono text-[10px]">
-                      {q.lastSeen}
-                    </td>
-                    <td className="p-3.5 text-center">
-                      <span className={`px-1.5 py-0.5 rounded font-mono text-[10px] ${scoreColor}`}>
-                        {Math.round(q.confidence * 100)}%
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-slate-550 dark:text-slate-450 font-mono text-[11px]">
-                      #{q.suggestedCluster}
-                    </td>
-                    <td className="p-3.5 text-center">
-                      <Badge type={
-                        q.status === 'Published' ? 'success' :
-                        q.status === 'Intent Created' ? 'billing' :
-                        q.status === 'Clustered' ? 'info' :
-                        q.status === 'Reviewed' ? 'warning' : 'neutral'
-                      }>
-                        {q.status}
-                      </Badge>
-                    </td>
-                    <td className="p-3.5 text-end flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => onOpenWizard(q.suggestedCluster, [q.text], 'billing')}
-                        disabled={isReadOnly || q.status === 'Published'}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent rounded-lg text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors cursor-pointer"
-                        title={lang === 'ar' ? 'إنشاء نية' : 'Create Intent'}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => handleIgnore(q.id, e)}
-                        disabled={isReadOnly || q.status === 'Published'}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
-                        title={lang === 'ar' ? 'تجاهل' : 'Ignore'}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => handleArchive(q.id, e)}
-                        disabled={isReadOnly}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:hover:bg-transparent rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
-                        title={lang === 'ar' ? 'أرشفة' : 'Archive'}
-                      >
-                        <Archive className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* EnterpriseTable orchestration */}
+      <EnterpriseTable
+        data={queries}
+        columns={columns}
+        lang={lang}
+        enableSelection={true}
+        bulkActions={bulkActions}
+        filterOptions={filterOptions}
+        onRowClick={setSelectedQuery}
+        searchPlaceholder={lang === 'ar' ? 'بحث عن استفسار أو مجموعة...' : 'Search unanswered queries or clusters...'}
+      />
 
       {/* Context Details Drawer */}
       {selectedQuery && (

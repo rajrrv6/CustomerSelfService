@@ -5,7 +5,8 @@ import { useApp } from '@/context/AppContext';
 import { SVGBarChart, SVGLineChart } from '@/components/dashboard/Charts';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
-import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
+import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
+import { ColumnDef } from '@tanstack/react-table';
 import { translations } from '@/i18n/translations';
 import { AlertTriangle, TrendingDown, TrendingUp, Activity } from 'lucide-react';
 
@@ -160,42 +161,77 @@ export function SuperAdminAnalyticsTab({ activeSubScreen }: SuperAdminAnalyticsT
 
       {/* Tenants list */}
       <div className="space-y-4 pt-2">
-        <h3 className="font-bold text-[11px] text-slate-650 dark:text-slate-400 uppercase tracking-wider font-mono">
+        <h3 className="font-bold text-[11px] text-slate-655 dark:text-slate-400 uppercase tracking-wider font-mono">
           {t.superAdmin.analytics.activeClientsTitle}
         </h3>
-        <EnterpriseTable headers={tenantHeaders}>
-          {tenantRows.map((row, idx) => (
-            <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-850/50 group cursor-pointer transition-colors">
-              <td className="px-6 py-4">
+        {(() => {
+          const columns: ColumnDef<typeof tenantRows[0]>[] = [
+            {
+              accessorKey: 'id',
+              header: tenantHeaders[0] || (isRtl ? 'معرّف العميل' : 'Client ID'),
+              cell: ({ row }) => (
                 <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-6 rounded-full ${idx === 3 ? 'bg-amber-400' : 'bg-emerald-500'}`} />
-                  <span className="font-bold text-slate-900 dark:text-white font-mono">{row.id}</span>
+                  <div className={`w-1.5 h-6 rounded-full ${row.original.id === 'gulf-fintech-hub' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                  <span className="font-bold text-slate-900 dark:text-white font-mono">{row.original.id}</span>
                 </div>
-              </td>
-              <td className="px-6 py-4 font-mono text-slate-600 dark:text-slate-400">{row.tokens}</td>
-              <td className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">
+              ),
+            },
+            {
+              accessorKey: 'tokens',
+              header: tenantHeaders[1] || (isRtl ? 'حجم الرموز' : 'Token Volume'),
+              cell: ({ row }) => (
+                <span className="font-mono text-slate-600 dark:text-slate-400">
+                  {row.original.tokens}
+                </span>
+              ),
+            },
+            {
+              accessorKey: 'bots',
+              header: tenantHeaders[2] || (isRtl ? 'البوتات النشطة' : 'Active Bots'),
+              cell: ({ row }) => (
                 <div className="flex items-center gap-1.5">
-                  <div className="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold">
-                    {row.bots}
+                  <div className="w-6 h-6 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold font-mono">
+                    {row.original.bots}
                   </div>
                 </div>
-              </td>
-              <td className="px-6 py-4">
-                <span className={`px-2 py-1 rounded text-xs font-bold ${idx === 3 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>
-                  {row.sla}
-                </span>
-              </td>
-              <td className="px-6 py-4">
+              ),
+            },
+            {
+              accessorKey: 'sla',
+              header: tenantHeaders[3] || (isRtl ? 'الالتزام باتفاقية الخدمة' : 'SLA Adherence'),
+              cell: ({ row }) => {
+                const isAmber = row.original.id === 'gulf-fintech-hub';
+                return (
+                  <span className={`px-2 py-1 rounded text-xs font-bold ${isAmber ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>
+                    {row.original.sla}
+                  </span>
+                );
+              },
+            },
+            {
+              accessorKey: 'load',
+              header: tenantHeaders[4] || (isRtl ? 'الحمل المباشر' : 'Real-Time Load'),
+              cell: ({ row }) => (
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-slate-600 dark:text-slate-400 text-xs">{row.load}</span>
-                  {row.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 text-rose-500" />}
-                  {row.trend === 'down' && <TrendingDown className="w-3.5 h-3.5 text-emerald-500" />}
-                  {row.trend === 'stable' && <span className="w-3.5 h-3.5 text-slate-400 font-mono">-</span>}
+                  <span className="font-mono text-slate-600 dark:text-slate-400 text-xs">{row.original.load}</span>
+                  {row.original.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 text-rose-500" />}
+                  {row.original.trend === 'down' && <TrendingDown className="w-3.5 h-3.5 text-emerald-500" />}
+                  {row.original.trend === 'stable' && <span className="w-3.5 h-3.5 text-slate-400 font-mono">-</span>}
                 </div>
-              </td>
-            </tr>
-          ))}
-        </EnterpriseTable>
+              ),
+            },
+          ];
+          return (
+            <EnterpriseTable
+              data={tenantRows}
+              columns={columns}
+              lang={lang}
+              enableSearch={true}
+              searchPlaceholder={isRtl ? 'البحث عن عميل...' : 'Search active clients...'}
+              enableColumnVisibility={false}
+            />
+          );
+        })()}
       </div>
     </div>
   );
