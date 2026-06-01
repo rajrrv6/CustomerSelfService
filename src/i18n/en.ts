@@ -178,7 +178,8 @@ export const en = {
     customer_ticket_detail: 'Ticket Thread & Resolution',
     customer_order_refund: 'Order Lookup & Return Portal',
     customer_chat_history: 'Resolved Chat History',
-    workspace: 'Workspace'
+    workspace: 'Workspace',
+    training: 'Training Loop'
   },
 
   superAdmin: {
@@ -1136,6 +1137,62 @@ export const en = {
       legendLow: 'Low (1-49%)',
       legendModerate: 'Moderate (50-74%)',
       legendPeak: 'Peak (>75%)',
+    },
+    training: {
+      title: 'Training Intelligence Loop',
+      desc: 'Review unanswered query queues, assign phrases to clusters, analyze AI intent suggestions, and publish new intents directly to production.',
+      unansweredTab: 'Unanswered Queries',
+      clustersTab: 'Suggested Intent Clusters',
+      dashboard: {
+        totalUnmatched: 'Total Unmatched Queries',
+        misses24h: 'Last 24h Misses',
+        escalated: 'Escalated Misses',
+        trendingFailures: 'Trending Failures'
+      },
+      table: {
+        query: 'Query Text',
+        lang: 'Language',
+        freq: 'Frequency',
+        lastSeen: 'Last Seen',
+        confidence: 'Confidence',
+        suggestedCluster: 'Suggested Cluster',
+        sentiment: 'Sentiment',
+        status: 'Status'
+      },
+      actions: {
+        createIntent: 'Create Intent',
+        addPhrase: 'Add training phrase',
+        ignore: 'Ignore',
+        archive: 'Archive',
+        escalate: 'Escalate',
+        merge: 'Merge Selected',
+        export: 'Export CSV',
+        bulkAction: 'Bulk Actions',
+        convert: 'Convert Intent',
+        split: 'Split Cluster',
+        openDetails: 'Details'
+      },
+      drawer: {
+        originalQuery: 'Original Query Utterance',
+        context: 'Conversation Context Snippet',
+        previousResponse: 'Previous Bot Fallback Output',
+        suggestedIntent: 'AI Suggested Target Intent',
+        similarUtterances: 'Similar Utterances Detected',
+        keywords: 'Extracted Top Keywords',
+        entities: 'Suggested Entities Detected',
+        slots: 'Suggested Slots & Prompts',
+        responses: 'Suggested Bot Replies'
+      },
+      wizard: {
+        title: 'Intent Generation Wizard',
+        nameStep: 'Intent Name',
+        phrasesStep: 'Training Phrases',
+        entitiesStep: 'Entities & Parameters',
+        slotsStep: 'Slot Rules',
+        responsesStep: 'Agent Responses',
+        publishStep: 'Sync & Publish',
+        publishBtn: 'Publish to Production NLU'
+      }
     }
   }
 } as const;

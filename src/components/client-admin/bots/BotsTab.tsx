@@ -75,10 +75,12 @@ export function BotsTab() {
     {
       sender: 'bot',
       text: lang === 'ar' ? 'مرحباً! أنا محاكاة البوت الخاص بك. اسألني أي سؤال لتجربة نبرة الصوت والمطابقة!' : 'Hi! I am your bot simulator. Ask me anything to test the tone and matching behavior!',
-      details: { intent: 'greeting', confidence: 1.00, fallback: false }
+      details: { intent: 'greeting', confidence: 1.00, fallback: false, entities: [] }
     }
   ]);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [lastDetails, setLastDetails] = useState<any>(null);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // STEP 6 - Publish & Deployment
   const [deployEnv, setDeployEnv] = useState('staging');
@@ -92,6 +94,27 @@ export function BotsTab() {
   const [editName, setEditName] = useState('');
   const [editPersona, setEditPersona] = useState('');
   const [editTone, setEditTone] = useState('Neutral');
+
+  const isWizardDirty = 
+    newBotName !== '' ||
+    newBotDescription !== '' ||
+    newBotPersonality !== 'An empathetic financial chatbot helper.' ||
+    newBotTone !== 'Friendly' ||
+    newBotEscalation !== 'fallback_limit' ||
+    newBotMultiBehavior !== 'auto_detect' ||
+    newBotChannels.whatsapp || newBotChannels.email || newBotChannels.voice || newBotChannels.instagram || newBotChannels.messenger ||
+    selectedKB.length > 1 || (selectedKB.length === 1 && selectedKB[0] !== 'kb-custom') ||
+    testChat.length > 1 ||
+    testQuery !== '';
+
+  const handleCloseAttempt = () => {
+    if (isWizardDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      setShowAddBotModal(false);
+      handleResetWizard();
+    }
+  };
 
   const handleNextStep = () => {
     if (wizardStep === 1 && !newBotName) return;
@@ -122,11 +145,13 @@ export function BotsTab() {
     setConfidenceThreshold(0.70);
     setFallbackBehavior('search_kb');
     setTestQuery('');
+    setLastDetails(null);
+    setShowDiscardConfirm(false);
     setTestChat([
       {
         sender: 'bot',
         text: lang === 'ar' ? 'مرحباً! أنا محاكاة البوت الخاص بك. اسألني أي سؤال لتجربة نبرة الصوت والمطابقة!' : 'Hi! I am your bot simulator. Ask me anything to test the tone and matching behavior!',
-        details: { intent: 'greeting', confidence: 1.00, fallback: false }
+        details: { intent: 'greeting', confidence: 1.00, fallback: false, entities: [] }
       }
     ]);
   };
@@ -142,7 +167,36 @@ export function BotsTab() {
 
     setTimeout(() => {
       let responseText = '';
-      let details: any = { intent: 'default', confidence: 0.85, fallback: false, escalation: false };
+      const entities: Array<{ name: string; value: string }> = [];
+      
+      // Order ID (8 digits)
+      const orderMatch = userText.match(/\b\d{8}\b/);
+      if (orderMatch) {
+        entities.push({ name: 'order_id', value: orderMatch[0] });
+      }
+      
+      // Email
+      const emailMatch = userText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch) {
+        entities.push({ name: 'email', value: emailMatch[0] });
+      }
+      
+      // IBAN (SA + 22 digits)
+      const ibanMatch = userText.match(/\bSA\d{22}\b/i);
+      if (ibanMatch) {
+        entities.push({ name: 'iban', value: ibanMatch[0].toUpperCase() });
+      }
+
+      let details: any = { 
+        intent: 'default', 
+        confidence: 0.85, 
+        fallback: false, 
+        escalation: false,
+        entities,
+        fallbackReason: '',
+        escalationReason: ''
+      };
+      
       const lower = userText.toLowerCase();
 
       if (lower.includes('price') || lower.includes('cost') || lower.includes('سعر') || lower.includes('تكلفة')) {
@@ -155,15 +209,29 @@ export function BotsTab() {
         responseText = lang === 'ar' 
           ? `[نبرة صوت: ${newBotTone}] بالتأكيد، يُسمح بالاسترداد المالي خلال 30 يوماً من الشراء. يرجى توفير رقم الطلب للبدء.` 
           : `[Tone: ${newBotTone}] Certainly, refunds are allowed within 30 days of purchase. Please supply your Order ID to initiate the return.`;
+        if (entities.length === 0) {
+          details.fallback = true;
+          details.confidence = 0.55;
+          details.fallbackReason = lang === 'ar' 
+            ? 'مطلوب إدخال رقم الطلب (order_id) ذو الـ 8 خانات للتحقق.'
+            : 'Slot validation failed: Missing required 8-digit Order ID entity.';
+        }
       } else if (lower.includes('broken') || lower.includes('angry') || lower.includes('double charge') || lower.includes('غاضب') || lower.includes('مشكلة')) {
         details.intent = 'billing_dispute';
         details.escalation = true;
+        details.confidence = 0.95;
+        details.escalationReason = lang === 'ar'
+          ? 'تم الكشف عن مشاعر سلبية شديدة أو نزاع مالي (تجاوز حد السمية 0.85).'
+          : 'Negative sentiment score detected (toxicity 0.92 limit breached on billing dispute).';
         responseText = lang === 'ar' 
           ? `[نبرة صوت: ${newBotTone}] أعتذر بشدة عن الإزعاج. سأقوم بتمرير المحادثة فوراً لوكيل دعم بشري لمراجعة الرسوم المزدوجة.` 
           : `[Tone: ${newBotTone}] I sincerely apologize for the inconvenience. Let me route you to a live support representative immediately.`;
       } else {
         details.fallback = true;
         details.confidence = 0.32;
+        details.fallbackReason = lang === 'ar'
+          ? `نسبة الثقة (32٪) أقل من حد القبول المستهدف (${(confidenceThreshold * 100).toFixed(0)}٪).`
+          : `Confidence score of 32% fell below target NLU threshold of ${(confidenceThreshold * 100).toFixed(0)}%.`;
         if (fallbackBehavior === 'search_kb') {
           responseText = lang === 'ar' 
             ? `[أداء بديل] لم أستطع العثور على مطابقة دقيقة. جاري البحث في مستودع المعرفة عن "${userText}"...` 
@@ -176,6 +244,7 @@ export function BotsTab() {
       }
 
       setTestChat((prev) => [...prev, { sender: 'bot', text: responseText, details }]);
+      setLastDetails(details);
       setIsSimulating(false);
     }, 800);
   };
@@ -313,13 +382,59 @@ export function BotsTab() {
       {/* Stepper Wizard Modal */}
       <ModalWrapper
         isOpen={showAddBotModal}
-        onClose={() => {
-          setShowAddBotModal(false);
-          handleResetWizard();
-        }}
+        onClose={handleCloseAttempt}
+        preventCloseOnOverlayClick={isWizardDirty}
+        preventCloseOnEsc={isWizardDirty}
         title={lang === 'ar' ? 'معالج إنشاء بوت ذكي متكامل' : 'Enterprise Bot Provisioning Wizard'}
         maxWidthClass="max-w-4xl"
       >
+        {showDiscardConfirm ? (
+          <div className="flex flex-col items-center justify-center py-10 px-4 text-center space-y-4 animate-zoom-in">
+            <div className="w-12 h-12 rounded-full bg-rose-500/10 dark:bg-rose-500/20 text-rose-500 flex items-center justify-center">
+              <ShieldAlert className="w-6 h-6 animate-pulse" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="font-bold text-base text-slate-850 dark:text-white">
+                {lang === 'ar' ? 'هل أنت متأكد من إلغاء الإعداد؟' : 'Discard unsaved changes?'}
+              </h3>
+              <p className="text-xs text-slate-400 max-w-sm">
+                {lang === 'ar' 
+                  ? 'لديك تغييرات غير محفوظة في معالج البوت. إذا قمت بالإغلاق الآن، ستفقد جميع التكوينات المدخلة.'
+                  : 'You are currently configuring a new AI agent. Closing now will permanently discard all inputs and configurations.'}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2 w-full max-w-xs justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDiscardConfirm(false);
+                }}
+                className="flex-1 py-2 px-4 border border-slate-200 dark:border-slate-800 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors text-slate-700 dark:text-slate-350 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                {lang === 'ar' ? 'الرجوع ومتابعة التعديل' : 'Keep Editing'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDiscardConfirm(false);
+                  setShowAddBotModal(false);
+                  handleResetWizard();
+                }}
+                className="flex-1 py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md shadow-rose-500/15 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+              >
+                {lang === 'ar' ? 'تأكيد الإلغاء والحذف' : 'Discard & Close'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Progress Bar */}
+            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full mb-5 overflow-hidden">
+              <div 
+                className="h-full bg-blue-600 transition-all duration-300 ease-out" 
+                style={{ width: `${(wizardStep / 6) * 100}%` }}
+              />
+            </div>
         {/* Step Indicators */}
         <div className="mb-6 flex items-center justify-between overflow-x-auto pb-2 border-b border-slate-100 dark:border-slate-800">
           {[
@@ -717,6 +832,16 @@ export function BotsTab() {
                               {msg.details.escalation && <span className="text-rose-500 font-extrabold">[ESCALATED]</span>}
                             </div>
                           )}
+
+                          {msg.details?.entities?.length > 0 && (
+                            <div className="mt-1.5 pt-1.5 border-t border-dotted border-slate-100 dark:border-slate-800 flex flex-wrap gap-1">
+                              {msg.details.entities.map((ent: any) => (
+                                <span key={ent.name} className="px-1.5 py-0.5 text-[8px] font-bold font-mono bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-md">
+                                  @{ent.name}: {ent.value}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -748,7 +873,7 @@ export function BotsTab() {
 
                 {/* Diagnostic helper */}
                 <div className="bg-slate-100/50 dark:bg-slate-900/40 p-4 border border-slate-200 dark:border-slate-850 rounded-2xl space-y-4">
-                  <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                  <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <Sliders className="w-4 h-4 text-blue-500" />
                     <span>{lang === 'ar' ? 'أدوات التشخيص NLU' : 'Simulation Diagnostics'}</span>
                   </h4>
@@ -764,20 +889,64 @@ export function BotsTab() {
                       <span className="font-bold text-blue-600 dark:text-blue-400">{embeddingModel}</span>
                     </div>
 
-                    <div className="p-2.5 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl space-y-1">
-                      <span className="text-slate-400 block">PII SAFETY INTERCEPT:</span>
-                      <span className="font-bold text-emerald-500 flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" />
-                        <span>PII SHIELD ACTIVE</span>
-                      </span>
-                    </div>
+                    {lastDetails ? (
+                      <>
+                        <div className="p-2.5 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl space-y-1">
+                          <span className="text-slate-400 block">MATCHED INTENT:</span>
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-blue-600 dark:text-blue-400">#{lastDetails.intent}</span>
+                            <span className="font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 text-[9px]">
+                              {(lastDetails.confidence * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl space-y-1.5">
+                          <span className="text-slate-400 block">EXTRACTED ENTITIES:</span>
+                          {lastDetails.entities.length > 0 ? (
+                            <div className="space-y-1">
+                              {lastDetails.entities.map((ent: any) => (
+                                <div key={ent.name} className="flex justify-between border-b border-slate-50 dark:border-slate-900 pb-0.5">
+                                  <span className="text-slate-500">@{ent.name}</span>
+                                  <span className="font-bold text-slate-880 dark:text-slate-200">{ent.value}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 italic block">{lang === 'ar' ? 'لا يوجد مدخلات مستخرجة' : 'No entities extracted'}</span>
+                          )}
+                        </div>
+
+                        {lastDetails.fallback && (
+                          <div className="p-2.5 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-1">
+                            <span className="text-amber-500 font-bold block">{lang === 'ar' ? 'سبب الإجراء البديل (Fallback):' : 'Fallback Reason:'}</span>
+                            <p className="text-[9px] text-amber-600 dark:text-amber-400 normal-case leading-normal font-sans">
+                              {lastDetails.fallbackReason}
+                            </p>
+                          </div>
+                        )}
+
+                        {lastDetails.escalation && (
+                          <div className="p-2.5 bg-rose-500/5 border border-rose-500/20 rounded-xl space-y-1">
+                            <span className="text-rose-500 font-bold block">{lang === 'ar' ? 'سبب التصعيد الفوري:' : 'Escalation Trigger Reason:'}</span>
+                            <p className="text-[9px] text-rose-600 dark:text-rose-400 normal-case leading-normal font-sans">
+                              {lastDetails.escalationReason}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="p-4 bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center text-slate-400 dark:text-slate-500 font-sans italic text-[11px]">
+                        {lang === 'ar' ? 'بانتظار إدخال الاستفسار لتشغيل المحاكاة الفورية...' : 'Awaiting query simulation to trigger live diagnostics...'}
+                      </div>
+                    )}
 
                     <div className="p-2.5 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl space-y-1.5">
                       <span className="text-slate-400 block">SIMULATION HINT:</span>
                       <p className="text-[9px] text-slate-400 normal-case leading-normal font-sans">
                         {lang === 'ar' 
-                          ? 'جرب كتابة "سعر" لفحص استدعاء RAG، أو "مشكلة" لتجربة التصعيد الفوري لوكيل الدعم.' 
-                          : 'Try typing "pricing" to test RAG retrieval, or "angry" to trigger the automatic supervisor escalation locks.'}
+                          ? 'جرب كتابة "سعر" لفحص RAG، أو "استرجاع" بدون رقم طلب، أو "غاضب" لتجربة التصعيد الفوري لوكيل الدعم.' 
+                          : 'Try typing "pricing" to test RAG retrieval, "refund" without Order ID to observe slot validation failure, or "angry" to trigger the automatic supervisor escalation locks.'}
                       </p>
                     </div>
                   </div>
@@ -926,11 +1095,8 @@ export function BotsTab() {
             <button
               type="button"
               disabled={deployLoading}
-              onClick={() => {
-                setShowAddBotModal(false);
-                handleResetWizard();
-              }}
-              className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-650 dark:text-slate-400"
+              onClick={handleCloseAttempt}
+              className="px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-650 dark:text-slate-400 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               {t.clientAdmin.bots.cancel}
             </button>
@@ -939,7 +1105,7 @@ export function BotsTab() {
                 type="button"
                 onClick={handleNextStep}
                 disabled={wizardStep === 1 && !newBotName}
-                className="flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl disabled:opacity-50"
+                className="flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <span>{lang === 'ar' ? 'المتابعة' : 'Continue'}</span>
                 <ChevronRight className="w-4 h-4 rtl:rotate-180" />
@@ -949,7 +1115,7 @@ export function BotsTab() {
                 type="button"
                 onClick={handleCreateBotSubmit}
                 disabled={deployLoading}
-                className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-50"
+                className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
                 {deployLoading ? (
                   <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -961,9 +1127,10 @@ export function BotsTab() {
             )}
           </div>
         </div>
-      </ModalWrapper>
+      </>
+    )}
+  </ModalWrapper>
 
-      {/* Edit Persona Modal */}
       <ModalWrapper
         isOpen={showEditPersonaModal}
         onClose={() => {

@@ -17,7 +17,9 @@ Implement tenant-scoped business customizations, chatbot triggers, NLU intent ma
 - Built `IntegrationsDashboard` housing the API Credential Vault and Webhook Console.
 
 ## 4. Verified Systems
-* **Bot Configurator**: State toggles, description editing, and audit trail hooks.
+* **Bot Configurator & Wizard**: Unsaved-changes dirty checking, close attempt intercept overlays, step progress bar, and simulation diagnostics (intent matching, confidence levels, entity extraction, fallback and escalation logs).
+* **NLU Governance & Safety**: Toxicity sensitivity threshold control, PII masking options, custom forbidden word filter, safety intercept test simulator, response template registry, and rollout traffic diverter weights (A/B split weight slider).
+* **Slot Validation Sandbox**: Loop retry attempts logging, RegEx mismatch explanation output, and escalation execution logs.
 * **Knowledge Connectors**: File upload list, indexing metrics, and sync triggers.
 * **Queues & Roster**: Agent statuses, assigned channel routing, and maximum load capacity levels.
 * **SLA Configuration**: Response baselines and warning/breached thresholds.

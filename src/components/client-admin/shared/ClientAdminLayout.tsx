@@ -14,6 +14,7 @@ import { LifecycleTab } from '../lifecycle/LifecycleTab';
 import { IntegrationsDashboard } from '@/components/integrations/IntegrationsDashboard';
 import { SurveysTab } from '../operations/SurveysTab';
 import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
+import { TrainingTab } from '../training/TrainingTab';
 
 interface ClientAdminLayoutProps {
   activeSubScreen: string;
@@ -45,6 +46,8 @@ export function ClientAdminLayout({ activeSubScreen }: ClientAdminLayoutProps) {
       return <IntegrationsDashboard />;
     case 'surveys':
       return <SurveysTab />;
+    case 'training':
+      return <TrainingTab />;
     default:
       return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">

@@ -70,6 +70,7 @@ export function Sidebar({
         return [
           { id: 'bots', label: t.botManagement, icon: <Bot className="w-4 h-4" /> },
           { id: 'intents', label: t.intentManagement, icon: <HelpCircle className="w-4 h-4" /> },
+          { id: 'training', label: t.screens.training || 'Training Loop', icon: <Brain className="w-4 h-4" /> },
           { id: 'dialog_flow', label: t.dialogBuilder, icon: <GitBranch className="w-4 h-4" /> },
           { id: 'knowledge_base', label: t.knowledgeBase, icon: <Brain className="w-4 h-4" /> },
           { id: 'guardrails', label: t.safetyGuardrails, icon: <ShieldCheck className="w-4 h-4" /> },
@@ -97,6 +98,7 @@ export function Sidebar({
         return [
           { id: 'qa_queue', label: t.screens.qa_queue, icon: <Award className="w-4 h-4" /> },
           { id: 'coaching', label: t.screens.coaching, icon: <Users className="w-4 h-4" /> },
+          { id: 'training', label: t.screens.training || 'Training Loop', icon: <Brain className="w-4 h-4" /> },
           { id: 'inbox', label: t.unifiedInbox, icon: <Mail className="w-4 h-4" /> },
           { id: 'surveys', label: t.screens.surveys, icon: <TrendingUp className="w-4 h-4" /> }
         ];

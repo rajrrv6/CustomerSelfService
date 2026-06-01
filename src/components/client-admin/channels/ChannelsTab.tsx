@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { DICT, CHANNELS, INITIAL_TEMPLATES } from './clientChannelsHelper';
+import { VoiceIvrDesigner } from './VoiceIvrDesigner';
 
 export function ChannelsTab() {
   const { lang, addAuditLog, agents } = useApp();
@@ -24,6 +25,7 @@ export function ChannelsTab() {
   const [activeChannels, setActiveChannels] = useState(CHANNELS);
   const [selectedChannel, setSelectedChannel] = useState<typeof CHANNELS[0] | null>(null);
   const [showChannelModal, setShowChannelModal] = useState(false);
+  const [showIvrDesigner, setShowIvrDesigner] = useState(false);
 
   // Business operations configurations
   const [hoursMode, setHoursMode] = useState<'biz' | '24h'>('24h');
@@ -125,6 +127,10 @@ export function ChannelsTab() {
     { label: d.avgResponseTime, value: lang === 'ar' ? '٤٥ ثانية' : '45 sec', icon: <Clock className="w-5 h-5 text-amber-500" />, bg: 'bg-amber-500/10', subtext: 'Omnichannel response average' },
     { label: d.activeSessions, value: String(totalVolume), icon: <BarChart3 className="w-5 h-5 text-sky-500" />, bg: 'bg-sky-500/10', subtext: 'Total inbound contacts volume' }
   ];
+
+  if (showIvrDesigner) {
+    return <VoiceIvrDesigner onClose={() => setShowIvrDesigner(false)} />;
+  }
 
   return (
     <div className="space-y-10 text-xs text-slate-800 dark:text-slate-200">
@@ -725,6 +731,27 @@ export function ChannelsTab() {
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-xs font-mono font-bold"
               />
             </div>
+
+            {selectedChannel.id === 't-vo' && (
+              <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-dashed border-blue-200 dark:border-blue-900 rounded-xl text-center space-y-2">
+                <span className="block text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">
+                  Voice IVR Designer Available
+                </span>
+                <p className="text-[10px] text-slate-450 leading-relaxed">
+                  Configure interactive caller menus, business hour branches, agent queue dispatch, and voice assistant fallback paths.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowChannelModal(false);
+                    setShowIvrDesigner(true);
+                  }}
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-all text-[10.5px]"
+                >
+                  {d.openIvrDesigner || 'Design IVR Workflow'}
+                </button>
+              </div>
+            )}
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button

@@ -178,7 +178,8 @@ export const ar = {
     customer_ticket_detail: 'تفاصيل التذكرة والحلول',
     customer_order_refund: 'البحث عن الطلبات وبوابة الاسترجاع',
     customer_chat_history: 'سجل المحادثات المنجزة',
-    workspace: 'مساحة العمل'
+    workspace: 'مساحة العمل',
+    training: 'حلقة التدريب الذكي'
   },
 
   superAdmin: {
@@ -1136,6 +1137,62 @@ export const ar = {
       legendLow: 'منخفض (1-49%)',
       legendModerate: 'معتدل (50-74%)',
       legendPeak: 'ذروة (>75%)',
+    },
+    training: {
+      title: 'حلقة التدريب الذكي (NLU)',
+      desc: 'راجع طوابير الاستفسارات غير المجابة، وصنف العبارات إلى مجموعات، وحلل مقترحات الذكاء الاصطناعي، وانشر النوايا مباشرة للإنتاج.',
+      unansweredTab: 'الاستفسارات غير المجابة',
+      clustersTab: 'مجموعات النوايا المقترحة',
+      dashboard: {
+        totalUnmatched: 'إجمالي الاستفسارات غير المطابقة',
+        misses24h: 'أخطاء آخر 24 ساعة',
+        escalated: 'الأخطاء المصعّدة',
+        trendingFailures: 'الاتجاهات الشائعة للفشل'
+      },
+      table: {
+        query: 'نص الاستفسار',
+        lang: 'اللغة',
+        freq: 'التكرار',
+        lastSeen: 'آخر ظهور',
+        confidence: 'مؤشر الثقة',
+        suggestedCluster: 'المجموعة المقترحة',
+        sentiment: 'المشاعر',
+        status: 'الحالة'
+      },
+      actions: {
+        createIntent: 'إنشاء نية جديدة',
+        addPhrase: 'إضافة عبارة تدريب',
+        ignore: 'تجاهل',
+        archive: 'أرشفة',
+        escalate: 'تصعيد',
+        merge: 'دمج المحدد',
+        export: 'تصدير CSV',
+        bulkAction: 'إجراءات جماعية',
+        convert: 'تحويل إلى نية',
+        split: 'تقسيم المجموعة',
+        openDetails: 'تفاصيل'
+      },
+      drawer: {
+        originalQuery: 'نص الاستفسار الأصلي',
+        context: 'سياق المحادثة المباشرة',
+        previousResponse: 'رد البوت البديل السابق',
+        suggestedIntent: 'النية المستهدفة المقترحة',
+        similarUtterances: 'العبارات المشابهة المكتشفة',
+        keywords: 'أبرز الكلمات المفتاحية المستخرجة',
+        entities: 'الكيانات المقترحة المكتشفة',
+        slots: 'الفتحات والمطالبات المقترحة',
+        responses: 'ردود البوت المقترحة للنية'
+      },
+      wizard: {
+        title: 'معالج إنشاء النية الذكي',
+        nameStep: 'اسم النية',
+        phrasesStep: 'عبارات التدريب',
+        entitiesStep: 'الكيانات والمعايير',
+        slotsStep: 'قواعد الفتحات',
+        responsesStep: 'ردود الوكيل',
+        publishStep: 'مزامنة ونشر',
+        publishBtn: 'نشر إلى نموذج NLU الفعلي'
+      }
     }
   }
 } as const;

@@ -28,10 +28,13 @@ The repository follows a clean role-based segregation system across the client-a
 - **Vector DB Status**: Real-time compaction simulations, index vector metrics, partition storage capacity limits, and manual rebalancing triggers with warning lock statuses and successful retries.
 
 ### B. Client Admin Operations
-- **Dialog Flow Builder**: Nodes representing branch logic, DB/API requests, RAG retrieval calls, human handoffs, and interactive form structures. Includes variable tracing consoles and step-by-step simulator panels.
-- **Safety & Guardrails**: Toggles for PII anonymization (Credit Cards, Phone Numbers, Saudi Civil Registry IDs) and toxic input score sensitivity parameters.
-- **Version Control & Deploy Pipelines**: Log console streamers outputting compilation pipelines, dynamic variant traffic diverters (e.g. controle split Variant A/B weight changes), and rollback actions.
+- **Dialog Flow & Bot Wizard**: Single controlled modal shell with a top progress tracker, unsaved-change close intercept warning overlay, and real-time simulator diagnostics (matched intent, confidence score, extracted entities table, fallback reasons, and escalation triggers).
+- **Safety & Guardrails**: Toxicity Sensitivity score sliders, dropdown actions for PII masking (Strict block, Medium mask, Log only), custom forbidden word blocklists, and safety intercept test panels.
+- **Response Template Governance**: Standardized templates mapped to intents using double brackets (e.g. `{{customer_name}}`, `{{order_id}}`) for structured response delivery.
+- **NLU Tenant Deployment**: Active NLU version indicators, rollout traffic splits (A/B weight split slider), publish/rollback controls, and live governance audit logs.
+- **Entity & Slot Validation Sandbox**: Sandbox with active attempt counter logs (e.g. `Attempt X of Y`), RegEx failure explanations, and visual escalation triggers when thresholds are breached.
 - **Workforce & Schedules**: Calendar roster shifts and forecasting volume adherence panels.
+- **Voice IVR Designer**: High-fidelity flow-focused IVR workflow builder supporting 9 custom node types (Welcome, Menu, Business Hours, Queues, Agent Transfer, Voicemail, Callback, AI Assistant, End Call). Includes real-time link validations (warnings for unconnected nodes, dead ends, missing routes) and a step-by-step interactive call simulation console with keypad input, active call path highlighting, and Farah AI voice confidence thresholds.
 
 ### C. Agent Unified Workspace
 - **Omnichannel Inbox**: Segregated channels (WhatsApp bubble interfaces, emails, phone SIP records) with macro canned responses, co-pilot suggestion tabs, supervisor whisper coaching, and live wiretap barge-in buttons.
@@ -42,6 +45,12 @@ The repository follows a clean role-based segregation system across the client-a
 - **OTP-Gated Refund Wizard**: Validates order returns via 4-digit MFA code challenge triggers without password registration.
 - **Accessibility Toolbox**: Dynamic font resizing (sm, base, lg) and high contrast theme class injects.
 
+### E. NLU Training Intelligence Loop
+- **Unanswered Queries Queue**: Multi-column datagrid of unmatched customer queries detailing sentiment, language, frequency, and last seen metrics. Includes contextual drawers showing live transcripts, similar utterances, and actions (Ignore, Archive, Escalate, Add to existing intent).
+- **Suggested Clusters**: Grid of AI-generated clusters containing confidence metrics, trend indicators, sample phrases, extracted keywords, and slot rules.
+- **Intent Generation Wizard**: 6-step workflow that guides admins through naming intents, managing training phrases, linking entity catalogs, defining slot validation prompts, drafting bilingual responses, and publishing directly to the active NLU registry.
+- **RBAC Policy Guardrails**: Enforces read-only access for QA Manager users, disabling all modifications and deployment wizards.
+
 ---
 
 ## 4. Engineering & Workflow Rules
@@ -49,6 +58,7 @@ The repository follows a clean role-based segregation system across the client-a
 * **Strict Type Safety**: Write strict TypeScript. No loose `any` types. Properly type event handlers, component states, and context structures.
 * **Visual Excellence & Realism**: Maintain visual design system parameters (glassmorphic border styles, subtle hover states, HSL-tailored colors). Do not use lorem ipsum placeholders or blank dashboard slots. Populate all components with realistic, domain-specific mock data.
 * **No Speculative Backend Assumptions**: Never implement mock endpoints or remote fetch blocks that assume nonexistent backend services. Keep data operations local and state-driven using the React context framework (`useApp`).
+* **Clean Business Naming & No Screen Numbers**: Under no circumstances should inventory screen numbers (such as Screen 52, Screen 55, Screen 102, etc.) or terms like "Inventory Item" be displayed in the UI, navigation, page titles, tabs, cards, drawers, modals, breadcrumbs, walkthroughs, task files, documentation, or code comments. Always use business names only. This rule is absolute and permanent.
 
 ---
 

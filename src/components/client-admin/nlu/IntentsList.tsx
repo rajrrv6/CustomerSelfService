@@ -27,7 +27,28 @@ export function IntentsList() {
   const t = translations[lang];
 
   // NLU Tab state
-  const [nluTab, setNluTab] = useState<'intents' | 'entities' | 'slots'>('intents');
+  const [nluTab, setNluTab] = useState<'intents' | 'entities' | 'slots' | 'governance'>('intents');
+
+  // NLU Governance & Safety States
+  const [toxicityThreshold, setToxicityThreshold] = useState(0.85);
+  const [piiMaskLevel, setPiiMaskLevel] = useState('full');
+  const [forbiddenWords, setForbiddenWords] = useState<string[]>(['spam', 'scam', 'fake', 'احتيال', 'نصب']);
+  const [newForbiddenWord, setNewForbiddenWord] = useState('');
+  const [safetyTestInput, setSafetyTestInput] = useState('');
+  const [safetyTestResult, setSafetyTestResult] = useState<any>(null);
+  const [governanceTemplates, setGovernanceTemplates] = useState([
+    { id: 't1', intent: 'order_lookup', name: 'Order Success Response', text: 'Hello {{customer_name}}, we found your order {{order_id}} in our database. Shipping status: On the way.' },
+    { id: 't2', intent: 'refund_request', name: 'IBAN Verification Response', text: 'Thank you. We have verified your IBAN {{iban}}. Your refund has been scheduled.' }
+  ]);
+  const [newTemplateIntent, setNewTemplateIntent] = useState('order_lookup');
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [newTemplateText, setNewTemplateText] = useState('');
+  const [governanceActiveVersion, setGovernanceActiveVersion] = useState('v2.1.0-stable');
+  const [governanceRollout, setGovernanceRollout] = useState(100);
+  const [governanceAuditLogs, setGovernanceAuditLogs] = useState([
+    { timestamp: '2026-06-01 10:15:22', user: 'admin_sudhir', action: 'Published NLU Engine version v2.1.0-stable to production tenant.' },
+    { timestamp: '2026-06-01 09:42:10', user: 'admin_sudhir', action: 'Added forbidden word "احتيال" to toxicity filter blocklist.' }
+  ]);
 
   // INTENT STATES
   const [editingIntentId, setEditingIntentId] = useState<string | null>(null);
@@ -197,6 +218,103 @@ export function IntentsList() {
     addAuditLog(`Removed slot validation rule for #${intent}.${slotName}`, 'success');
   };
 
+  // NLU Governance actions
+  const handleAddForbiddenWord = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newForbiddenWord) return;
+    if (forbiddenWords.includes(newForbiddenWord)) return;
+    setForbiddenWords(prev => [...prev, newForbiddenWord]);
+    setGovernanceAuditLogs(prev => [
+      { timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19), user: 'admin_sudhir', action: `Added forbidden word "${newForbiddenWord}" to blocklist.` },
+      ...prev
+    ]);
+    addAuditLog(`Added forbidden keyword to toxicity blocklist: "${newForbiddenWord}"`, 'success');
+    setNewForbiddenWord('');
+  };
+
+  const handleDeleteForbiddenWord = (word: string) => {
+    setForbiddenWords(prev => prev.filter(w => w !== word));
+    setGovernanceAuditLogs(prev => [
+      { timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19), user: 'admin_sudhir', action: `Removed forbidden word "${word}" from blocklist.` },
+      ...prev
+    ]);
+    addAuditLog(`Removed forbidden keyword: "${word}"`, 'success');
+  };
+
+  const handleTestSafety = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!safetyTestInput) return;
+
+    const input = safetyTestInput.toLowerCase();
+    const matchedForbidden = forbiddenWords.filter(w => input.includes(w.toLowerCase()));
+    
+    // check PII leaks
+    const matchesEmail = input.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    const matchesPhone = input.match(/\b\d{10,15}\b/);
+    const matchesIban = input.match(/\bSA\d{22}\b/i);
+
+    let classification: 'pass' | 'blocked' = 'pass';
+    let blockReason = '';
+    let anonymized = safetyTestInput;
+
+    if (matchedForbidden.length > 0) {
+      classification = 'blocked';
+      blockReason = `Toxicity/Forbidden keywords detected: [${matchedForbidden.join(', ')}]`;
+    } else if (matchesEmail || matchesPhone || matchesIban) {
+      classification = 'blocked';
+      blockReason = 'Unmasked PII transmission intercepted (Email/Phone/IBAN detected).';
+      
+      // simulate anonymization
+      if (matchesEmail) anonymized = anonymized.replace(matchesEmail[0], '[EMAIL_MASKED]');
+      if (matchesPhone) anonymized = anonymized.replace(matchesPhone[0], 'XXXXXX' + matchesPhone[0].slice(-4));
+      if (matchesIban) anonymized = anonymized.replace(matchesIban[0], 'SAXXXXXXXXXXXXXXXXXXXX' + matchesIban[0].slice(-4));
+    }
+
+    setSafetyTestResult({
+      classification,
+      blockReason,
+      anonymizedText: anonymized,
+      testedInput: safetyTestInput
+    });
+  };
+
+  const handleAddTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTemplateName || !newTemplateText) return;
+    const newT = {
+      id: `t-${Date.now()}`,
+      intent: newTemplateIntent,
+      name: newTemplateName,
+      text: newTemplateText
+    };
+    setGovernanceTemplates(prev => [...prev, newT]);
+    setGovernanceAuditLogs(prev => [
+      { timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19), user: 'admin_sudhir', action: `Registered response template "${newTemplateName}" for #${newTemplateIntent}.` },
+      ...prev
+    ]);
+    addAuditLog(`Registered NLU response template: ${newTemplateName}`, 'success');
+    setNewTemplateName('');
+    setNewTemplateText('');
+  };
+
+  const handleDeleteTemplate = (id: string, name: string) => {
+    setGovernanceTemplates(prev => prev.filter(t => t.id !== id));
+    setGovernanceAuditLogs(prev => [
+      { timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19), user: 'admin_sudhir', action: `Deleted response template "${name}".` },
+      ...prev
+    ]);
+    addAuditLog(`Deleted response template: ${name}`, 'success');
+  };
+
+  const handlePublishVersion = (version: string) => {
+    setGovernanceActiveVersion(version);
+    setGovernanceAuditLogs(prev => [
+      { timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19), user: 'admin_sudhir', action: `Published active NLU version: ${version}.` },
+      ...prev
+    ]);
+    addAuditLog(`Published NLU version: ${version}`, 'success');
+  };
+
   // Sandbox simulation execution
   const handleRunSandbox = (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,21 +384,25 @@ export function IntentsList() {
             ...prev,
             {
               sender: 'bot',
-              text: `[SUCCESS] Slot "@${rule.slotName}" extracted successfully.\nValue: "${userInput}"\nCondition: ${rule.successCondition}\nSlot filling complete. Proceeding to dialogue flow step.`,
-              note: 'Extraction matched RegEx'
+              text: `[SUCCESS] Extraction complete for slot @${rule.slotName}.\n- Value: "${userInput}"\n- Rule match: ${rule.successCondition}\n- Dialogue flow state updated.`,
+              note: 'Extraction verified'
             }
           ]);
           setSandboxActiveRule(null);
           setSandboxRetriesCount(0);
         } else {
           const nextRetries = sandboxRetriesCount + 1;
+          const explanation = rule.slotName === 'order_id' 
+            ? `The input '${userInput}' fails the required 8-digit numeric check (Regex: ^\\d{8}$)`
+            : `The input '${userInput}' does not match the valid Saudi IBAN pattern SA + 22 digits (Regex: ^SA\\d{22}$)`;
+
           if (nextRetries >= rule.maxRetries) {
             setSandboxMessages((prev) => [
               ...prev,
               {
                 sender: 'bot',
-                text: `[RETRIES EXHAUSTED] Validation failed ${nextRetries} times. Triggering escalation rules.\nEnforcement: ${rule.escalationTrigger}`,
-                note: 'Max retries exhausted'
+                text: `[ESCALATED] Slot validation threshold breached (${nextRetries} of ${rule.maxRetries} failed attempts).\n\n- Reason: ${explanation}\n- Handoff Action: ${rule.escalationTrigger}\n- Session Lock: Enabled`,
+                note: 'Max attempts breached'
               }
             ]);
             setSandboxActiveRule(null);
@@ -291,8 +413,8 @@ export function IntentsList() {
               ...prev,
               {
                 sender: 'bot',
-                text: `[VALIDATION FAILURE (Attempt ${nextRetries}/${rule.maxRetries})]\n${rule.retryPrompt}`,
-                note: 'Regex match mismatch'
+                text: `[VALIDATION FAILURE - Attempt ${nextRetries} of ${rule.maxRetries}]\n\n- Explanation: ${explanation}\n\n- System Prompt: ${rule.retryPrompt}`,
+                note: `Regex failed on value: '${userInput}'`
               }
             ]);
           }
@@ -339,6 +461,16 @@ export function IntentsList() {
           }`}
         >
           {lang === 'ar' ? 'قواعد وتصديق الفتحات (Slots)' : 'Slot Validation Rules'}
+        </button>
+        <button
+          onClick={() => setNluTab('governance')}
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            nluTab === 'governance'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
+              : 'hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+          }`}
+        >
+          {lang === 'ar' ? 'حوكمة وقوانين السلامة' : 'NLU Governance & Safety'}
         </button>
       </div>
 
@@ -794,6 +926,348 @@ export function IntentsList() {
                   <ArrowRight className="w-4 h-4 rtl:rotate-180" />
                 </button>
               </form>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* TAB 4: NLU Governance & Safety Controls */}
+      {nluTab === 'governance' && (
+        <div className="space-y-6 animate-fade-in text-slate-700 dark:text-slate-350">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Safety & Profanity Controls Section */}
+            <div className="lg:col-span-2 space-y-6">
+              
+              {/* Toxicity & PII Controls */}
+              <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+                  <span>{lang === 'ar' ? 'معايير جدار الحماية للسمية والخصوصية' : 'Toxicity & PII Shield Gateways'}</span>
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  {lang === 'ar' 
+                    ? 'قم بضبط حساسية مصنف السمية التلقائي ومستويات إخفاء معلومات الهوية الشخصية (PII).' 
+                    : 'Manage active toxicity scoring classifications and PII masking layers to restrict credit card or phone leaks.'}
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <label className="font-bold text-slate-650 dark:text-slate-400">{lang === 'ar' ? 'حساسية مصنف السمية' : 'Toxicity Sensitivity Score'}</label>
+                      <span className="font-bold text-rose-500 font-mono">{(toxicityThreshold * 100).toFixed(0)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.50"
+                      max="0.95"
+                      step="0.05"
+                      value={toxicityThreshold}
+                      onChange={(e) => setToxicityThreshold(parseFloat(e.target.value))}
+                      className="w-full accent-rose-600 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer h-1.5"
+                    />
+                    <span className="text-[9px] text-slate-400 block italic leading-relaxed">
+                      {lang === 'ar' ? 'أي مدخل عميل يتجاوز هذا النسبة سيتم اعتراضه وتوجيهه لإنهاء الحوار.' : 'Inputs scored above this will trigger containment/fallback.'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-650 dark:text-slate-400">{lang === 'ar' ? 'مستوى قناع الهوية (PII Masking)' : 'PII Leak Protection Level'}</label>
+                    <select
+                      value={piiMaskLevel}
+                      onChange={(e) => setPiiMaskLevel(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 focus:outline-none text-xs focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <option value="full">{lang === 'ar' ? 'تشفير وحظر كامل لجميع الفئات' : 'Strict - Anonymize all and Block Send'}</option>
+                      <option value="anonymize">{lang === 'ar' ? 'استبدال القيم بنصوص بديلة (أقنعة)' : 'Medium - Mask values (e.g. [EMAIL_MASKED])'}</option>
+                      <option value="none">{lang === 'ar' ? 'تعطيل الحظر (تنبيه فقط)' : 'Log Only - Allow with Warning Audit logs'}</option>
+                    </select>
+                    <span className="text-[9px] text-slate-400 block italic leading-relaxed">
+                      {lang === 'ar' ? 'فئات الكشف: البريد الإلكتروني، الهواتف، الحسابات البنكية (IBAN).' : 'Targets: Saudi National IDs, credit cards, KSA IBANs, and email strings.'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Forbidden Keywords blocklist manager */}
+              <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <span>{lang === 'ar' ? 'الكلمات والعبارات المحظورة' : 'Safety Filter Blocklist Words'}</span>
+                </h3>
+
+                <form onSubmit={handleAddForbiddenWord} className="flex gap-2 bg-transparent">
+                  <input
+                    type="text"
+                    required
+                    placeholder={lang === 'ar' ? "أضف كلمة محظورة (مثال: نصب)" : "Add forbidden word (e.g. scam)"}
+                    value={newForbiddenWord}
+                    onChange={(e) => setNewForbiddenWord(e.target.value)}
+                    className="flex-1 px-3 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  >
+                    {lang === 'ar' ? 'إضافة' : 'Block Word'}
+                  </button>
+                </form>
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {forbiddenWords.map((word) => (
+                    <span
+                      key={word}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-500/20 rounded-xl text-xs font-mono font-bold"
+                    >
+                      <span>{word}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteForbiddenWord(word)}
+                        className="text-rose-455 hover:text-rose-700 focus:outline-none transition-colors cursor-pointer"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  {forbiddenWords.length === 0 && (
+                    <span className="text-slate-400 italic text-xs">{lang === 'ar' ? 'لا يوجد كلمات في قائمة الحظر حالياً.' : 'No active keywords on the blocklist.'}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Response Template Governance */}
+              <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <span>{lang === 'ar' ? 'قوالب الردود الموحدة للحوكمة' : 'Governance Response Templates'}</span>
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  {lang === 'ar' 
+                    ? 'قم بإعداد نصوص موحدة لاستخدامها في إجابات النوايا لضمان الحفاظ على الهوية القانونية للمؤسسة.' 
+                    : 'Manage standardized response templates mapped to intents. Dynamically inject slots using double brackets.'}
+                </p>
+
+                <form onSubmit={handleAddTemplate} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-150 dark:border-slate-850 space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold text-slate-500">{lang === 'ar' ? 'النية المستهدفة' : 'Target Intent'}</label>
+                      <select
+                        value={newTemplateIntent}
+                        onChange={(e) => setNewTemplateIntent(e.target.value)}
+                        className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 focus:outline-none text-xs"
+                      >
+                        {intents.map((i) => (
+                          <option key={i.id} value={i.name}>#{i.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="block text-[10px] font-bold text-slate-500">{lang === 'ar' ? 'اسم القالب' : 'Template Identifier'}</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Order Tracking Update"
+                        value={newTemplateName}
+                        onChange={(e) => setNewTemplateName(e.target.value)}
+                        className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 focus:outline-none text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold text-slate-500">{lang === 'ar' ? 'محتوى الرد (Response Content)' : 'Response Content'}</label>
+                    <textarea
+                      rows={2}
+                      required
+                      placeholder="Hello {{customer_name}}, tracking is {{shipment_tracking}}..."
+                      value={newTemplateText}
+                      onChange={(e) => setNewTemplateText(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 focus:outline-none text-xs"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="submit"
+                      className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      {lang === 'ar' ? 'تسجيل القالب المعتمد' : 'Register Template'}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="space-y-3 pt-1">
+                  {governanceTemplates.map((tpl) => (
+                    <div 
+                      key={tpl.id}
+                      className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-850 rounded-2xl flex justify-between items-start"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-slate-850 dark:text-white">{tpl.name}</span>
+                          <span className="text-[9px] font-bold font-mono text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 rounded">
+                            #{tpl.intent}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-serif leading-relaxed italic">"{tpl.text}"</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTemplate(tpl.id, tpl.name)}
+                        className="text-slate-400 hover:text-rose-500 transition-colors p-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right sidebar: Tenant Distribution Tracker & Safety Test Panel */}
+            <div className="space-y-6">
+              
+              {/* Safety Intercept Tester Sandbox */}
+              <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Brain className="w-4.5 h-4.5 text-emerald-500" />
+                  <span>{lang === 'ar' ? 'فاحص جدار الحماية (Safety Intercept)' : 'Safety Intercept Sandbox'}</span>
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  {lang === 'ar'
+                    ? 'اختبار فوري لعبارات العميل قبل معالجتها من محرك NLU للتأكد من فلاتر الحماية.'
+                    : 'Test user statements locally to analyze PII triggers, forbidden lists, and masking outcomes.'}
+                </p>
+
+                <form onSubmit={handleTestSafety} className="space-y-3 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-150 dark:border-slate-850">
+                  <div className="space-y-1">
+                    <label className="block text-[9px] font-bold text-slate-500">{lang === 'ar' ? 'عبارة عميل تجريبية' : 'Test Client input statement'}</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. My email is user@mpaas.com or spam"
+                      value={safetyTestInput}
+                      onChange={(e) => setSafetyTestInput(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-slate-205 dark:border-slate-850 rounded-xl bg-white dark:bg-slate-900 focus:outline-none text-xs"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full py-1.5 bg-blue-650 hover:bg-blue-700 text-white font-bold rounded-xl text-xs cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  >
+                    {lang === 'ar' ? 'فحص واعتراض القوانين' : 'Analyze Safety Gateway'}
+                  </button>
+                </form>
+
+                {safetyTestResult && (
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-850 rounded-2xl space-y-3 animate-fade-in text-[10px] font-mono">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">CLASSIFICATION:</span>
+                      <span className={`font-bold px-1.5 py-0.5 rounded text-[9px] ${
+                        safetyTestResult.classification === 'pass' 
+                          ? 'bg-emerald-500/10 text-emerald-500' 
+                          : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                      }`}>
+                        {safetyTestResult.classification.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {safetyTestResult.classification === 'blocked' && (
+                      <div className="space-y-1">
+                        <span className="text-rose-500 font-bold block">BLOCK REASON:</span>
+                        <span className="text-slate-650 dark:text-slate-350 block font-sans">{safetyTestResult.blockReason}</span>
+                      </div>
+                    )}
+
+                    <div className="space-y-1 border-t border-slate-200 dark:border-slate-850 pt-2">
+                      <span className="text-slate-400 block">ANONYMIZED OUTPUT SENT TO NLU:</span>
+                      <p className="text-[10px] text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 p-2 rounded border border-slate-100 dark:border-slate-900/50 font-sans whitespace-pre-wrap">
+                        {safetyTestResult.anonymizedText}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Tenant Distribution tracker */}
+              <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <span>{lang === 'ar' ? 'تتبع توزيع وإصدارات المستأجر' : 'NLU Tenant Deployment'}</span>
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  {lang === 'ar' 
+                    ? 'إدارة التوزيع وتوزيع حركة مرور النية على البيئات المختلفة للمستأجر.' 
+                    : 'Manage NLU activations, monitor rollout split, and rollback to older model states.'}
+                </p>
+
+                <div className="space-y-3 pt-1 text-[11px]">
+                  <div className="flex justify-between border-b border-slate-50 dark:border-slate-850 pb-1.5">
+                    <span className="text-slate-400">ACTIVE ENGINE VERSION:</span>
+                    <span className="font-mono font-bold text-emerald-500">{governanceActiveVersion}</span>
+                  </div>
+
+                  <div className="space-y-2 pt-1">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase">{lang === 'ar' ? 'توزيع حركة المرور للمستأجر (A/B)' : 'Split Traffic Assignment'}</label>
+                    <div className="flex justify-between items-center text-[10px] font-mono">
+                      <span className="text-blue-500">Variant A: {governanceRollout}%</span>
+                      <span className="text-slate-400 font-bold">Variant B: {100 - governanceRollout}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="10"
+                      value={governanceRollout}
+                      onChange={(e) => setGovernanceRollout(parseInt(e.target.value))}
+                      className="w-full accent-blue-650 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer h-1"
+                    />
+                  </div>
+
+                  <div className="pt-2.5 space-y-2">
+                    <span className="text-[10px] font-bold text-slate-505 block uppercase">{lang === 'ar' ? 'إجراءات النشر والحوكمة' : 'Deploy Control Panel'}</span>
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                      <button
+                        type="button"
+                        disabled={governanceActiveVersion === 'v2.2.0-rc-1'}
+                        onClick={() => handlePublishVersion('v2.2.0-rc-1')}
+                        className="py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors cursor-pointer text-[10px] disabled:opacity-50"
+                      >
+                        {lang === 'ar' ? 'نشر v2.2.0-rc-1' : 'Publish RC'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={governanceActiveVersion === 'v2.0.4-stable'}
+                        onClick={() => handlePublishVersion('v2.0.4-stable')}
+                        className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold rounded-lg transition-colors cursor-pointer text-[10px] disabled:opacity-50"
+                      >
+                        {lang === 'ar' ? 'تراجع لـ v2.0.4' : 'Rollback Stable'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Governance Audit Log Console */}
+              <div className="bg-slate-100/50 dark:bg-slate-900/40 p-4 border border-slate-200 dark:border-slate-850 rounded-2xl space-y-3">
+                <h4 className="font-bold text-[10px] uppercase font-mono tracking-wide text-slate-500">{lang === 'ar' ? 'سجل حوكمة الأمان والانتشار' : 'Governance Audit Log'}</h4>
+                
+                <div className="space-y-2.5 max-h-40 overflow-y-auto font-mono text-[9px] leading-relaxed">
+                  {governanceAuditLogs.map((log, index) => (
+                    <div key={index} className="space-y-0.5 border-b border-slate-200 dark:border-slate-850 pb-1.5 last:border-b-0">
+                      <div className="flex justify-between text-slate-400">
+                        <span>{log.timestamp}</span>
+                        <span className="text-slate-500 font-bold font-mono">@{log.user}</span>
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-350">{log.action}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
             </div>
 

@@ -6,6 +6,7 @@ import { QAReview } from '@/types';
 import { Award, Plus, Sliders, CheckCircle, HelpCircle, MessageSquare } from 'lucide-react';
 import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
 import { SurveysTab } from '@/components/client-admin/operations/SurveysTab';
+import { TrainingTab } from '@/components/client-admin/training/TrainingTab';
 
 
 export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) {
@@ -45,6 +46,9 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
 
     case 'surveys':
       return <SurveysTab />;
+
+    case 'training':
+      return <TrainingTab />;
 
 
     case 'qa_queue':
