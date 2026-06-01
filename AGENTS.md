@@ -28,7 +28,8 @@ The repository follows a clean role-based segregation system across the client-a
 - **Vector DB Status**: Real-time compaction simulations, index vector metrics, partition storage capacity limits, and manual rebalancing triggers with warning lock statuses and successful retries.
 
 ### B. Client Admin Operations
-- **Dialog Flow & Bot Wizard**: Single controlled modal shell with a top progress tracker, unsaved-change close intercept warning overlay, and real-time simulator diagnostics (matched intent, confidence score, extracted entities table, fallback reasons, and escalation triggers).
+- **Dialog Flow & Bot Builder**: High-fidelity conversational graph orchestration engine powered by React Flow supporting 11 node types (Start, Message, Condition, Intent, API Action, Escalation, Variable Set, Delay, Human Handoff, Knowledge Search, End). Includes dynamic LTR/RTL handle position mirroring, Zod-validated node inspectors with sticky save panels, a live validation diagnostics engine, and a client-side execution simulator with path highlighting and slot-filling prompts.
+- **Bot Wizard**: Single controlled modal shell with a top progress tracker, unsaved-change close intercept warning overlay, and real-time simulator diagnostics (matched intent, confidence score, extracted entities table, fallback reasons, and escalation triggers).
 - **Safety & Guardrails**: Toxicity Sensitivity score sliders, dropdown actions for PII masking (Strict block, Medium mask, Log only), custom forbidden word blocklists, and safety intercept test panels.
 - **Response Template Governance**: Standardized templates mapped to intents using double brackets (e.g. `{{customer_name}}`, `{{order_id}}`) for structured response delivery.
 - **NLU Tenant Deployment**: Active NLU version indicators, rollout traffic splits (A/B weight split slider), publish/rollback controls, and live governance audit logs.
@@ -50,6 +51,13 @@ The repository follows a clean role-based segregation system across the client-a
 - **Suggested Clusters**: Grid of AI-generated clusters containing confidence metrics, trend indicators, sample phrases, extracted keywords, and slot rules.
 - **Intent Generation Wizard**: 6-step workflow that guides admins through naming intents, managing training phrases, linking entity catalogs, defining slot validation prompts, drafting bilingual responses, and publishing directly to the active NLU registry.
 - **RBAC Policy Guardrails**: Enforces read-only access for QA Manager users, disabling all modifications and deployment wizards.
+
+### F. Global Notification & Telemetry Center
+- **Zustand Telemetry Engine**: Ephemeral operational alert store with narrow selectors, deduplication counters, rate-limiting constraints, and alert mute toggles. Exposes backward-compatible alises for legacy audit logging.
+- **Toast Stacking viewport**: Renders active toasts with LTR/RTL mirrored layouts, severity-based auto-dismiss progress timelines, and interactive inline actions.
+- **Telemetry Drawer & Filters**: Slide-out timeline organizer showing categorized events, structured metadata tables, and interactive simulation console settings.
+- **SIEM Security Center**: Full-screen overlay console displaying aggregate cluster metrics, category muting switches, searchable telemetry timelines, and immutable security audit logs.
+- **Decoupled Event Publisher**: Future-proof event-based creators for SLA breaches, webhook delays, API timeouts, NLU drops, safety blockages, and DB indexes.
 
 ---
 

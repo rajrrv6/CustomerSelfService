@@ -81,6 +81,13 @@ export interface KnowledgeSource {
   chunkCount: number;
   lastIngested: string;
   sizeBytes?: number;
+  isStale?: boolean;
+  syncSchedule?: string;
+  crawlerDetails?: {
+    urlCount?: number;
+    depthLimit?: number;
+    lastSyncBytes?: number;
+  };
 }
 
 export interface IngestionLog {
@@ -149,17 +156,56 @@ export interface Agent {
   lastActive: string;
 }
 
+export type QAStatus =
+  | 'pending'
+  | 'in_calibration'
+  | 'disputed'
+  | 'approved'
+  | 'escalated'
+  | 'coaching_assigned'
+  | 'completed';
+
+export interface QAReviewHistoryItem {
+  status: QAStatus;
+  date: string;
+  updatedBy: string;
+  notes?: string;
+}
+
 export interface QAReview {
   id: string;
   conversationId: string;
   agentName: string;
   supervisorName: string;
   score: number; // out of 100
-  status: 'pending' | 'completed';
+  status: QAStatus;
   date: string;
   positives: string[];
   negatives: string[];
   coachingPoints: string[];
+  
+  // Extended properties for Sprint 6 workflow depth
+  scorecardMetrics?: {
+    compliance: number;
+    empathy: number;
+    technical: number;
+    resolution: number;
+  };
+  disputeReason?: string;
+  disputeResponse?: string;
+  supervisorNotes?: string;
+  sentimentBreakdown?: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+  resolutionQuality?: 'resolved' | 'unresolved' | 'partially_resolved';
+  slaContext?: {
+    met: boolean;
+    actualDuration: string;
+    targetLimit: string;
+  };
+  historyTimeline?: QAReviewHistoryItem[];
 }
 
 export interface SLARule {

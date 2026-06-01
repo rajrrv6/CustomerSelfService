@@ -8,6 +8,8 @@ import { Badge } from '@/components/shared/BadgeSystem';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
 import { ColumnDef } from '@tanstack/react-table';
+import { QAReview } from '@/types';
+import { OperationalBanner } from '@/components/shared/workflows/OperationalBanner';
 import { 
   TrendingUp, 
   Star, 
@@ -29,7 +31,7 @@ import {
 } from 'lucide-react';
 
 export function SurveysTab() {
-  const { lang } = useApp();
+  const { lang, qaReviews, setQaReviews, addAuditLog } = useApp();
   const t = translations[lang];
 
   // Filters State
@@ -323,6 +325,10 @@ export function SurveysTab() {
   // 2. Lightweight details subcomponent inside row expansion
   const renderSubComponent = ({ row }: { row: any }) => {
     const srv = row.original;
+    const alreadyAudited = qaReviews.some(
+      (r) => r.id === `qa-srv-${srv.id}` || r.conversationId === srv.ticketId
+    );
+
     return (
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-450">
@@ -354,13 +360,69 @@ export function SurveysTab() {
             </div>
             <div>
               <span className="text-[10px] text-slate-500 font-bold block">{d.supervisorNotes}</span>
-              <span className="text-[10px] font-medium text-slate-650 dark:text-slate-400 leading-relaxed">{srv.notes}</span>
+              <span className="text-[10px] font-medium text-slate-655 dark:text-slate-400 leading-relaxed">{srv.notes}</span>
             </div>
           </div>
         </div>
+
+        {srv.csat < 3 && (
+          <div className="bg-rose-50/50 dark:bg-rose-955/10 p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mt-1 animate-in slide-in-from-top-1">
+            <div className="space-y-1">
+              <span className="font-bold text-xs text-rose-800 dark:text-rose-400 block">
+                {lang === 'ar' ? 'تنبيه تدقيق الجودة' : 'QA Quality Dispatch Required'}
+              </span>
+              <p className="text-[10px] text-slate-500 font-normal">
+                {lang === 'ar' 
+                  ? 'هذا الاستبيان حصل على تقييم منخفض. يرجى توجيه الحالة إلى طابور مراجعة الجودة.'
+                  : 'This CSAT survey represents a poor service experience. Click to route to QA Audit review.'}
+              </p>
+            </div>
+            {alreadyAudited ? (
+              <span className="px-2.5 py-1.5 text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-805 border border-slate-200 dark:border-slate-700 rounded-lg">
+                {lang === 'ar' ? 'تم التوجيه للتدقيق' : 'Routed to QA Review'}
+              </span>
+            ) : (
+              <button
+                onClick={() => {
+                  const newReview: QAReview = {
+                    id: `qa-srv-${srv.id}`,
+                    conversationId: srv.ticketId === 'TCK-102' ? 'conv-5' : srv.ticketId === 'TCK-621' ? 'conv-2' : 'conv-1',
+                    agentName: srv.agent === 'Unassigned (Queue)' ? 'Liam Bennett' : srv.agent,
+                    supervisorName: 'Marc Antoine',
+                    score: 0,
+                    status: 'pending',
+                    date: new Date().toISOString().split('T')[0],
+                    positives: [],
+                    negatives: [],
+                    coachingPoints: [],
+                    historyTimeline: [
+                      {
+                        status: 'pending',
+                        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                        updatedBy: 'System (CSAT Trigger)',
+                        notes: `Auto-dispatched from low CSAT survey (${srv.csat} Stars)`
+                      }
+                    ]
+                  };
+                  setQaReviews((prev) => [newReview, ...prev]);
+                  addAuditLog(`Dispatched QA Audit case for ticket ${srv.ticketId} due to low CSAT`, 'success');
+                }}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-[10px] uppercase tracking-wider transition-colors shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 cursor-pointer"
+              >
+                {lang === 'ar' ? 'توجيه لمراجعة الجودة' : 'Dispatch to QA Audit'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   };
+
+  const pendingDispatchesCount = mockSurveys.filter(
+    (s) =>
+      s.csat < 3 &&
+      !qaReviews.some((r) => r.id === `qa-srv-${s.id}` || r.conversationId === s.ticketId)
+  ).length;
 
   return (
     <div className="space-y-6 text-xs text-slate-800 dark:text-slate-200">
@@ -368,6 +430,15 @@ export function SurveysTab() {
         title={t.clientAdmin.surveys.title}
         description={t.clientAdmin.surveys.description}
       />
+
+      {pendingDispatchesCount > 0 && (
+        <OperationalBanner
+          type="error"
+          messageEn={`Action Required: There are ${pendingDispatchesCount} poor CSAT responses (< 3 stars) that have not yet been dispatched to the QA Audit review queue.`}
+          messageAr={`مطلوب اتخاذ إجراء: هناك عدد ${pendingDispatchesCount} من استبيانات الرضا المنخفضة (< 3 نجوم) لم يتم إرسالها بعد إلى طابور تدقيق الجودة.`}
+          isRtl={lang === 'ar'}
+        />
+      )}
 
       {/* Anomaly Alert Banner */}
       <div className="flex items-start sm:items-center justify-between gap-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 p-4 rounded-2xl shadow-sm">

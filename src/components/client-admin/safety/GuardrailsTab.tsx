@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
+import { triggerSafetyIntercept } from '@/stores/notifications/notificationEvents';
 import { Badge } from '@/components/shared/BadgeSystem';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
@@ -463,6 +464,13 @@ export function GuardrailsTab() {
         };
         setAuditLogs(prev => [newLog, ...prev]);
         addAuditLog(`Safety sandbox evaluated prompt: ${passed ? 'PASSED' : 'BLOCKED'}`, passed ? 'success' : 'failed');
+
+        // Trigger global operational alert notifications
+        if (piiDetected.length > 0) {
+          triggerSafetyIntercept(piiDetected.join(', '), 'PII Leak Redaction');
+        } else if (!passed) {
+          triggerSafetyIntercept('Blocked word/jailbreak prompt matched security signature', 'Sandbox Prompt Jailbreak');
+        }
       }
 
       setIsTestingSandbox(false);

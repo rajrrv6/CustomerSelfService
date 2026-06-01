@@ -793,7 +793,28 @@ export const mockQAReviews: QAReview[] = [
     date: '2026-05-19',
     positives: ['Highly professional tone', 'Accurate resolution steps', 'Immediate follow-up details'],
     negatives: [],
-    coachingPoints: ['Keep up the excellent response speed. Good utilization of API macro tags.']
+    coachingPoints: ['Keep up the excellent response speed. Good utilization of API macro tags.'],
+    scorecardMetrics: {
+      compliance: 100,
+      empathy: 95,
+      technical: 95,
+      resolution: 94
+    },
+    sentimentBreakdown: {
+      positive: 70,
+      neutral: 25,
+      negative: 5
+    },
+    resolutionQuality: 'resolved',
+    slaContext: {
+      met: true,
+      actualDuration: '1h 30m',
+      targetLimit: '4h 00m'
+    },
+    historyTimeline: [
+      { status: 'pending', date: '2026-05-19 11:15', updatedBy: 'System' },
+      { status: 'completed', date: '2026-05-19 12:45', updatedBy: 'Marc Antoine', notes: 'Excellent handling of gold account renewal dispute.' }
+    ]
   },
   {
     id: 'qa-2',
@@ -805,7 +826,28 @@ export const mockQAReviews: QAReview[] = [
     date: '2026-05-18',
     positives: ['Polite language', 'Offered clear transition to team lead support'],
     negatives: ['Delayed greeting for 3 minutes', 'Did not confirm order refund criteria before proposing exception'],
-    coachingPoints: ['Work on immediate initial response. Always verify items against the returns checklist before promising exceptions.']
+    coachingPoints: ['Work on immediate initial response. Always verify items against the returns checklist before promising exceptions.'],
+    scorecardMetrics: {
+      compliance: 80,
+      empathy: 90,
+      technical: 85,
+      resolution: 73
+    },
+    sentimentBreakdown: {
+      positive: 40,
+      neutral: 30,
+      negative: 30
+    },
+    resolutionQuality: 'partially_resolved',
+    slaContext: {
+      met: false,
+      actualDuration: '4h 12m',
+      targetLimit: '4h 00m'
+    },
+    historyTimeline: [
+      { status: 'pending', date: '2026-05-18 14:10', updatedBy: 'System' },
+      { status: 'completed', date: '2026-05-18 15:30', updatedBy: 'Marc Antoine', notes: 'Good tone but response time violated SLAs.' }
+    ]
   },
   {
     id: 'qa-3',
@@ -817,7 +859,10 @@ export const mockQAReviews: QAReview[] = [
     date: '2026-05-19',
     positives: [],
     negatives: [],
-    coachingPoints: []
+    coachingPoints: [],
+    historyTimeline: [
+      { status: 'pending', date: '2026-05-19 14:25', updatedBy: 'System' }
+    ]
   }
 ];
 

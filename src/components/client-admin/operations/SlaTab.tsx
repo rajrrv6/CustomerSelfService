@@ -7,6 +7,7 @@ import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
 import { Badge } from '@/components/shared/BadgeSystem';
 import { translations } from '@/i18n/translations';
 import { AlertCircle, TrendingDown, TrendingUp } from 'lucide-react';
+import { triggerSlaBreach } from '@/stores/notifications/notificationEvents';
 
 export function SlaTab() {
   const { lang, slaRules } = useApp();
@@ -53,7 +54,16 @@ export function SlaTab() {
           <h3 className="font-bold text-[11px] text-slate-655 dark:text-slate-400 uppercase tracking-wider font-mono">
             {t.clientAdmin.sla.configuredSla}
           </h3>
-          <span className="text-[10px] text-slate-500 font-mono">Last synced: 2 mins ago</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => triggerSlaBreach('VIP Support Queue', '19m 15s', '15m')}
+              className="px-2.5 py-1 text-[10px] font-bold text-rose-500 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 rounded-xl transition-all active:scale-95 cursor-pointer"
+            >
+              {isRtl ? 'محاكاة خرق الاتفاقية' : 'Simulate SLA Breach'}
+            </button>
+            <span className="text-[10px] text-slate-500 font-mono">Last synced: 2 mins ago</span>
+          </div>
         </div>
         
         <EnterpriseTable headers={tableHeaders}>

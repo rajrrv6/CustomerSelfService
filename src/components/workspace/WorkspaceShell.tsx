@@ -18,6 +18,10 @@ import { SupervisorView } from '@/components/dashboard/SupervisorView';
 import { PublicBotWidget } from '@/components/dashboard/PublicBotWidget';
 import AnalyticsCenterLayout from '@/components/analytics/AnalyticsCenterLayout';
 import { ShieldAlert, Activity, MessageSquare, X } from 'lucide-react';
+import { ToastProvider } from '@/components/shared/notifications/ToastProvider';
+import { NotificationDrawer } from '@/components/shared/notifications/NotificationDrawer';
+import { NotificationCenter } from '@/components/shared/notifications/NotificationCenter';
+import { useNotificationSimulator } from '@/stores/notifications/notificationSimulator';
 import {
   canAccessScreen,
   getScreenTitle,
@@ -75,6 +79,14 @@ function WorkspaceShellInner({
   const [showPublicBotOverlay, setShowPublicBotOverlay] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Notification UI & Simulator states
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCenterOpen, setIsCenterOpen] = useState(false);
+  const [isSimEnabled, setIsSimEnabled] = useState(false);
+
+  // Run the operational simulation loop in the background when enabled
+  useNotificationSimulator(isSimEnabled, 15000);
+
   // Listen for custom navigation events from child components (e.g., BotsTab 'Flows' button)
   React.useEffect(() => {
     const handler = (ev: Event) => {
@@ -98,10 +110,11 @@ function WorkspaceShellInner({
   };
 
   return (
-    <div
-      className="flex h-screen min-h-dvh overflow-hidden bg-slate-50 dark:bg-[#030712] transition-colors"
-      dir={lang === 'ar' ? 'rtl' : 'ltr'}
-    >
+    <ToastProvider>
+      <div
+        className="flex h-screen min-h-dvh overflow-hidden bg-slate-50 dark:bg-[#030712] transition-colors"
+        dir={lang === 'ar' ? 'rtl' : 'ltr'}
+      >
       {isSidebarOpen && <button type="button" aria-label="Close navigation drawer" onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/50 lg:hidden" />}
 
       <Sidebar
@@ -121,6 +134,7 @@ function WorkspaceShellInner({
           onLogout={handleLogout}
           onOpenAuditLogs={() => setShowAuditLogs(true)}
           onOpenMenu={() => setIsSidebarOpen(true)}
+          onOpenNotifications={() => setIsDrawerOpen(true)}
         />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-8 bg-slate-50 dark:bg-[#030712] transition-colors min-w-0">
@@ -263,6 +277,24 @@ function WorkspaceShellInner({
       )}
 
       {/* navigation events handled in React useEffect above */}
-    </div>
+
+      {/* Notification Drawer and Full Center Console overlays */}
+      <NotificationDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        onOpenCenter={() => {
+          setIsDrawerOpen(false);
+          setIsCenterOpen(true);
+        }}
+        isSimEnabled={isSimEnabled}
+        onToggleSim={setIsSimEnabled}
+      />
+
+      <NotificationCenter
+        isOpen={isCenterOpen}
+        onClose={() => setIsCenterOpen(false)}
+      />
+      </div>
+    </ToastProvider>
   );
 }

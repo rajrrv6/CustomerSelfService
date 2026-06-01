@@ -6,6 +6,7 @@ import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
+import { triggerVectorDBIndexFailure, triggerSyncCompleted } from '@/stores/notifications/notificationEvents';
 
 export function VectorDbStatusTab() {
   const { lang, addAuditLog } = useApp();
@@ -35,6 +36,7 @@ export function VectorDbStatusTab() {
           // Simulate a partial compaction timeout/failure to test retry
           setRebalanceState('failed');
           addAuditLog('Rebalance compaction stage failed on pinecone-us-east-1: ShardLockException', 'failed');
+          triggerVectorDBIndexFailure('pinecone-us-east-1-shard-3');
         }, 1200);
       }, 1205);
     }, 1205);
@@ -49,6 +51,7 @@ export function VectorDbStatusTab() {
       setRebalanceState('success');
       setRebalanceProgress(100);
       addAuditLog('Vector DB nodes rebalanced successfully', 'success');
+      triggerSyncCompleted('Pinecone DB Shard Relocator', 4120);
     }, 1205);
   };
 

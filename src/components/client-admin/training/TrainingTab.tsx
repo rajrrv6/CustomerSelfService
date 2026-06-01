@@ -11,6 +11,7 @@ import { translations } from '@/i18n/translations';
 import { UnansweredQueriesTab, UnansweredQuery } from './UnansweredQueriesTab';
 import { SuggestedClustersTab, Cluster } from './SuggestedClustersTab';
 import { IntentGenerationWizard } from './IntentGenerationWizard';
+import { triggerIntentPublish } from '@/stores/notifications/notificationEvents';
 
 export function TrainingTab() {
   useRenderProfiler('TrainingTab');
@@ -294,6 +295,7 @@ export function TrainingTab() {
     }));
 
     addAuditLog(`Published NLU Intent: #${intentData.name} from training intelligence loop`, 'success');
+    triggerIntentPublish(intentData.name, 'v1.4.2-rollout');
   };
 
   // Metric aggregates

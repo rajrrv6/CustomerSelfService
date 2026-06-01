@@ -16,7 +16,7 @@ import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLay
 
 // Heavy tabs imported lazily
 const BotsTab = lazy(() => import('../bots/BotsTab').then(m => ({ default: m.BotsTab })));
-const DialogFlowLayout = lazy(() => import('@/components/dialog-builder/DialogFlowLayout').then(m => ({ default: m.DialogFlowLayout })));
+const DialogFlowLayout = lazy(() => import('../dialog-builder/DialogFlowLayout').then(m => ({ default: m.DialogFlowLayout })));
 const IntegrationsDashboard = lazy(() => import('@/components/integrations/IntegrationsDashboard').then(m => ({ default: m.IntegrationsDashboard })));
 const TrainingTab = lazy(() => import('../training/TrainingTab').then(m => ({ default: m.TrainingTab })));
 

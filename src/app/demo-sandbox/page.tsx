@@ -124,6 +124,7 @@ export default function DemoSandboxPage() {
           onLogout={() => setIsLoggedIn(false)}
           onOpenAuditLogs={() => setShowAuditLogs(true)}
           onOpenMenu={() => {}}
+          onOpenNotifications={() => {}}
         />
 
         {/* Content viewport area */}
