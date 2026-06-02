@@ -16,6 +16,8 @@ export const conversationsSeed: Conversation[] = [
     language: 'ar',
     slaStatus: 'within_sla',
     slaDeadline: '15:40',
+    priority: 'medium',
+    unreadCount: 2,
     messages: [
       {
         id: 'am1',
@@ -61,6 +63,8 @@ export const conversationsSeed: Conversation[] = [
     language: 'en',
     slaStatus: 'breached',
     slaDeadline: '14:45',
+    priority: 'urgent',
+    unreadCount: 0,
     messages: [
       {
         id: 'mm1',
@@ -109,6 +113,8 @@ export const conversationsSeed: Conversation[] = [
     language: 'en',
     slaStatus: 'warning',
     slaDeadline: '15:10',
+    priority: 'low',
+    unreadCount: 1,
     messages: [
       {
         id: 'jm1',
@@ -150,6 +156,8 @@ export const conversationsSeed: Conversation[] = [
     language: 'ar',
     slaStatus: 'within_sla',
     slaDeadline: '13:30',
+    priority: 'medium',
+    unreadCount: 0,
     messages: [
       {
         id: 'ym1',
@@ -177,6 +185,94 @@ export const conversationsSeed: Conversation[] = [
         timestamp: '13:00',
         translatedText: 'Yes, the speed is excellent now and the connection is very stable. Thank you very much.',
         sentiment: 'positive'
+      }
+    ]
+  },
+  {
+    id: 'conv-105',
+    customerName: 'Layla Hassan',
+    customerPhone: '+966 50 111 2222',
+    customerEmail: 'layla.hassan@riyadh.sa',
+    customerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    channel: 'instagram',
+    lastMessage: 'Hi support team, I sent a direct message about the discount voucher mismatch.',
+    lastMessageTime: '15:15',
+    status: 'active',
+    agentId: 'agent-1',
+    sentiment: 'neutral',
+    language: 'en',
+    slaStatus: 'within_sla',
+    slaDeadline: '15:55',
+    priority: 'medium',
+    unreadCount: 3,
+    messages: [
+      {
+        id: 'im1',
+        sender: 'customer',
+        senderName: 'Layla Hassan',
+        text: 'Hi! Is the checkout discount code active?',
+        timestamp: '15:10',
+        sentiment: 'neutral'
+      },
+      {
+        id: 'im2',
+        sender: 'bot',
+        senderName: 'Farah AI',
+        text: 'Hello Layla. Standard discount code rules apply to items in your cart. Check exclusions at ks-5 policy dashboard.',
+        timestamp: '15:12',
+        sentiment: 'neutral'
+      },
+      {
+        id: 'im3',
+        sender: 'customer',
+        senderName: 'Layla Hassan',
+        text: 'Hi support team, I sent a direct message about the discount voucher mismatch.',
+        timestamp: '15:15',
+        sentiment: 'neutral'
+      }
+    ]
+  },
+  {
+    id: 'conv-106',
+    customerName: 'Alex Mercer',
+    customerEmail: 'alex.mercer@gentek.com',
+    customerPhone: '+1 (555) 777-8888',
+    customerAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
+    channel: 'messenger',
+    lastMessage: 'Billing issue: my account got charged twice for the monthly SaaS subscription.',
+    lastMessageTime: '15:20',
+    status: 'active',
+    agentId: 'agent-1',
+    sentiment: 'negative',
+    language: 'en',
+    slaStatus: 'warning',
+    slaDeadline: '15:35',
+    priority: 'high',
+    unreadCount: 0,
+    messages: [
+      {
+        id: 'mmc1',
+        sender: 'customer',
+        senderName: 'Alex Mercer',
+        text: 'Why is there a duplicate payment charge on my invoice?',
+        timestamp: '15:05',
+        sentiment: 'negative'
+      },
+      {
+        id: 'mmc2',
+        sender: 'bot',
+        senderName: 'Farah AI',
+        text: 'Scanning billing repository. Found active charge for sub-99881. Initiating support ticket.',
+        timestamp: '15:10',
+        sentiment: 'neutral'
+      },
+      {
+        id: 'mmc3',
+        sender: 'customer',
+        senderName: 'Alex Mercer',
+        text: 'Billing issue: my account got charged twice for the monthly SaaS subscription.',
+        timestamp: '15:20',
+        sentiment: 'negative'
       }
     ]
   }

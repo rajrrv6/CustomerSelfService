@@ -496,7 +496,7 @@ export function SurveysTab() {
             <Download className="w-3.5 h-3.5" />
             {d.exportCSV}
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-105 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-lg transition-colors border border-blue-200 dark:border-blue-800 cursor-pointer">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-lg transition-colors border border-blue-200 dark:border-blue-800 cursor-pointer">
             <Settings className="w-3.5 h-3.5" />
             {d.configThresholds}
           </button>

@@ -41,21 +41,21 @@ export function Customer360Drawer({ profile }: Customer360DrawerProps) {
           <User className="w-8 h-8 text-slate-400 dark:text-slate-500" />
         </div>
         <div>
-          <h4 className="font-bold text-sm text-slate-800 dark:text-white leading-tight">{profile.customerName}</h4>
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono mt-1">{t.agentWorkspace.customer360.email}: {profile.email}</span>
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono">{t.agentWorkspace.customer360.phone}: {profile.phone}</span>
+          <h4 className="font-bold text-[15px] text-slate-800 dark:text-white leading-tight">{profile.customerName}</h4>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block font-mono mt-1">{t.agentWorkspace.customer360.email}: {profile.email}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block font-mono">{t.agentWorkspace.customer360.phone}: {profile.phone}</span>
         </div>
       </div>
 
       {/* SLA Metrics grid */}
-      <div className="grid grid-cols-2 gap-2 text-[10px]">
+      <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-left">
-          <span className="text-slate-500 dark:text-slate-400 font-bold block uppercase font-mono text-[8px]">{t.agentWorkspace.customer360.npsScore}</span>
+          <span className="text-slate-500 dark:text-slate-400 font-bold block uppercase font-mono text-[9.5px]">{t.agentWorkspace.customer360.npsScore}</span>
           <span className="text-sm font-bold text-slate-800 dark:text-white mt-0.5 block font-mono">{profile.npsScore}/10</span>
         </div>
         <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-left">
-          <span className="text-slate-500 dark:text-slate-400 font-bold block uppercase font-mono text-[8px]">{t.agentWorkspace.customer360.churnRisk}</span>
-          <span className={`px-1.5 py-0.5 mt-1 rounded font-bold font-mono inline-block text-[8px] ${riskColors[profile.churnRisk]}`}>
+          <span className="text-slate-500 dark:text-slate-400 font-bold block uppercase font-mono text-[9.5px]">{t.agentWorkspace.customer360.churnRisk}</span>
+          <span className={`px-1.5 py-0.5 mt-1 rounded font-bold font-mono inline-block text-[9.5px] ${riskColors[profile.churnRisk]}`}>
             {profile.churnRisk.toUpperCase()}
           </span>
         </div>
@@ -63,14 +63,14 @@ export function Customer360Drawer({ profile }: Customer360DrawerProps) {
 
       {/* Billing Stats */}
       <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800/80">
-        <div className="flex justify-between items-center text-xs">
+        <div className="flex justify-between items-center text-sm">
           <span className="text-slate-500 dark:text-slate-400">{t.agentWorkspace.customer360.vipTier}</span>
-          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-[9px] font-mono">
+          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-[10.5px] font-mono">
             {profile.tier}
           </span>
         </div>
 
-        <div className="flex justify-between items-center text-xs">
+        <div className="flex justify-between items-center text-sm">
           <span className="text-slate-500 dark:text-slate-400">{t.agentWorkspace.customer360.totalSpend}</span>
           <span className="font-bold text-slate-800 dark:text-white font-mono">${profile.totalSpent.toLocaleString()} USD</span>
         </div>
@@ -78,21 +78,21 @@ export function Customer360Drawer({ profile }: Customer360DrawerProps) {
 
       {/* SAP Orders Sync */}
       <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-800/80">
-        <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase font-mono">
+        <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-slate-400 uppercase font-mono">
           <ShoppingBag className="w-3.5 h-3.5" />
           <span>{t.agentWorkspace.customer360.orderHistorySap}</span>
         </div>
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {profile.orders.map((ord) => (
-            <div key={ord.id} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 text-[10px]">
+            <div key={ord.id} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 text-xs">
               <div className="flex justify-between items-center font-mono">
                 <span className="font-bold text-slate-800 dark:text-white">{ord.id}</span>
-                <span className={`px-1.5 py-0.2 rounded text-[8px] font-bold ${
+                <span className={`px-1.5 py-0.2 rounded text-[9.5px] font-bold ${
                   ord.status === 'DELIVERED' ? 'text-emerald-500' : 'text-blue-500 animate-pulse'
                 }`}>{ord.status}</span>
               </div>
               <p className="text-slate-500 dark:text-slate-400 font-normal truncate max-w-50">{ord.itemName}</p>
-              <div className="flex justify-between items-center text-[8px] text-slate-500 dark:text-slate-400 font-mono">
+              <div className="flex justify-between items-center text-[9px] text-slate-500 dark:text-slate-400 font-mono">
                 <span>{t.agentWorkspace.customer360.date} {ord.date}</span>
                 <span className="font-bold">${ord.amount}</span>
               </div>
@@ -103,22 +103,22 @@ export function Customer360Drawer({ profile }: Customer360DrawerProps) {
 
       {/* Salesforce Prior Tickets */}
       <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-800/80">
-        <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase font-mono">
+        <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-slate-400 uppercase font-mono">
           <FileText className="w-3.5 h-3.5" />
           <span>{t.agentWorkspace.customer360.priorTicketsSf}</span>
         </div>
         <div className="space-y-2 max-h-40 overflow-y-auto">
           {profile.tickets.length === 0 ? (
-            <span className="text-[10px] text-slate-400 italic font-normal block py-1">{t.agentWorkspace.customer360.noPriorTickets}</span>
+            <span className="text-xs text-slate-400 italic font-normal block py-1">{t.agentWorkspace.customer360.noPriorTickets}</span>
           ) : (
             profile.tickets.map((tkt) => (
-              <div key={tkt.id} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 text-[10px]">
+              <div key={tkt.id} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 text-xs">
                 <div className="flex justify-between items-center font-mono">
                   <span className="font-bold text-slate-800 dark:text-white">{tkt.id}</span>
-                  <span className="capitalize text-slate-500">{tkt.status}</span>
+                  <span className="capitalize text-slate-500"> {tkt.status}</span>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 font-normal truncate max-w-50">{tkt.title}</p>
-                <div className="flex justify-between items-center text-[8px] text-slate-500 dark:text-slate-400 font-mono">
+                <div className="flex justify-between items-center text-[9px] text-slate-500 dark:text-slate-400 font-mono">
                   <span>{t.agentWorkspace.customer360.date} {tkt.date}</span>
                   <span className={`uppercase px-1 rounded ${
                     tkt.priority === 'urgent' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'

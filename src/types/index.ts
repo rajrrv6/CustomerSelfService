@@ -116,7 +116,7 @@ export interface Conversation {
   customerPhone?: string;
   customerEmail?: string;
   customerAvatar?: string;
-  channel: 'whatsapp' | 'web' | 'voice' | 'email';
+  channel: 'whatsapp' | 'web' | 'voice' | 'email' | 'instagram' | 'messenger';
   lastMessage: string;
   lastMessageTime: string;
   status: 'unassigned' | 'active' | 'resolved' | 'escalated';
@@ -126,6 +126,8 @@ export interface Conversation {
   slaStatus: 'within_sla' | 'breached' | 'warning';
   slaDeadline: string;
   language: 'en' | 'ar';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  unreadCount?: number;
 }
 
 export interface Ticket {

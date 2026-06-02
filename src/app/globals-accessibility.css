@@ -14,8 +14,16 @@ input[type="radio"],
 select,
 textarea,
 [role="button"],
+[role="tab"],
+[role="combobox"],
+[role="listbox"],
+[role="option"],
+[role="menuitem"],
+[role="switch"],
+[role="slider"],
+.cursor-pointer,
 [onclick] {
-  cursor: pointer;
+  cursor: pointer !important;
 }
 
 button:disabled,
@@ -29,22 +37,6 @@ input[type="submit"]:disabled,
 
 /* Define missing Tailwind extended color */
 @layer components {
-  .bg-blue-650 {
-    @apply bg-blue-600;
-  }
-  
-  .bg-blue-750 {
-    @apply bg-blue-700;
-  }
-  
-  .hover\\:bg-blue-755 {
-    @apply hover:bg-blue-700;
-  }
-  
-  .hover\\:bg-blue-750 {
-    @apply hover:bg-blue-700;
-  }
-
   /* Ensure primary CTA buttons always visible */
   .btn-primary {
     @apply px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer min-h-10 shadow-md;
@@ -59,7 +51,7 @@ input[type="submit"]:disabled,
   }
 
   .btn-secondary {
-    @apply px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-150 dark:hover:bg-slate-750 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer min-h-10;
+    @apply px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer min-h-10;
   }
 
   .btn-icon {
@@ -260,8 +252,8 @@ input[type="submit"]:disabled,
 .high-contrast-mode .bg-white,
 .high-contrast-mode .bg-slate-50,
 .high-contrast-mode .bg-slate-100,
-.high-contrast-mode .dark\\:bg-slate-900,
-.high-contrast-mode .dark\\:bg-slate-800 {
+.high-contrast-mode .dark\:bg-slate-900,
+.high-contrast-mode .dark\:bg-slate-800 {
   background-color: var(--hc-bg) !important;
 }
 

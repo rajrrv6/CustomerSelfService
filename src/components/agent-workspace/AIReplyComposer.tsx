@@ -14,7 +14,7 @@ interface AIReplyComposerProps {
   suggestedReplyText: string;
   lang: 'en' | 'ar';
   onSummarize: () => void;
-  channel?: 'whatsapp' | 'web' | 'voice' | 'email';
+  channel?: 'whatsapp' | 'web' | 'voice' | 'email' | 'instagram' | 'messenger';
   status?: 'unassigned' | 'active' | 'resolved' | 'escalated';
 }
 
@@ -173,11 +173,11 @@ export function AIReplyComposer({
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 min-w-0">
         <select
           onChange={(e) => handleApplyMacro(e.target.value)}
           defaultValue=""
-          className="max-w-full flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-[10px] text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+          className="max-w-full min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-[10px] text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
         >
           <option value="" disabled>
             {t.agentWorkspace.aiComposer.insertCannedReply}
@@ -193,7 +193,7 @@ export function AIReplyComposer({
   );
 
   return (
-    <div className="shrink-0 space-y-3 border-t border-slate-200 bg-slate-50/95 p-3 text-xs font-semibold dark:border-slate-800 dark:bg-slate-900/60 sm:p-4">
+    <div className="shrink-0 min-w-0 space-y-3 border-t border-slate-200 bg-slate-50/95 p-3 text-xs font-semibold dark:border-slate-800 dark:bg-slate-900/60 sm:p-4">
       {isDesktop ? (
         advancedToolsBlock
       ) : (

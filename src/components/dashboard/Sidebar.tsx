@@ -163,7 +163,7 @@ export function Sidebar({
 
   return (
     <aside
-      className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} z-50 w-72 max-w-[85vw] bg-white dark:bg-[#03050a] text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 h-screen lg:static lg:w-64 transition-transform duration-300 ${
+      className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} z-50 w-72 max-w-[85vw] bg-white dark:bg-[#03050a] text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 h-screen lg:static lg:w-64 transition-transform duration-300 overflow-y-auto ${
         isMobileOpen ? 'translate-x-0' : isRtl ? 'translate-x-full lg:translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}
     >
@@ -195,7 +195,7 @@ export function Sidebar({
           {/* Sub-Role Selector */}
           {(['client_admin', 'supervisor', 'qa_manager', 'operations_manager', 'viewer'].includes(role) || ['customer', 'support_agent'].includes(role)) && (
             <div className="px-3 mb-4 relative">
-              <span className="text-[9px] uppercase font-bold text-slate-500 block mb-1">
+              <span className="text-[10.5px] uppercase font-bold text-slate-500 block mb-1">
                 {lang === 'ar' ? 'الدور الوظيفي الداخلي:' : 'Internal Sub-Role:'}
               </span>
               <button
@@ -246,7 +246,7 @@ export function Sidebar({
             </div>
           )}
 
-          <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          <div className="px-3 mb-2 text-[11.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             {role.replace('_', ' ')} Options
           </div>
           {menuItems.map((item) => {
@@ -256,7 +256,7 @@ export function Sidebar({
                 key={item.id}
                 data-testid={`sidebar-item-${item.id}`}
                 onClick={() => setActiveScreen(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 text-start cursor-pointer ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5'
                     : 'hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 text-slate-500 dark:text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
@@ -273,7 +273,7 @@ export function Sidebar({
       </div>
 
       {/* Footer Section */}
-      <div className="border-t border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/40 px-4 py-3 text-[10px] text-slate-500 text-center font-semibold">
+      <div className="border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-[#03050a] px-4 py-3 text-[10px] text-slate-500 text-center font-semibold">
         <div className="lg:hidden mb-3 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-950/70 p-3 text-left">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
             <Globe className="h-3.5 w-3.5 text-blue-400" />

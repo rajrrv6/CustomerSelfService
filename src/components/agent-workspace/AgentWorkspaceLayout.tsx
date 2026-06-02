@@ -5,7 +5,7 @@ import { useNotificationsStore } from '@/stores/notificationsStore';
 import { translations } from '@/i18n/translations';
 import { UnifiedInbox } from './UnifiedInbox';
 import { ConversationPanel } from './ConversationPanel';
-import { Customer360Drawer } from './Customer360Drawer';
+import { RightWorkspacePanel } from './RightWorkspacePanel';
 import { SupervisorPanel } from './SupervisorPanel';
 import { ShiftSchedule } from './ShiftSchedule';
 import { PerformanceScorecard } from './PerformanceScorecard';
@@ -55,14 +55,17 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   const [conversations, setConversations] = useState(conversationsSeed);
   const [activeChatId, setActiveChatId] = useState<string>('conv-102');
 
-  // Inbox filters (tab, search, queue) — extracted hook
+  // Inbox filters (tab, search, queue, status) — extracted hook
   const {
     activeTab,
     setActiveTab,
+    statusFilter,
+    setStatusFilter,
     searchQuery,
     setSearchQuery,
     selectedQueue,
     setSelectedQueue,
+    filteredConversations,
   } = useInboxFilters(conversations);
 
   // AUX timer + queue metrics — extracted hook
@@ -253,6 +256,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   const [summaryText, setSummaryText] = useState<string | null>(null);
   const activeCallPanelRef = useRef<HTMLDivElement | null>(null);
   const autoFocusActiveCallRef = useRef(false);
+  const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
 
   const focusActiveCallPanel = () => {
     const panel = activeCallPanelRef.current;
@@ -280,6 +284,41 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
 
   // Send messaging dispatch
   const [draftText, setDraftText] = useState('');
+
+  const handleEscalateChat = () => {
+    setConversations(prev => prev.map(c => {
+      if (c.id === activeChat.id) {
+        return {
+          ...c,
+          status: 'escalated',
+          slaStatus: 'warning',
+          slaDeadline: '15m'
+        };
+      }
+      return c;
+    }));
+    addAuditLog(`Escalated chat session ${activeChat.id}`, 'failed');
+  };
+
+  const handleAssignToggle = () => {
+    setConversations(prev => prev.map(c => {
+      if (c.id === activeChat.id) {
+        const isUnassigned = c.status === 'unassigned';
+        return {
+          ...c,
+          status: isUnassigned ? 'active' : 'unassigned',
+          agentId: isUnassigned ? 'agent-1' : undefined
+        };
+      }
+      return c;
+    }));
+    addAuditLog(
+      activeChat.status === 'unassigned'
+        ? `Assigned chat ${activeChat.id} to Liam Bennett`
+        : `Unassigned chat ${activeChat.id}`,
+      'success'
+    );
+  };
 
   const handleSendMessage = (text: string, type: 'chat' | 'note') => {
     if (!text) return;
@@ -499,13 +538,15 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
       {/* Main split-pane content — desktop: 3-col; mobile: primary work + sheets */}
       <div className={`flex min-h-0 flex-1 flex-col overflow-x-hidden lg:flex-row ${showReturnToCallDock ? 'pb-28 sm:pb-32 lg:pb-24' : ''}`}>
         {/* Left pane: Unified Inbox (desktop only — mobile uses sheet) */}
-        <div className="hidden h-full min-h-0 w-80 shrink-0 lg:block">
+        <div className="hidden h-full min-h-0 w-64 xl:w-72 2xl:w-80 min-w-0 shrink-0 lg:block">
           <UnifiedInbox
-            conversations={conversations}
+            conversations={filteredConversations}
             activeChatId={activeChatId}
             onSelectChat={(id) => setActiveChatId(id)}
             activeTab={activeTab}
             onChangeTab={setActiveTab}
+            statusFilter={statusFilter}
+            onChangeStatusFilter={setStatusFilter}
             selectedQueue={selectedQueue}
             onChangeQueue={setSelectedQueue}
             queues={queueSeed}
@@ -515,7 +556,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
         </div>
 
         {/* Middle pane: Conversation Panel or Voice Panel */}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col">
           <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-slate-50/95 px-2 py-2 dark:border-slate-800 dark:bg-slate-950/40 lg:hidden">
             <button
               type="button"
@@ -751,13 +792,25 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             onCloseWhisper={() => setActiveWhisper('')}
             lang={lang}
             onSummarize={handleTriggerSummary}
+            onEscalateClick={handleEscalateChat}
+            onAssignClick={handleAssignToggle}
+            rightPanelExpanded={rightPanelExpanded}
+            onToggleRightPanel={() => setRightPanelExpanded(!rightPanelExpanded)}
           />
         )}
         </div>
 
-        {/* Right pane: Customer 360 (desktop) */}
-        <div className="hidden h-full w-72 min-w-0 shrink-0 overflow-hidden border-slate-200 dark:border-slate-800 lg:block lg:border-s">
-          <Customer360Drawer profile={activeCustomerProfile} />
+        {/* Right pane: Customer 360 & AI Copilot */}
+        <div className={`hidden h-full min-w-0 shrink-0 overflow-hidden border-slate-200 dark:border-slate-800 lg:block lg:border-s transition-all duration-300 ${rightPanelExpanded ? 'w-64 xl:w-72' : 'w-0 border-none'}`}>
+          {rightPanelExpanded && (
+            <RightWorkspacePanel
+              profile={activeCustomerProfile}
+              activeChat={activeChat}
+              lang={lang}
+              onApplySuggestedReply={(text) => setDraftText(text)}
+              onSummarize={handleTriggerSummary}
+            />
+          )}
         </div>
       </div>
 
@@ -817,7 +870,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
         bodyClassName="max-h-[min(82dvh,640px)]"
       >
         <UnifiedInbox
-          conversations={conversations}
+          conversations={filteredConversations}
           activeChatId={activeChatId}
           onSelectChat={(id) => {
             setActiveChatId(id);
@@ -825,6 +878,8 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
           }}
           activeTab={activeTab}
           onChangeTab={setActiveTab}
+          statusFilter={statusFilter}
+          onChangeStatusFilter={setStatusFilter}
           selectedQueue={selectedQueue}
           onChangeQueue={setSelectedQueue}
           queues={queueSeed}
@@ -837,12 +892,21 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
       <MobileSheet
         open={mobileOverlay === 'customer360'}
         onClose={() => setMobileOverlay(null)}
-        title="Customer 360"
+        title={lang === 'ar' ? 'ملف العميل والمساعد' : 'Customer 360 & AI Copilot'}
         description={activeChat?.customerName ?? 'Context'}
         bodyClassName="max-h-[min(85dvh,680px)]"
       >
         <div className="min-h-[min(50dvh,400px)]">
-          <Customer360Drawer profile={activeCustomerProfile} />
+          <RightWorkspacePanel
+            profile={activeCustomerProfile}
+            activeChat={activeChat}
+            lang={lang}
+            onApplySuggestedReply={(text) => {
+              setDraftText(text);
+              setMobileOverlay(null);
+            }}
+            onSummarize={handleTriggerSummary}
+          />
         </div>
       </MobileSheet>
 

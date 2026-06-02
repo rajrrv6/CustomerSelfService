@@ -541,6 +541,8 @@ export const ar = {
         web: 'المحادثة',
         email: 'البريد الإلكتروني',
         voice: 'الصوت',
+        instagram: 'إنستغرام',
+        messenger: 'ماسينجر',
         escalated: 'مصعّدة'
       },
       searchActive: 'البحث في المحادثات النشطة...',

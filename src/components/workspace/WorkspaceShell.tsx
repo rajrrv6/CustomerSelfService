@@ -134,7 +134,7 @@ function WorkspaceShellInner({
   return (
     <ToastProvider>
       <div
-        className="flex h-screen min-h-dvh overflow-hidden bg-slate-50 dark:bg-[#030712] transition-colors"
+        className="flex h-screen min-h-screen overflow-hidden bg-slate-50 dark:bg-[#030712] transition-colors"
         dir={lang === 'ar' ? 'rtl' : 'ltr'}
       >
       {isSidebarOpen && <button type="button" aria-label="Close navigation drawer" onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/50 lg:hidden" />}
@@ -159,7 +159,7 @@ function WorkspaceShellInner({
           onOpenNotifications={() => setIsDrawerOpen(true)}
         />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-8 bg-slate-50 dark:bg-[#030712] transition-colors min-w-0">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-8 bg-slate-50 dark:bg-[#030712] transition-colors min-w-0">
           {!authorized ? (
             <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center space-y-4 max-w-md mx-auto px-2">
               <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 flex items-center justify-center">

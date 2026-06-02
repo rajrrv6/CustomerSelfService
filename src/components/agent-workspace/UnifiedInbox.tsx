@@ -1,5 +1,35 @@
 import React from 'react';
 import { Search, MessageSquare, Phone, Mail, Globe, AlertOctagon, User, Pin } from 'lucide-react';
+
+const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={props.className}
+  >
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+  </svg>
+);
+
+const Facebook = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={props.className}
+  >
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+  </svg>
+);
 import { Conversation } from '@/types';
 import { QueueSwitcher } from './QueueSwitcher';
 import { QueueConfig } from '@/data/seed/queueSeed';
@@ -7,13 +37,16 @@ import { SentimentBadge } from './SentimentBadge';
 
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
+import { InboxTab, StatusFilter } from '@/hooks/useInboxFilters';
 
 interface UnifiedInboxProps {
   conversations: Conversation[];
   activeChatId: string;
   onSelectChat: (id: string) => void;
-  activeTab: 'all' | 'whatsapp' | 'web' | 'email' | 'voice' | 'escalated';
-  onChangeTab: (tab: 'all' | 'whatsapp' | 'web' | 'email' | 'voice' | 'escalated') => void;
+  activeTab: InboxTab;
+  onChangeTab: (tab: InboxTab) => void;
+  statusFilter: StatusFilter;
+  onChangeStatusFilter: (status: StatusFilter) => void;
   selectedQueue: string;
   onChangeQueue: (queueId: string) => void;
   queues: QueueConfig[];
@@ -29,6 +62,8 @@ export function UnifiedInbox({
   onSelectChat,
   activeTab,
   onChangeTab,
+  statusFilter,
+  onChangeStatusFilter,
   selectedQueue,
   onChangeQueue,
   queues,
@@ -46,38 +81,28 @@ export function UnifiedInbox({
     { id: 'web', label: t.agentWorkspace.inbox.tabs.web, icon: Globe },
     { id: 'email', label: t.agentWorkspace.inbox.tabs.email, icon: Mail },
     { id: 'voice', label: t.agentWorkspace.inbox.tabs.voice, icon: Phone },
+    { id: 'instagram', label: 'Instagram', icon: Instagram },
+    { id: 'messenger', label: 'Messenger', icon: Facebook },
     { id: 'escalated', label: t.agentWorkspace.inbox.tabs.escalated, icon: AlertOctagon }
   ];
 
-  // Filtering
-  const filtered = conversations.filter((c) => {
-    // Channel check
-    if (activeTab !== 'all') {
-      if (activeTab === 'escalated') {
-        if (c.status !== 'escalated') return false;
-      } else if (c.channel !== activeTab) {
-        return false;
-      }
-    }
-    // Search check
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchName = c.customerName.toLowerCase().includes(query);
-      const matchMsg = c.lastMessage.toLowerCase().includes(query);
-      if (!matchName && !matchMsg) return false;
-    }
-    return true;
-  });
+  // Status Filter options
+  const statusOptions: Array<{ id: StatusFilter; label: string }> = [
+    { id: 'all', label: lang === 'ar' ? 'الكل' : 'All Status' },
+    { id: 'open', label: lang === 'ar' ? 'مفتوحة' : 'Open' },
+    { id: 'pending', label: lang === 'ar' ? 'معلقة' : 'Pending' },
+    { id: 'escalated', label: lang === 'ar' ? 'مصعّدة' : 'Escalated' },
+    { id: 'resolved', label: lang === 'ar' ? 'محلولة' : 'Resolved' },
+  ];
 
   return (
     <div
-      className={`flex w-80 min-w-0 shrink-0 flex-col justify-between border-slate-200 bg-slate-50/95 text-xs font-semibold dark:border-slate-800 dark:bg-slate-950/30 ${
+      className={`flex w-64 xl:w-72 2xl:w-80 min-w-0 shrink-0 h-full flex-col justify-between border-slate-200 bg-slate-50/95 text-sm font-semibold dark:border-slate-800 dark:bg-slate-950/30 ${
         className ?? 'border-r'
       }`}
     >
-      
       {/* Search and Queue switcher top header */}
-      <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3 shrink-0">
         <QueueSwitcher
           queues={queues}
           selectedQueue={selectedQueue}
@@ -94,10 +119,27 @@ export function UnifiedInbox({
             className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 ps-9 pe-4 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           />
         </div>
+
+        {/* Status filters pills */}
+        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none select-none">
+          {statusOptions.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => onChangeStatusFilter(opt.id)}
+              className={`px-2 py-0.5 rounded-full text-[10.5px] font-extrabold border transition-all whitespace-nowrap ${
+                statusFilter === opt.id
+                  ? 'bg-slate-800 text-white border-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800 dark:hover:border-slate-700'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto py-1.5 px-3 gap-1 shrink-0 bg-slate-50/80 dark:bg-slate-900/10">
+      {/* Channels Tabs */}
+      <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto py-1.5 px-3 gap-1 shrink-0 bg-slate-50/80 dark:bg-slate-900/10 scrollbar-none">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.id === activeTab;
@@ -105,8 +147,8 @@ export function UnifiedInbox({
             <button
               key={tab.id}
               data-testid={`inbox-tab-${tab.id}`}
-              onClick={() => onChangeTab(tab.id as 'all' | 'whatsapp' | 'web' | 'email' | 'voice' | 'escalated')}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg whitespace-nowrap text-[10px] font-bold transition-all ${
+              onClick={() => onChangeTab(tab.id as InboxTab)}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg whitespace-nowrap text-xs font-bold transition-all ${
                 isActive
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -119,14 +161,14 @@ export function UnifiedInbox({
         })}
       </div>
 
-      {/* Conversational sessions queue */}
+      {/* Conversational sessions list */}
       <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/40">
-        {filtered.length === 0 ? (
+        {conversations.length === 0 ? (
           <div className="p-6 text-center text-slate-500 dark:text-slate-400 font-normal">
             {t.agentWorkspace.inbox.emptySearch}
           </div>
         ) : (
-          filtered.map((chat) => {
+          conversations.map((chat) => {
             const isActive = chat.id === activeChatId;
 
             // SLA Outcomes labels
@@ -161,12 +203,24 @@ export function UnifiedInbox({
                 borderInactive: 'border-cyan-500/20 dark:border-cyan-500/10',
                 bgActive: 'bg-cyan-500/10 dark:bg-cyan-500/5',
                 badgeBg: 'bg-cyan-500'
+              },
+              instagram: {
+                borderActive: 'border-pink-500 dark:border-pink-400',
+                borderInactive: 'border-pink-500/20 dark:border-pink-500/10',
+                bgActive: 'bg-pink-500/10 dark:bg-pink-500/5',
+                badgeBg: 'bg-pink-500'
+              },
+              messenger: {
+                borderActive: 'border-blue-500 dark:border-blue-400',
+                borderInactive: 'border-blue-500/20 dark:border-blue-500/10',
+                bgActive: 'bg-blue-500/10 dark:bg-blue-500/5',
+                badgeBg: 'bg-blue-500'
               }
             };
 
             const escStyle = {
               borderActive: 'border-rose-600 dark:border-rose-500',
-              borderInactive: 'border-rose-600/30 dark:border-rose-500/20 animate-pulse',
+              borderInactive: 'border-rose-600/30 dark:border-rose-500/20',
               bgActive: 'bg-rose-500/10 dark:bg-rose-500/5',
               badgeBg: 'bg-rose-600'
             };
@@ -175,25 +229,34 @@ export function UnifiedInbox({
               whatsapp: MessageSquare,
               email: Mail,
               web: Globe,
-              voice: Phone
+              voice: Phone,
+              instagram: Instagram,
+              messenger: Facebook
             };
 
             const isEscalated = chat.status === 'escalated';
             const style = isEscalated ? escStyle : (channelStyles[chat.channel] || channelStyles.web);
             const IconComponent = isEscalated ? AlertOctagon : (channelIcons[chat.channel] || MessageSquare);
 
-            return (
+            const priorityColors = {
+              low: 'text-slate-500 bg-slate-100 border-slate-200 dark:text-slate-400 dark:bg-slate-900/50 dark:border-slate-800',
+              medium: 'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/20 dark:border-blue-900/30',
+              high: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-500 dark:bg-amber-950/20 dark:border-amber-900/30',
+              urgent: 'text-rose-600 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-950/20 dark:border-rose-900/30 animate-pulse'
+            };
+
+             return (
               <button
                 key={chat.id}
                 onClick={() => onSelectChat(chat.id)}
-                className={`flex w-full gap-3 border-s-4 p-4 text-start transition-all ${
+                className={`flex w-full gap-2 xl:gap-3 border-s-4 p-3 xl:p-4 text-start transition-all ${
                   isActive
                     ? `${style.borderActive} ${style.bgActive}`
                     : `${style.borderInactive} hover:bg-slate-100 dark:hover:bg-slate-800/40`
                 }`}
               >
                 {/* Avatar area */}
-                <div className="relative shrink-0">
+                <div className="relative shrink-0 select-none">
                   <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 flex items-center justify-center">
                     {chat.customerAvatar ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
@@ -206,25 +269,47 @@ export function UnifiedInbox({
                   <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${style.badgeBg} text-white flex items-center justify-center p-0.5 shadow-sm`}>
                     <IconComponent className="w-2.5 h-2.5 shrink-0" />
                   </span>
+                  {/* Unread indicator */}
+                  {chat.unreadCount && chat.unreadCount > 0 ? (
+                    <span className="absolute -top-1 -left-1 min-w-4 h-4 px-1 rounded-full bg-blue-600 text-white font-mono text-[9.5px] font-extrabold flex items-center justify-center shadow-sm select-none">
+                      {chat.unreadCount}
+                    </span>
+                  ) : null}
                 </div>
 
                 {/* Body details */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline text-xs mb-1">
-                    <span className="font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1">
+                  <div className="flex justify-between items-baseline mb-1">
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate flex items-center gap-1">
                       {chat.customerName}
-                      {chat.id === 'conv-102' && <Pin className="w-3 h-3 text-blue-500" />}
+                      {chat.id === 'conv-102' && <Pin className="w-3 h-3 text-blue-500 shrink-0" />}
                     </span>
-                    <span className="font-mono text-slate-500 dark:text-slate-400 text-[9px] shrink-0">{chat.lastMessageTime}</span>
+                    <span className="font-mono text-slate-500 dark:text-slate-400 text-[10.5px] shrink-0">{chat.lastMessageTime}</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mb-2 leading-normal">{chat.lastMessage}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate mb-2 leading-normal">{chat.lastMessage}</p>
 
-                  <div className="flex items-center justify-between">
-                    <SentimentBadge sentiment={chat.sentiment} />
+                  <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <SentimentBadge sentiment={chat.sentiment} />
+                      {chat.priority && (
+                        <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase border tracking-wider leading-none select-none ${priorityColors[chat.priority]}`}>
+                          {chat.priority}
+                        </span>
+                      )}
+                    </div>
 
-                    {/* SLA state indicator bar */}
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold font-mono">
-                      <span className={`w-2 h-2 rounded-full ${slaColor}`} />
+                    {/* Assignment & SLA status indicator */}
+                    <div className="flex items-center gap-1.5 text-[10.5px] font-bold font-mono">
+                      {chat.status === 'unassigned' ? (
+                        <span className="text-amber-600 dark:text-amber-500 bg-amber-500/10 px-1 rounded text-[9px] uppercase select-none">
+                          Unassigned
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 select-none">
+                          {chat.agentId ? 'Assigned' : 'Unassigned'}
+                        </span>
+                      )}
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${slaColor}`} />
                       <span className="text-slate-400">
                         {chat.slaDeadline}
                       </span>

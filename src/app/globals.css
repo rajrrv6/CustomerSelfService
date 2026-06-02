@@ -1,7 +1,42 @@
 @import "tailwindcss";
 @import "./globals-accessibility.css";
 
+@theme {
+  --color-slate-105: #f1f5f9;
+  --color-slate-150: #e2e8f0;
+  --color-slate-205: #cbd5e1;
+  --color-slate-250: #cbd5e1;
+  --color-slate-255: #cbd5e1;
+  --color-slate-335: #94a3b8;
+  --color-slate-350: #94a3b8;
+  --color-slate-450: #64748b;
+  --color-slate-455: #64748b;
+  --color-slate-505: #64748b;
+  --color-slate-550: #475569;
+  --color-slate-555: #475569;
+  --color-slate-650: #475569;
+  --color-slate-655: #334155;
+  --color-slate-705: #334155;
+  --color-slate-750: #1e293b;
+  --color-slate-805: #0f172a;
+  --color-slate-850: #0f172a;
+  --color-slate-855: #020617;
+  --color-slate-905: #020617;
+
+  --color-blue-550: #3b82f6;
+  --color-blue-650: #2563eb;
+  --color-blue-750: #1d4ed8;
+  --color-blue-755: #1d4ed8;
+
+  --color-indigo-750: #4338ca;
+
+  --color-emerald-650: #059669;
+
+  --color-rose-605: #e11d48;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
+
 
 :root {
   --background: #f8fafc;

@@ -111,5 +111,39 @@ export const customer360Seed: Record<string, CustomerProfile360> = {
     csatRatings: [
       { chatId: 'ch-002', date: '2026-05-12', rating: 5, feedback: 'Liam Bennett was fantastic. Speed was immediate!' }
     ]
+  },
+  'conv-105': {
+    customerId: 'CUST-4122',
+    customerName: 'Layla Hassan',
+    email: 'layla.hassan@riyadh.sa',
+    phone: '+966 50 111 2222',
+    tier: 'Standard Business',
+    churnRisk: 'Low',
+    npsScore: 8,
+    totalSpent: 3400.0,
+    segmentTags: ['Instagram User', 'Voucher Inquiries'],
+    orders: [
+      { id: 'ORD-54321', date: '2026-05-01', amount: 150.0, status: 'DELIVERED', itemName: 'SaaS Expansion Pack v2' }
+    ],
+    tickets: [],
+    csatRatings: []
+  },
+  'conv-106': {
+    customerId: 'CUST-2090',
+    customerName: 'Alex Mercer',
+    email: 'alex.mercer@gentek.com',
+    phone: '+1 (555) 777-8888',
+    tier: 'Corporate Gold',
+    churnRisk: 'High',
+    npsScore: 5,
+    totalSpent: 18500.0,
+    segmentTags: ['Facebook Messenger User', 'Billing Disputes'],
+    orders: [
+      { id: 'ORD-12290', date: '2026-04-20', amount: 499.0, status: 'DELIVERED', itemName: 'Core Gateway Router (Gentek-Pack)' }
+    ],
+    tickets: [
+      { id: 'TIC-2033', title: 'Double charge dispute billing error', status: 'open', priority: 'high', date: '2026-05-20' }
+    ],
+    csatRatings: []
   }
 };

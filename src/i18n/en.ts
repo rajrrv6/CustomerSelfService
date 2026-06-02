@@ -541,6 +541,8 @@ export const en = {
         web: 'Chat',
         email: 'Email',
         voice: 'Voice',
+        instagram: 'Instagram',
+        messenger: 'Messenger',
         escalated: 'Escalated'
       },
       searchActive: 'Search active chats...',

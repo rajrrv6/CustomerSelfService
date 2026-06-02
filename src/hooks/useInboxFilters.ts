@@ -1,24 +1,25 @@
 'use client';
 
-/**
- * useInboxFilters — Extracts conversation filter logic from AgentWorkspaceLayout.
- *
- * This hook owns the active tab, queue, and search state plus the derived
- * filtered conversation list. Previously this logic was inline in the 1,023-line
- * AgentWorkspaceLayout component.
- *
- * This is a genuine deduplication — the filter predicate was duplicated between
- * the desktop layout (UnifiedInbox) and the mobile overlay rendering.
- */
-
 import { useState, useMemo } from 'react';
 import type { Conversation } from '@/types';
 
-export type InboxTab = 'all' | 'whatsapp' | 'web' | 'email' | 'voice' | 'escalated';
+export type InboxTab =
+  | 'all'
+  | 'whatsapp'
+  | 'web'
+  | 'email'
+  | 'voice'
+  | 'instagram'
+  | 'messenger'
+  | 'escalated';
+
+export type StatusFilter = 'all' | 'open' | 'pending' | 'escalated' | 'resolved';
 
 interface UseInboxFiltersResult {
   activeTab: InboxTab;
   setActiveTab: (tab: InboxTab) => void;
+  statusFilter: StatusFilter;
+  setStatusFilter: (status: StatusFilter) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   selectedQueue: string;
@@ -29,9 +30,11 @@ interface UseInboxFiltersResult {
 export function useInboxFilters(
   conversations: Conversation[],
   initialTab: InboxTab = 'all',
-  initialQueue = 'q-all'
+  initialQueue = 'q-all',
+  initialStatus: StatusFilter = 'all'
 ): UseInboxFiltersResult {
   const [activeTab, setActiveTab] = useState<InboxTab>(initialTab);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatus);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQueue, setSelectedQueue] = useState(initialQueue);
 
@@ -44,6 +47,32 @@ export function useInboxFilters(
         result = result.filter((c) => c.status === 'escalated');
       } else {
         result = result.filter((c) => c.channel === activeTab);
+      }
+    }
+
+    // Filter by status filter
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'open') {
+        result = result.filter((c) => c.status === 'active' || c.status === 'unassigned');
+      } else if (statusFilter === 'pending') {
+        // Pending state can be represented by active chats with unread messages or unassigned active status
+        result = result.filter((c) => c.status === 'active' && (c.unreadCount || 0) > 0);
+      } else if (statusFilter === 'escalated') {
+        result = result.filter((c) => c.status === 'escalated');
+      } else if (statusFilter === 'resolved') {
+        result = result.filter((c) => c.status === 'resolved');
+      }
+    }
+
+    // Filter by queue
+    if (selectedQueue !== 'q-all') {
+      // In a real DB we would check queue routing. We can mock it by checking priority or conversation ID
+      if (selectedQueue === 'q-vip') {
+        result = result.filter((c) => c.priority === 'urgent' || c.priority === 'high');
+      } else if (selectedQueue === 'q-billing') {
+        result = result.filter((c) => c.channel === 'email' || c.id === 'conv-106');
+      } else if (selectedQueue === 'q-tech') {
+        result = result.filter((c) => c.channel === 'web' || c.channel === 'voice');
       }
     }
 
@@ -60,11 +89,13 @@ export function useInboxFilters(
     }
 
     return result;
-  }, [conversations, activeTab, searchQuery]);
+  }, [conversations, activeTab, statusFilter, selectedQueue, searchQuery]);
 
   return {
     activeTab,
     setActiveTab,
+    statusFilter,
+    setStatusFilter,
     searchQuery,
     setSearchQuery,
     selectedQueue,

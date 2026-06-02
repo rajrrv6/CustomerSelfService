@@ -13,7 +13,7 @@ export function ToastViewport() {
 
   return (
     <div
-      className={`fixed bottom-4 sm:bottom-6 z-50 flex flex-col gap-3 pointer-events-none transition-all duration-300 max-w-[calc(100vw-2rem)]`}
+      className={`fixed top-16 sm:top-20 z-50 flex flex-col gap-3 pointer-events-none transition-all duration-300 max-w-[calc(100vw-2rem)] w-80`}
       style={{
         [isRtl ? 'left' : 'right']: '1.5rem',
       }}
