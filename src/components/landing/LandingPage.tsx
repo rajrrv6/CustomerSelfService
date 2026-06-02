@@ -18,6 +18,11 @@ import { useApp } from '@/context/AppContext';
 export function LandingPage() {
   const { lang, theme, setLang, setTheme } = useApp();
   const isRtl = lang === 'ar';
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -55,7 +60,13 @@ export function LandingPage() {
               className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               aria-label={isRtl ? 'تبديل المظهر' : 'Toggle theme'}
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {!mounted ? (
+                <Moon className="w-4 h-4" />
+              ) : theme === 'dark' ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
             </button>
             <Link
               href="/login"

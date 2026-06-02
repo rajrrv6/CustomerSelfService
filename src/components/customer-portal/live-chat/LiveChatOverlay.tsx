@@ -1,9 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
-import { Brain, Clock, Send, Star, X, CheckCircle } from 'lucide-react';
+import { Brain, Clock, Send, X } from 'lucide-react';
+import { CsatSurveyWidget } from '../feedback/CsatSurveyWidget';
+import { NpsSurveyWidget } from '../feedback/NpsSurveyWidget';
+import { TranscriptEmailModal } from '../feedback/TranscriptEmailModal';
+import { useFeedbackToasts } from '../feedback/PostChatToasts';
 
 interface ChatMessage {
   sender: 'bot' | 'user' | 'agent' | 'system';
@@ -56,12 +60,13 @@ export function LiveChatOverlay({
 }: LiveChatOverlayProps) {
   const { lang, addAuditLog } = useApp();
   const t = translations[lang];
-  const [showSurveyThankYou, setShowSurveyThankYou] = React.useState(false);
-  const [showTranscriptSent, setShowTranscriptSent] = React.useState(false);
-  const [isHighContrast, setIsHighContrast] = React.useState(false);
+  const { pushToast } = useFeedbackToasts();
   
+  const [isHighContrast, setIsHighContrast] = useState(false);
+  const [surveyStep, setSurveyStep] = useState<'csat' | 'nps'>('csat');
+
   // Detect high contrast mode
-  React.useEffect(() => {
+  useEffect(() => {
     const checkHighContrast = () => {
       const root = document.documentElement;
       const hasHighContrast = root.classList.contains('high-contrast-mode');
@@ -74,6 +79,31 @@ export function LiveChatOverlay({
     return () => observer.disconnect();
   }, []);
 
+  const handleCsatComplete = (rating: number, comment: string, tags: string[]) => {
+    setSurveyCsat(rating);
+    addAuditLog(`LiveChat CSAT: ${rating}/5, Tags: ${tags.join(',')}`, 'success');
+    setTimeout(() => {
+      setSurveyStep('nps');
+    }, 1500);
+  };
+
+  const handleNpsComplete = (score: number, comment: string) => {
+    setSurveyNps(score);
+    addAuditLog(`LiveChat NPS: ${score}/10, Comment: ${comment}`, 'success');
+    setTimeout(() => {
+      setChatStatus('email_transcript');
+    }, 1500);
+  };
+
+  const handleTranscriptClose = () => {
+    setChatStatus('idle');
+    setChatOpen(false);
+    setSurveyStep('csat');
+    setChatMessages([
+      { sender: 'bot', text: 'Hi! I am Farah. How can I help you today?\n\nأهلاً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك؟', time: '15:00' }
+    ]);
+  };
+
   return (
     <div className={`fixed bottom-6 ${lang === 'ar' ? 'left-6' : 'right-6'} z-40`}>
       {chatOpen ? (
@@ -82,7 +112,7 @@ export function LiveChatOverlay({
           {/* Chat header */}
           <div className="bg-blue-600 px-4 py-3 text-white flex justify-between items-center rounded-t-3xl shrink-0">
             <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-blue-250" />
+              <Brain className="w-5 h-5 text-blue-250 animate-pulse" />
               <div>
                 <h4 className="font-bold text-xs">{t.portal.liveChat.botName}</h4>
                 <span className="text-[9px] opacity-75 block font-mono">{t.portal.liveChat.botSubtitle}</span>
@@ -92,12 +122,12 @@ export function LiveChatOverlay({
             <div className="flex gap-1">
               <button
                 onClick={() => setChatLanguage(chatLanguage === 'en' ? 'ar' : 'en')}
-                className="text-[9px] px-1.5 py-0.5 bg-white/20 rounded font-mono font-bold"
+                className="text-[9px] px-1.5 py-0.5 bg-white/20 rounded font-mono font-bold cursor-pointer"
                 title="Toggle translation locale"
               >
                 {chatLanguage.toUpperCase()}
               </button>
-              <button onClick={() => setChatOpen(false)} className="text-white hover:text-slate-250 text-sm">
+              <button onClick={() => setChatOpen(false)} className="text-white hover:text-slate-250 text-sm cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -109,154 +139,73 @@ export function LiveChatOverlay({
             aria-live="polite"
             aria-atomic="false"
           >
+            {chatStatus !== 'survey' && chatStatus !== 'email_transcript' && (
+              <>
+                {chatMessages.map((msg, idx) => (
+                  <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-3 py-2 leading-relaxed ${
+                        msg.sender === 'user'
+                          ? 'bg-blue-600 text-white rounded-br-none'
+                          : msg.sender === 'system'
+                          ? 'bg-purple-900/40 text-purple-200 font-mono text-[9px] text-center mx-auto rounded-lg'
+                          : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700/50'
+                      }`}
+                    >
+                      <p className="whitespace-pre-line">{msg.text}</p>
+                      {msg.time && <span className="text-[8px] opacity-50 block mt-1 text-right">{msg.time}</span>}
+                    </div>
+                  </div>
+                ))}
 
-            {chatMessages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[85%] rounded-2xl px-3 py-2 leading-relaxed ${
-                    msg.sender === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-none'
-                      : msg.sender === 'system'
-                      ? 'bg-purple-900/40 text-purple-200 font-mono text-[9px] text-center mx-auto rounded-lg'
-                      : 'bg-slate-800 text-slate-202 rounded-bl-none border border-slate-700/50'
-                  }`}
-                >
-                  <p className="whitespace-pre-line">{msg.text}</p>
-                  {msg.time && <span className="text-[8px] opacity-50 block mt-1 text-right">{msg.time}</span>}
-                </div>
-              </div>
-            ))}
+                {/* Bot typing state simulation */}
+                {chatStatus === 'typing' && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-800 border border-slate-700/50 rounded-2xl px-3 py-2 flex items-center gap-1.5 text-blue-400 font-mono text-[9px]">
+                      <Clock className="w-3.5 h-3.5 animate-spin" />
+                      <span>{t.portal.liveChat.farahTyping}</span>
+                    </div>
+                  </div>
+                )}
 
-            {/* Bot typing state simulation */}
-            {chatStatus === 'typing' && (
-              <div className="flex justify-start">
-                <div className="bg-slate-800 border border-slate-700/50 rounded-2xl px-3 py-2 flex items-center gap-1.5 text-blue-400 font-mono text-[9px]">
-                  <Clock className="w-3.5 h-3.5 animate-spin" />
-                  <span>{t.portal.liveChat.farahTyping}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Handoff queue intermediate position state */}
-            {chatStatus === 'queue' && (
-              <div className="text-center py-4 bg-slate-900/50 border border-slate-800 rounded-xl space-y-2">
-                <span className="text-amber-500 font-bold block animate-pulse">{t.portal.liveChat.routingToAgent}</span>
-                <div className="text-[10px] text-slate-450">
-                  <p>{t.portal.liveChat.queuePosition} <strong>{queuePos}</strong></p>
-                  <p>{t.portal.liveChat.estimatedWait} <strong>{queuePos * 1.5} {t.portal.liveChat.mins}</strong></p>
-                </div>
-              </div>
+                {/* Handoff queue intermediate position state */}
+                {chatStatus === 'queue' && (
+                  <div className="text-center py-4 bg-slate-900/50 border border-slate-800 rounded-xl space-y-2">
+                    <span className="text-amber-500 font-bold block animate-pulse">{t.portal.liveChat.routingToAgent}</span>
+                    <div className="text-[10px] text-slate-400">
+                      <p>{t.portal.liveChat.queuePosition} <strong>{queuePos}</strong></p>
+                      <p>{t.portal.liveChat.estimatedWait} <strong>{queuePos * 1.5} {t.portal.liveChat.mins}</strong></p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Survey state */}
             {chatStatus === 'survey' && (
-              showSurveyThankYou ? (
-                <div className="bg-slate-900 border border-slate-805 p-6 rounded-2xl text-center space-y-3 flex flex-col items-center justify-center min-h-[200px]">
-                  <CheckCircle className="w-10 h-10 text-emerald-550 animate-bounce" />
-                  <span className="font-bold text-sm text-white">{t.portal.liveChat.surveyThankYou}</span>
-                  <p className="text-[10px] text-slate-400">{t.portal.liveChat.surveyLogged}</p>
-                </div>
-              ) : (
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-3.5">
-                  <div className="text-center space-y-1">
-                    <span className="font-bold text-xs">{t.portal.liveChat.csatTitle}</span>
-                    <p className="text-[10px] text-slate-455 font-normal">{t.portal.liveChat.csatSubtitle}</p>
-                  </div>
-                  
-                  {/* Stars input */}
-                  <div className="flex justify-center gap-1">
-                    {[1, 2, 3, 4, 5].map((st) => (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => setSurveyCsat(st)}
-                        className={`p-1 ${surveyCsat >= st ? 'text-amber-505' : 'text-slate-600 hover:text-amber-450'}`}
-                      >
-                        <Star className="w-5 h-5 fill-current" />
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* NPS score selector */}
-                  <div className="pt-2 border-t border-slate-800 space-y-1 text-center">
-                    <span className="text-[10px] text-slate-404 font-bold">{t.portal.liveChat.npsTitle}</span>
-                    <p className="text-[9px] text-slate-450 font-normal">{t.portal.liveChat.npsScale}</p>
-                    <div className="flex flex-wrap justify-center gap-1 mt-1">
-                      {Array.from({ length: 10 }).map((_, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setSurveyNps(i + 1)}
-                          className={`w-6 h-6 rounded flex items-center justify-center font-mono text-[9px] ${
-                            surveyNps === i + 1 ? 'bg-purple-650 text-white' : 'bg-slate-800 hover:bg-slate-700'
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      addAuditLog(`CSAT logged (${surveyCsat}/5) & NPS logged (${surveyNps}/10)`, 'success');
-                      setShowSurveyThankYou(true);
-                      setTimeout(() => {
-                        setShowSurveyThankYou(false);
-                        setChatStatus('email_transcript');
-                      }, 1500);
-                    }}
-                    className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-[10px] text-center font-bold"
-                  >
-                    {t.portal.liveChat.submitSurvey}
-                  </button>
-                </div>
-              )
+              <div className="space-y-4">
+                {surveyStep === 'csat' ? (
+                  <CsatSurveyWidget
+                    lang={lang}
+                    onComplete={handleCsatComplete}
+                    onToastTrigger={pushToast}
+                  />
+                ) : (
+                  <NpsSurveyWidget
+                    lang={lang}
+                    onComplete={handleNpsComplete}
+                    onToastTrigger={pushToast}
+                  />
+                )}
+              </div>
             )}
 
-            {/* Email Transcript Modal */}
+            {/* Email Transcript Loading Panel */}
             {chatStatus === 'email_transcript' && (
-              showTranscriptSent ? (
-                <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-3 flex flex-col items-center justify-center min-h-[200px]">
-                  <CheckCircle className="w-10 h-10 text-emerald-550 animate-bounce" />
-                  <span className="font-bold text-sm text-white">{t.portal.liveChat.transcriptSent}</span>
-                  <p className="text-[10px] text-slate-400 font-mono font-normal">{t.portal.liveChat.transcriptDispatchedTo} {transcriptEmail}</p>
-                </div>
-              ) : (
-                <div className="bg-slate-905 border border-slate-808 p-3 rounded-xl space-y-3">
-                  <span className="font-bold text-[10px] uppercase font-mono block text-center text-blue-500">{t.portal.liveChat.emailTranscriptTitle}</span>
-                  <div>
-                    <label className="block text-slate-404 text-[10px] mb-1">{t.portal.liveChat.emailLabel}</label>
-                    <input
-                      type="email"
-                      placeholder="david.miller@yahoo.com"
-                      value={transcriptEmail}
-                      onChange={(e) => setTranscriptEmail(e.target.value)}
-                      className="w-full px-2.5 py-1.5 border border-slate-800 bg-slate-950 rounded-xl text-xs focus:outline-none"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      addAuditLog(`Dispatched chat transcript to email: ${transcriptEmail}`, 'success');
-                      setShowTranscriptSent(true);
-                      setTimeout(() => {
-                        setShowTranscriptSent(false);
-                        setChatStatus('idle');
-                        setChatOpen(false);
-                        setTranscriptEmail('');
-                        setChatMessages([{ sender: 'bot', text: 'Hi! I am Farah. How can I help you today?\n\nأهلاً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك؟', time: '15:00' }]);
-                        setSurveyCsat(0);
-                        setSurveyNps(0);
-                      }, 1500);
-                    }}
-                    className="w-full py-1.5 bg-blue-600 rounded-xl text-[10px] text-center font-bold"
-                  >
-                    {t.portal.liveChat.sendTranscript}
-                  </button>
-                </div>
-              )
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-3 p-4">
+                <Clock className="w-8 h-8 text-blue-500 animate-spin" />
+                <span className="font-bold text-slate-200">Opening Email Transcript Wizard...</span>
+              </div>
             )}
           </div>
 
@@ -268,7 +217,7 @@ export function LiveChatOverlay({
                 placeholder={t.portal.liveChat.inputPlaceholder}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-800 bg-transparent rounded-xl focus:outline-none text-xs text-white"
+                className="flex-1 px-3 py-2 border border-slate-800 bg-transparent rounded-xl focus:outline-none text-xs text-white font-semibold"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSendChatMessage(chatInput);
                 }}
@@ -278,7 +227,7 @@ export function LiveChatOverlay({
                 <button
                   type="button"
                   onClick={() => setChatStatus('survey')}
-                  className="px-2 bg-rose-600 hover:bg-rose-700 rounded-xl text-[9px] font-bold"
+                  className="px-2 bg-rose-600 hover:bg-rose-700 rounded-xl text-[9px] font-bold cursor-pointer"
                   title="End Conversation and Survey"
                 >
                   {t.portal.liveChat.closeChat}
@@ -290,7 +239,7 @@ export function LiveChatOverlay({
                     setChatStatus('queue');
                     setQueuePos(3);
                   }}
-                  className="px-2 bg-slate-800 hover:bg-slate-700 border border-slate-700/60 rounded-xl text-[9px] font-bold"
+                  className="px-2 bg-slate-800 hover:bg-slate-700 border border-slate-700/60 rounded-xl text-[9px] font-bold cursor-pointer"
                   title="Consult Human Desk"
                 >
                   {t.portal.liveChat.agentButton}
@@ -299,7 +248,7 @@ export function LiveChatOverlay({
 
               <button
                 onClick={() => handleSendChatMessage(chatInput)}
-                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -356,6 +305,18 @@ export function LiveChatOverlay({
           <Brain className="w-7 h-7" style={{ color: 'currentColor' }} />
         </button>
       )}
+
+      {/* Transcript Email Modal overlay */}
+      <TranscriptEmailModal
+        isOpen={chatStatus === 'email_transcript'}
+        onClose={handleTranscriptClose}
+        lang={lang}
+        agentName="Nadia Vance (Support Desk)"
+        chatDuration="5m 12s"
+        messageCount={chatMessages.length + 3}
+        messagesPreview={chatMessages.map(m => ({ sender: m.sender === 'user' ? 'user' : 'bot', text: m.text }))}
+        onToastTrigger={pushToast}
+      />
     </div>
   );
 }

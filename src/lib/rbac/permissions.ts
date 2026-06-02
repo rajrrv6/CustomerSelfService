@@ -28,6 +28,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'integrations',
     'analytics_center',
     'training',
+    'billing',
+    'rbac',
+    'supervisor_monitor',
+    'workforce',
+    'qa_queue',
+    'coaching',
+    'agent_dashboard',
+    'tickets'
   ],
   operations_manager: ['inbox', 'agents', 'sla', 'surveys', 'integrations', 'analytics_center'],
   qa_manager: ['qa_queue', 'coaching', 'inbox', 'surveys', 'training'],
@@ -42,6 +50,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'customer_ticket_detail',
     'customer_order_refund',
     'customer_chat_history',
+    'customer_feedback_hub',
   ],
   viewer: ['surveys', 'sla', 'analytics_center'],
 };
@@ -97,7 +106,10 @@ export function getScreenTitle(screenId: string, t: TranslationKeys): string {
     customer_ticket_detail: t.screens.customer_ticket_detail,
     customer_order_refund: t.screens.customer_order_refund,
     customer_chat_history: t.screens.customer_chat_history,
+    customer_feedback_hub: t.screens.customer_feedback_hub || 'Feedback Hub',
     training: t.screens.training || 'Training Intelligence Loop',
+    billing: 'Billing',
+    rbac: 'RBAC Settings'
   };
 
   return mapping[screenId] ?? t.screens.workspace;

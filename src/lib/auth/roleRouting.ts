@@ -54,6 +54,10 @@ const MOCK_STAFF_REGISTRY: Record<string, UserRole> = {
 export function inferRoleFromEmail(email: string): UserRole {
   const normalized = email.trim().toLowerCase();
   
+  if (normalized === 'superadmin@mpaas.com') {
+    return 'super_admin';
+  }
+  
   if (normalized in MOCK_STAFF_REGISTRY) {
     return MOCK_STAFF_REGISTRY[normalized];
   }

@@ -2,15 +2,23 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Agent, Conversation } from '@/types';
-import { ShieldAlert, Volume2, Send, Calendar, Users, Eye, HelpCircle, Activity } from 'lucide-react';
-import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
+import { ShieldAlert, Volume2, Send, Calendar, Users, Eye, HelpCircle, Activity, Shield, Clock } from 'lucide-react';
+import { WfmAlertsPanel } from '@/components/client-admin/operations/WfmAlertsPanel';
+import { QueueHeatmapDashboard } from '@/components/client-admin/operations/QueueHeatmapDashboard';
+import { StaffingEscalationWorkflow } from '@/components/client-admin/operations/StaffingEscalationWorkflow';
+import { LivePresenceBoard } from '@/components/client-admin/operations/LivePresenceBoard';
 
 export function SupervisorView({ activeSubScreen }: { activeSubScreen: string }) {
-  const { agents, conversations, setConversations, addAuditLog } = useApp();
+  const { lang, agents, setAgents, conversations, setConversations, addAuditLog } = useApp();
+  const isRtl = lang === 'ar';
+  
   const [whisperTargetChatId, setWhisperTargetChatId] = useState('conv-2');
   const [whisperInput, setWhisperInput] = useState('');
   
+  // Supervisor monitoring state for presence board integration
+  const [supervisedAgent, setSupervisedAgent] = useState<string | null>(null);
+  const [activeSupervisorMode, setActiveSupervisorMode] = useState<'silent' | 'whisper' | 'barge' | null>(null);
+
   // Workforce forecasting mock states
   const forecastData = [
     { hour: '09:00 - 10:00 AST', expectedChats: 45, scheduledAgents: 4, status: 'sufficient' },
@@ -35,35 +43,117 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
       })
     );
 
-    addAuditLog(`Supervisor Sarah sent live whisper to chat ${whisperTargetChatId}: "${whisperInput}"`, 'success');
+    addAuditLog(`Supervisor sent coaching whisper to interaction ${whisperTargetChatId}: "${whisperInput}"`, 'success');
     setWhisperInput('');
   };
 
-  switch (activeSubScreen) {
-    case 'inbox':
-      return <AgentWorkspaceLayout activeSubScreen={activeSubScreen} />;
+  const handleAgentStatusChange = (agentId: string, status: 'online' | 'busy' | 'away' | 'offline') => {
+    setAgents(agents.map(a => {
+      if (a.id === agentId) {
+        addAuditLog(`Supervisor manually overrode status of ${a.name} to ${status.toUpperCase()}`, 'success');
+        return { ...a, status };
+      }
+      return a;
+    }));
+  };
 
+  const getOccupancyRate = () => {
+    const totalActive = agents.reduce((acc, a) => acc + a.activeChatsCount, 0);
+    const totalMax = agents.reduce((acc, a) => acc + a.maxChatsCount, 0);
+    return totalMax > 0 ? Math.round((totalActive / totalMax) * 100) : 0;
+  };
+
+  switch (activeSubScreen) {
     case 'supervisor_monitor':
       return (
-        <div className="space-y-4 sm:space-y-6 min-w-0">
+        <div className="space-y-6 min-w-0" dir={isRtl ? 'rtl' : 'ltr'}>
+          {/* Header */}
           <div className="space-y-1.5">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Supervisor Monitoring Console</h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500">Monitor active chats, review agent sentiment flags, and whisper coaching guidelines in real-time.</p>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+              {isRtl ? 'منصة مراقبة المشرف والتحكم بالـ Aux' : 'Supervisor Monitoring Workspace'}
+            </h2>
+            <p className="text-xs text-slate-455">
+              {isRtl 
+                ? 'مراقبة المحادثات النشطة، والتدخل بالاتصالات الجارية، وتتبع وكلاء خدمة العملاء في الوقت الفعلي.' 
+                : 'Monitor active conversations, review agent sentiment flags, and whisper coaching guidelines in real-time.'}
+            </p>
           </div>
 
+          {/* 1. Workforce Alerts Panel integration */}
+          <WfmAlertsPanel lang={lang} />
+
+          {/* 2. Roster dashboard indicators */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'نسبة الإشغال الإجمالية' : 'Roster Occupancy Rate'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {getOccupancyRate()}%
+              </strong>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'وكلاء في الاستراحة' : 'Agents in Break/Aux'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {agents.filter(a => a.status === 'away').length} {isRtl ? 'وكلاء' : 'agents'}
+              </strong>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'المحادثات المصعدة' : 'Escalated Interactions'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {conversations.filter(c => c.status === 'escalated').length} {isRtl ? 'حالات' : 'cases'}
+              </strong>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'متوسط نقاط CSAT الحالية' : 'Average Live CSAT'}
+              </span>
+              <strong className="text-lg font-bold text-emerald-500 font-mono block mt-1">
+                94.2%
+              </strong>
+            </div>
+          </div>
+
+          {/* 3. Live Presence Board Enhancements */}
+          <div className="space-y-3">
+            <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider">
+              {isRtl ? 'الموظفين المتصلين وحالة الـ Aux' : 'Team Presence Roster & Aux Tracker'}
+            </h3>
+            <LivePresenceBoard
+              lang={lang}
+              agents={agents}
+              onAgentStatusChange={handleAgentStatusChange}
+              supervisedAgent={supervisedAgent}
+              setSupervisedAgent={setSupervisedAgent}
+              activeSupervisorMode={activeSupervisorMode}
+              setActiveSupervisorMode={setActiveSupervisorMode}
+              addAuditLog={addAuditLog}
+            />
+          </div>
+
+          {/* 4. Live Agent Monitoring Table */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Monitor roster */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm space-y-4 min-w-0">
-              <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono mb-2">Live Conversation Roster</h3>
-              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-                <table className="w-full min-w-190 text-left text-xs border-collapse">
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 min-w-0">
+              <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">
+                {isRtl ? 'طابور المحادثات الجارية للمراقبة' : 'Live Interaction Monitoring Roster'}
+              </h3>
+              <div className="overflow-x-auto min-w-0">
+                <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
-                      <th className="pb-3">Customer</th>
-                      <th className="pb-3">Agent Assigned</th>
-                      <th className="pb-3">Sentiment</th>
-                      <th className="pb-3">SLA Status</th>
-                      <th className="pb-3">Actions</th>
+                      <th className="pb-3">{isRtl ? 'العميل' : 'Customer'}</th>
+                      <th className="pb-3">{isRtl ? 'الموظف المسؤول' : 'Agent Assigned'}</th>
+                      <th className="pb-3">{isRtl ? 'تحليل المشاعر' : 'Sentiment'}</th>
+                      <th className="pb-3">{isRtl ? 'حالة الـ SLA' : 'SLA Status'}</th>
+                      <th className="pb-3 text-right">{isRtl ? 'إجراءات' : 'Actions'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
@@ -77,7 +167,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                         <td className="py-3.5">
                           <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
                             chat.sentiment === 'negative'
-                              ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/20 dark:text-rose-400'
+                              ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/20 dark:text-rose-455'
                               : 'bg-emerald-100 text-emerald-850'
                           }`}>
                             {chat.sentiment}
@@ -90,12 +180,12 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                             {chat.slaStatus.toUpperCase()}
                           </span>
                         </td>
-                        <td className="py-3.5">
+                        <td className="py-3.5 text-right">
                           <button
                             onClick={() => setWhisperTargetChatId(chat.id)}
-                            className="px-2.5 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-200"
+                            className="px-2.5 py-1 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-205 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
                           >
-                            Listen
+                            {isRtl ? 'استماع' : 'Listen'}
                           </button>
                         </td>
                       </tr>
@@ -106,45 +196,45 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </div>
 
             {/* Live Whisper composer panel */}
-            <div className="bg-slate-150/40 dark:bg-slate-900/55 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-850 h-fit space-y-4 text-xs font-semibold min-w-0">
+            <div className="bg-slate-50 dark:bg-slate-900/55 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 h-fit space-y-4 text-xs font-semibold min-w-0">
               <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono flex items-center gap-1.5">
                 <Volume2 className="w-4 h-4 text-purple-500" />
-                Live Agent Whisper
+                {isRtl ? 'تلقين الوكيل المباشر' : 'Live Agent Whisper Coaching'}
               </h3>
               
               <form onSubmit={handleSendWhisper} className="space-y-4">
                 <div>
-                  <label className="block text-slate-500 mb-1.5">Whisper Destination</label>
+                  <label className="block text-slate-500 mb-1.5">{isRtl ? 'المستلم للملاحظة' : 'Coaching Recipient'}</label>
                   <select
                     value={whisperTargetChatId}
                     onChange={(e) => setWhisperTargetChatId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-900 rounded-xl focus:outline-none focus:border-blue-500 text-slate-300"
                   >
                     {conversations.filter(c => c.status === 'active' || c.status === 'escalated').map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.customerName} (Liam)
+                        {c.customerName} ({c.agentId === 'agent-1' ? 'Liam' : 'Nadia'})
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 mb-1.5">Whispering Message Note</label>
+                  <label className="block text-slate-500 mb-1.5">{isRtl ? 'ملاحظة التلقين الهامسة' : 'Whispering Instruction'}</label>
                   <textarea
                     required
                     rows={3}
-                    placeholder="e.g. Propose checking customer API logs scopes..."
+                    placeholder={isRtl ? 'أدخل تعليمات التوجيه للوكيل...' : 'e.g. Propose checking customer API logs scopes...'}
                     value={whisperInput}
                     onChange={(e) => setWhisperInput(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550 text-slate-800 dark:text-slate-200"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-2 bg-purple-650 hover:bg-purple-700 text-white font-bold rounded-xl text-center"
+                  className="w-full py-2 bg-purple-650 hover:bg-purple-700 text-white font-bold rounded-xl text-center cursor-pointer shadow-md active:scale-95 transition-all"
                 >
-                  Whisper to Agent
+                  {isRtl ? 'إرسال ملاحظة همس' : 'Whisper to Agent'}
                 </button>
               </form>
             </div>
@@ -154,22 +244,38 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
 
     case 'workforce':
       return (
-        <div className="space-y-6">
+        <div className="space-y-6" dir={isRtl ? 'rtl' : 'ltr'}>
+          {/* Header */}
           <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Forecasting & Scheduling</h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500">Analyze forecasted contact center queues and optimize agent shift schedules.</p>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+              {isRtl ? 'تخطيط الموظفين والجدولة الذكية' : 'Forecasting & Operations Management'}
+            </h2>
+            <p className="text-xs text-slate-455">
+              {isRtl 
+                ? 'تحليل ازدحام طوابير الدعم الفني، ووضع جداول العمل وتحقيق التوازن للمناوبات.' 
+                : 'Analyze forecasted contact center queues and optimize agent shift schedules.'}
+            </p>
           </div>
 
+          {/* 1. Queue Heatmap Dashboard */}
+          <QueueHeatmapDashboard lang={lang} />
+
+          {/* 2. Staffing Escalation Workflow */}
+          <StaffingEscalationWorkflow lang={lang} />
+
+          {/* 3. Traffic Forecast Table */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
-            <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono">Today's Traffic Forecast</h3>
+            <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono">
+              {isRtl ? 'توقعات حجم المحادثات اليومية' : "Today's Traffic Forecast Metrics"}
+            </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-450 font-bold">
-                    <th className="pb-3">Shift Hour</th>
-                    <th className="pb-3">Expected Inbound Chats</th>
-                    <th className="pb-3">Scheduled Agents</th>
-                    <th className="pb-3">Status Assessment</th>
+                    <th className="pb-3">{isRtl ? 'ساعة المناوبة' : 'Shift Hour'}</th>
+                    <th className="pb-3">{isRtl ? 'حجم الجلسات المتوقع' : 'Expected Inbound Chats'}</th>
+                    <th className="pb-3">{isRtl ? 'عدد الوكلاء المجدولين' : 'Scheduled Agents'}</th>
+                    <th className="pb-3">{isRtl ? 'تقييم كفاية القوى العاملة' : 'Status Assessment'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
@@ -181,10 +287,10 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                       <td className="py-3.5">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
                           row.status === 'sufficient'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
                             : row.status === 'warning'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455'
                         }`}>
                           {row.status.replace('_', ' ')}
                         </span>
@@ -202,3 +308,5 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
       return null;
   }
 }
+
+export default SupervisorView;

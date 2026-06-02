@@ -32,6 +32,7 @@ import {
   getHomeRouteForRole,
   inferRoleFromEmail,
 } from '@/lib/auth/roleRouting';
+import { useAuthStore } from '@/stores/authStore';
 
 const MOCK_API_DELAY_MS = 900;
 const MOCK_MFA_DELAY_MS = 700;
@@ -89,10 +90,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     setStatus('loading');
+    clearSession();
+    setSession(null);
 
     await delay(MOCK_API_DELAY_MS);
 
-    const inferredRole = readRegisteredRole(credentials.email) ?? inferRoleFromEmail(credentials.email);
+    // Resolve role explicitly based on credentials mapping
+    let inferredRole = inferRoleFromEmail(credentials.email);
+    if (inferredRole === 'customer') {
+      const registered = readRegisteredRole(credentials.email);
+      if (registered) {
+        inferredRole = registered;
+      }
+    }
+
     const pending: PendingLogin = {
       email: credentials.email.trim().toLowerCase(),
       password: credentials.password,
@@ -147,9 +158,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     clearSession();
     clearPendingLogin();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('role');
+      localStorage.removeItem('mpaas_registered_roles');
+    }
     setSession(null);
     setPendingLogin(null);
     setStatus('idle');
+    useAuthStore.getState().setRole('client_admin');
   }, []);
 
   const value = useMemo<AuthContextValue>(

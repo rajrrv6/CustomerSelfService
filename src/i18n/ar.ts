@@ -178,6 +178,7 @@ export const ar = {
     customer_ticket_detail: 'تفاصيل التذكرة والحلول',
     customer_order_refund: 'البحث عن الطلبات وبوابة الاسترجاع',
     customer_chat_history: 'سجل المحادثات المنجزة',
+    customer_feedback_hub: 'مركز التقييمات والدعم',
     workspace: 'مساحة العمل',
     training: 'حلقة التدريب الذكي'
   },

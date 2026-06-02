@@ -8,7 +8,7 @@ import { useNotificationsStore } from '@/stores/notificationsStore';
 import { useAuth } from '@/hooks/useAuth';
 import { translations } from '@/i18n/translations';
 import { Sidebar } from '@/components/dashboard/Sidebar';
-import { Header } from '@/components/dashboard/Header';
+import { Header, getTopAppForRole } from '@/components/dashboard/Header';
 import { SuperAdminView } from '@/components/dashboard/SuperAdminView';
 import { ClientAdminView } from '@/components/dashboard/ClientAdminView';
 import { AgentWorkspaceView } from '@/components/dashboard/AgentWorkspaceView';
@@ -26,6 +26,7 @@ import {
   canAccessScreen,
   getScreenTitle,
   ROLE_DEFAULT_SCREEN,
+  ROLE_PERMISSIONS,
 } from '@/lib/rbac/permissions';
 import type { AuditLog } from '@/types';
 import type { TranslationKeys } from '@/i18n/translations';
@@ -102,7 +103,28 @@ function WorkspaceShellInner({
     return () => window.removeEventListener('navigate-to-screen', handler as EventListener);
   }, []);
 
-  const authorized = canAccessScreen(role, activeScreen);
+  const renderedScreen = React.useMemo(() => {
+    const isAuth = canAccessScreen(role, activeScreen);
+    if (isAuth) return activeScreen;
+
+    const defaultScreen = ROLE_DEFAULT_SCREEN[role];
+    if (canAccessScreen(role, defaultScreen)) {
+      return defaultScreen;
+    }
+    const allowedScreens = ROLE_PERMISSIONS[role];
+    if (allowedScreens && allowedScreens.length > 0) {
+      return allowedScreens[0];
+    }
+    return activeScreen;
+  }, [role, activeScreen]);
+
+  React.useEffect(() => {
+    if (activeScreen !== renderedScreen) {
+      setActiveScreen(renderedScreen);
+    }
+  }, [activeScreen, renderedScreen]);
+
+  const authorized = canAccessScreen(role, renderedScreen);
 
   const handleLogout = () => {
     onLogout();
@@ -118,7 +140,7 @@ function WorkspaceShellInner({
       {isSidebarOpen && <button type="button" aria-label="Close navigation drawer" onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/50 lg:hidden" />}
 
       <Sidebar
-        activeScreen={activeScreen}
+        activeScreen={renderedScreen}
         setActiveScreen={(screenId) => {
           setActiveScreen(screenId);
           setIsSidebarOpen(false);
@@ -130,7 +152,7 @@ function WorkspaceShellInner({
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header
-          activeScreenTitle={getScreenTitle(activeScreen, t)}
+          activeScreenTitle={getScreenTitle(renderedScreen, t)}
           onLogout={handleLogout}
           onOpenAuditLogs={() => setShowAuditLogs(true)}
           onOpenMenu={() => setIsSidebarOpen(true)}
@@ -150,32 +172,29 @@ function WorkspaceShellInner({
                 {lang === 'ar' ? (
                   <>
                     دورك الحالي (<strong className="uppercase">{role.replace('_', ' ')}</strong>) غير مصرح له
-                    بالوصول إلى <strong>/{activeScreen}</strong>.
+                    بالوصول إلى <strong>/{renderedScreen}</strong>.
                   </>
                 ) : (
                   <>
                     Your role (<strong className="uppercase">{role.replace('_', ' ')}</strong>) is not authorized for{' '}
-                    <strong>/{activeScreen}</strong>.
+                    <strong>/{renderedScreen}</strong>.
                     {userEmail && <span className="block mt-2 text-slate-400">Signed in as {userEmail}</span>}
                   </>
                 )}
               </p>
             </div>
-          ) : activeScreen === 'analytics_center' ? (
+          ) : renderedScreen === 'analytics_center' ? (
             <AnalyticsCenterLayout />
           ) : (
             <>
-              {role === 'super_admin' && <SuperAdminView activeSubScreen={activeScreen} />}
-              {(role === 'client_admin' || role === 'operations_manager') && (
-                <ClientAdminView activeSubScreen={activeScreen} />
+              {role === 'super_admin' && <SuperAdminView activeSubScreen={renderedScreen} />}
+              {(role === 'client_admin' || role === 'operations_manager' || role === 'qa_manager' || role === 'supervisor' || role === 'viewer') && (
+                <ClientAdminView activeSubScreen={renderedScreen} />
               )}
-              {role === 'support_agent' && <AgentWorkspaceView activeSubScreen={activeScreen} />}
+              {role === 'support_agent' && <AgentWorkspaceView activeSubScreen={renderedScreen} />}
               {role === 'customer' && (
-                <CustomerPortalView activeSubScreen={activeScreen} setActiveSubScreen={setActiveScreen} />
+                <CustomerPortalView activeSubScreen={renderedScreen} setActiveSubScreen={setActiveScreen} />
               )}
-              {role === 'qa_manager' && <QAManagerView activeSubScreen={activeScreen} />}
-              {role === 'supervisor' && <SupervisorView activeSubScreen={activeScreen} />}
-              {role === 'viewer' && <ClientAdminView activeSubScreen={activeScreen} />}
             </>
           )}
         </main>

@@ -82,7 +82,7 @@ export function KbArticleView({
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 shadow-sm">
           <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <span className="px-2 py-0.5 bg-blue-55 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-[9px] font-bold uppercase font-mono">
+              <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-[9px] font-bold uppercase font-mono">
                 {article.category}
               </span>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1.5">{article.title}</h3>

@@ -14,6 +14,13 @@ import { LifecycleTab } from '../lifecycle/LifecycleTab';
 import { SurveysTab } from '../operations/SurveysTab';
 import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
 
+// Direct layouts for nested Client Admin sub-role dashboard support
+import { SupervisorView } from '@/components/dashboard/SupervisorView';
+import { QAManagerView } from '@/components/dashboard/QAManagerView';
+import { AgentWorkspaceView } from '@/components/dashboard/AgentWorkspaceView';
+import { BillingTab } from '../billing/BillingTab';
+import { RbacTab } from '../rbac/RbacTab';
+
 // Heavy tabs imported lazily
 const BotsTab = lazy(() => import('../bots/BotsTab').then(m => ({ default: m.BotsTab })));
 const DialogFlowLayout = lazy(() => import('../dialog-builder/DialogFlowLayout').then(m => ({ default: m.DialogFlowLayout })));
@@ -77,6 +84,19 @@ export function ClientAdminLayout({ activeSubScreen }: ClientAdminLayoutProps) {
           <TrainingTab />
         </Suspense>
       );
+    case 'supervisor_monitor':
+    case 'workforce':
+      return <SupervisorView activeSubScreen={activeSubScreen} />;
+    case 'qa_queue':
+    case 'coaching':
+      return <QAManagerView activeSubScreen={activeSubScreen} />;
+    case 'agent_dashboard':
+    case 'tickets':
+      return <AgentWorkspaceView activeSubScreen={activeSubScreen} />;
+    case 'billing':
+      return <BillingTab />;
+    case 'rbac':
+      return <RbacTab />;
     default:
       return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -86,3 +106,4 @@ export function ClientAdminLayout({ activeSubScreen }: ClientAdminLayoutProps) {
       );
   }
 }
+export default ClientAdminLayout;

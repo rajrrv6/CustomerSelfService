@@ -4,7 +4,17 @@ import type { UserRole } from '@/types';
 import { AUTH_COOKIES } from '@/lib/auth/authStorage';
 import { canRoleAccessPath, getHomeRouteForRole } from '@/lib/auth/roleRouting';
 
-const PUBLIC_PATHS = ['/', '/login', '/login/mfa', '/register', '/demo-sandbox', '/access-denied'];
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/login/mfa',
+  '/register',
+  '/demo-sandbox',
+  '/access-denied',
+  '/super-admin/login',
+  '/client-admin/login',
+  '/end-user/login'
+];
 
 const PUBLIC_PREFIXES = ['/kb', '/bot', '/callback', '/portal/public'];
 
@@ -53,7 +63,13 @@ export function middleware(request: NextRequest) {
   if (isProtectedPath(pathname)) {
     if (!isAuthenticated || !role) {
       const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = '/login';
+      if (pathname.startsWith('/admin')) {
+        loginUrl.pathname = '/super-admin/login';
+      } else if (pathname.startsWith('/portal')) {
+        loginUrl.pathname = '/end-user/login';
+      } else {
+        loginUrl.pathname = '/client-admin/login';
+      }
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }

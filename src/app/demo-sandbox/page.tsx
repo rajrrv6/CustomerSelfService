@@ -15,6 +15,7 @@ import { SupervisorView } from '@/components/dashboard/SupervisorView';
 import { PublicBotWidget } from '@/components/dashboard/PublicBotWidget';
 import { ShieldAlert, Activity, MessageSquare, X } from 'lucide-react';
 import { UserRole } from '@/types';
+import { ROLE_DEFAULT_SCREEN, ROLE_PERMISSIONS, canAccessScreen } from '@/lib/rbac/permissions';
 
 export default function DemoSandboxPage() {
   const { role, lang, auditLogs } = useApp();
@@ -43,27 +44,7 @@ export default function DemoSandboxPage() {
 
   // Check role-based route clearance (RBAC enforcement)
   const isAuthorized = (screenId: string, currentRole: UserRole): boolean => {
-    const permissions: Record<UserRole, string[]> = {
-      super_admin: ['llm_registry', 'asr_tts_registry', 'channels', 'cost_benchmarks', 'cross_tenant_analytics', 'vector_db', 'sip_trunk'],
-      client_admin: ['bots', 'intents', 'dialog_flow', 'knowledge_base', 'guardrails', 'channels', 'agents', 'inbox', 'sla', 'surveys', 'deployments', 'integrations'],
-      operations_manager: ['inbox', 'agents', 'sla', 'surveys', 'integrations'],
-      qa_manager: ['qa_queue', 'coaching', 'inbox', 'surveys'],
-      support_agent: ['agent_dashboard', 'inbox', 'tickets'],
-      supervisor: ['inbox', 'supervisor_monitor', 'workforce', 'sla'],
-      customer: [
-        'customer_home',
-        'customer_kb',
-        'customer_ticket_submit',
-        'customer_my_tickets',
-        'customer_kb_article',
-        'customer_ticket_detail',
-        'customer_order_refund',
-        'customer_chat_history'
-      ],
-      viewer: ['surveys', 'sla']
-    };
-
-    return permissions[currentRole]?.includes(screenId) || false;
+    return canAccessScreen(currentRole, screenId);
   };
 
   const getScreenTitle = (screenId: string): string => {
@@ -99,7 +80,9 @@ export default function DemoSandboxPage() {
       customer_kb_article: 'Knowledge Base Article',
       customer_ticket_detail: 'Ticket Thread & Resolution',
       customer_order_refund: 'Order Lookup & Return Portal',
-      customer_chat_history: 'Resolved Chat History'
+      customer_chat_history: 'Resolved Chat History',
+      billing: 'Billing',
+      rbac: 'RBAC Settings'
     };
 
     return mapping[screenId] || 'Workspace';
@@ -109,18 +92,39 @@ export default function DemoSandboxPage() {
     return <LoginScreen onLogin={() => setIsLoggedIn(true)} />;
   }
 
-  const authorized = isAuthorized(activeScreen, role);
+  const renderedScreen = React.useMemo(() => {
+    const isAuth = isAuthorized(activeScreen, role);
+    if (isAuth) return activeScreen;
+
+    const defaultScreen = ROLE_DEFAULT_SCREEN[role];
+    if (isAuthorized(defaultScreen, role)) {
+      return defaultScreen;
+    }
+    const allowedScreens = ROLE_PERMISSIONS[role];
+    if (allowedScreens && allowedScreens.length > 0) {
+      return allowedScreens[0];
+    }
+    return activeScreen;
+  }, [role, activeScreen]);
+
+  useEffect(() => {
+    if (activeScreen !== renderedScreen) {
+      setActiveScreen(renderedScreen);
+    }
+  }, [activeScreen, renderedScreen]);
+
+  const authorized = isAuthorized(renderedScreen, role);
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#030712] transition-colors" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Sidebar Navigation */}
-      <Sidebar activeScreen={activeScreen} setActiveScreen={setActiveScreen} />
+      <Sidebar activeScreen={renderedScreen} setActiveScreen={setActiveScreen} />
 
       {/* Main Workspace Frame */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header toolbar */}
         <Header
-          activeScreenTitle={getScreenTitle(activeScreen)}
+          activeScreenTitle={getScreenTitle(renderedScreen)}
           onLogout={() => setIsLoggedIn(false)}
           onOpenAuditLogs={() => setShowAuditLogs(true)}
           onOpenMenu={() => {}}
@@ -136,8 +140,8 @@ export default function DemoSandboxPage() {
                 <ShieldAlert className="w-8 h-8" />
               </div>
               <h2 className="text-xl font-bold text-slate-800 dark:text-white">Access Denied (RBAC Protected)</h2>
-              <p className="text-xs leading-relaxed text-slate-450">
-                Your currently selected profile role (<strong className="uppercase">{role.replace('_', ' ')}</strong>) is not granted authorization parameters to query route <strong>/{activeScreen}</strong>.
+              <p className="text-xs leading-relaxed text-slate-455">
+                Your currently selected profile role (<strong className="uppercase">{role.replace('_', ' ')}</strong>) is not granted authorization parameters to query route <strong>/{renderedScreen}</strong>.
               </p>
               <div className="pt-2">
                 <span className="text-[10px] text-slate-400 font-semibold italic">Please switch roles in the header toolbar to access this module.</span>
@@ -148,37 +152,22 @@ export default function DemoSandboxPage() {
             <>
               {/* Super Admin Panel Sub-routing */}
               {role === 'super_admin' && (
-                <SuperAdminView activeSubScreen={activeScreen} />
+                <SuperAdminView activeSubScreen={renderedScreen} />
               )}
 
-              {/* Client Admin Sub-routing */}
-              {(role === 'client_admin' || role === 'operations_manager') && (
-                <ClientAdminView activeSubScreen={activeScreen} />
+              {/* Client Admin Sub-routing (swallows supervisor, QA, operations, and viewer roles) */}
+              {(role === 'client_admin' || role === 'operations_manager' || role === 'qa_manager' || role === 'supervisor' || role === 'viewer') && (
+                <ClientAdminView activeSubScreen={renderedScreen} />
               )}
 
-              {/* Agent Workspace Sub-routing */}
+              {/* Agent Workspace Sub-routing (under End User app hierarchy) */}
               {role === 'support_agent' && (
-                <AgentWorkspaceView activeSubScreen={activeScreen} />
+                <AgentWorkspaceView activeSubScreen={renderedScreen} />
               )}
 
               {/* Customer Portal Sub-routing */}
               {role === 'customer' && (
-                <CustomerPortalView activeSubScreen={activeScreen} setActiveSubScreen={setActiveScreen} />
-              )}
-
-              {/* QA Manager Sub-routing */}
-              {role === 'qa_manager' && (
-                <QAManagerView activeSubScreen={activeScreen} />
-              )}
-
-              {/* Supervisor Sub-routing */}
-              {role === 'supervisor' && (
-                <SupervisorView activeSubScreen={activeScreen} />
-              )}
-
-              {/* Viewer Sub-routing (reuses specific panels) */}
-              {role === 'viewer' && (
-                <ClientAdminView activeSubScreen={activeScreen} />
+                <CustomerPortalView activeSubScreen={renderedScreen} setActiveSubScreen={setActiveScreen} />
               )}
             </>
           )}

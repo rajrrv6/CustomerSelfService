@@ -1,9 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bot, Sparkles, Send, RefreshCw, KeyRound, CheckCircle } from 'lucide-react';
+import { Bot, Sparkles, Send, RefreshCw, KeyRound } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
+import { translations } from '@/i18n/translations';
+import { CsatSurveyWidget } from '../customer-portal/feedback/CsatSurveyWidget';
+import { NpsSurveyWidget } from '../customer-portal/feedback/NpsSurveyWidget';
+import { TranscriptEmailModal } from '../customer-portal/feedback/TranscriptEmailModal';
+import { useFeedbackToasts } from '../customer-portal/feedback/PostChatToasts';
 
 export function PublicBotWidget() {
+  const { lang, addAuditLog } = useApp();
+  const t = translations[lang];
+  const { pushToast } = useFeedbackToasts();
+
   const [messages, setMessages] = useState([
     { sender: 'bot', text: 'مرحباً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك اليوم؟\n\nHi! I am Farah. How can I help you today?', time: '14:30' }
   ]);
@@ -14,6 +24,12 @@ export function PublicBotWidget() {
   const [otpStep, setOtpStep] = useState<'none' | 'order' | 'code' | 'verified'>('none');
   const [orderNumber, setOrderNumber] = useState('');
   const [otpCode, setOtpCode] = useState('');
+
+  // Bot Feedback status
+  const [botStatus, setBotStatus] = useState<'chat' | 'survey' | 'transcript'>('chat');
+  const [surveyStep, setSurveyStep] = useState<'csat' | 'nps'>('csat');
+  const [surveyCsat, setSurveyCsat] = useState(0);
+  const [surveyNps, setSurveyNps] = useState(0);
 
   const handleSend = (text: string) => {
     if (!text) return;
@@ -72,8 +88,33 @@ export function PublicBotWidget() {
     }
   };
 
+  const handleCsatComplete = (rating: number, comment: string, tags: string[]) => {
+    setSurveyCsat(rating);
+    addAuditLog(`Guest Bot CSAT Rating: ${rating}/5, tags: ${tags.join(',')}`, 'success');
+    setTimeout(() => {
+      setSurveyStep('nps');
+    }, 1500);
+  };
+
+  const handleNpsComplete = (score: number, comment: string) => {
+    setSurveyNps(score);
+    addAuditLog(`Guest Bot NPS Score: ${score}/10`, 'success');
+    setTimeout(() => {
+      setBotStatus('transcript');
+    }, 1500);
+  };
+
+  const handleTranscriptClose = () => {
+    setBotStatus('chat');
+    setSurveyStep('csat');
+    setOtpStep('none');
+    setMessages([
+      { sender: 'bot', text: 'مرحباً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك اليوم؟\n\nHi! I am Farah. How can I help you today?', time: '14:30' }
+    ]);
+  };
+
   return (
-    <div className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl flex flex-col justify-between h-[520px] text-xs font-semibold">
+    <div className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl flex flex-col justify-between h-[520px] text-xs font-semibold">
       {/* Widget Header */}
       <div className="bg-blue-600 px-5 py-4 text-white flex justify-between items-center shrink-0">
         <div className="flex items-center gap-2">
@@ -85,35 +126,73 @@ export function PublicBotWidget() {
             <span className="text-[9px] opacity-75 font-semibold">Omnichannel Bot widget</span>
           </div>
         </div>
-        <Sparkles className="w-4.5 h-4.5 text-blue-200 glow-active" />
+        {botStatus === 'chat' ? (
+          <button
+            onClick={() => setBotStatus('survey')}
+            className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[9px] font-bold transition-all active:scale-95 cursor-pointer"
+          >
+            {lang === 'ar' ? 'إنهاء الجلسة' : 'End Session'}
+          </button>
+        ) : (
+          <Sparkles className="w-4.5 h-4.5 text-blue-205 glow-active" />
+        )}
       </div>
 
-      {/* Messages area */}
+      {/* Messages area or Survey layout */}
       <div className="flex-1 overflow-y-auto p-5 space-y-3.5 bg-slate-50/50 dark:bg-slate-950/20">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
-              msg.sender === 'user'
-                ? 'bg-blue-600 text-white rounded-br-none'
-                : 'bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/50 text-slate-800 dark:text-slate-200 rounded-bl-none shadow-sm'
-            }`}>
-              <p className="whitespace-pre-line">{msg.text}</p>
-            </div>
-          </div>
-        ))}
+        {botStatus === 'chat' && (
+          <>
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
+                  msg.sender === 'user'
+                    ? 'bg-blue-600 text-white rounded-br-none'
+                    : 'bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/50 text-slate-850 dark:text-slate-200 rounded-bl-none shadow-sm'
+                }`}>
+                  <p className="whitespace-pre-line">{msg.text}</p>
+                </div>
+              </div>
+            ))}
 
-        {loading && (
-          <div className="flex justify-start">
-            <div className="bg-white dark:bg-slate-850 border border-slate-250 dark:border-slate-800 rounded-2xl px-3 py-2 flex items-center gap-1.5 font-bold text-blue-500 font-mono text-[10px]">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              <span>Typing...</span>
-            </div>
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white dark:bg-slate-850 border border-slate-250 dark:border-slate-800 rounded-2xl px-3 py-2 flex items-center gap-1.5 font-bold text-blue-500 font-mono text-[10px]">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Typing...</span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {botStatus === 'survey' && (
+          <div className="space-y-4 py-2">
+            {surveyStep === 'csat' ? (
+              <CsatSurveyWidget
+                lang={lang}
+                onComplete={handleCsatComplete}
+                onToastTrigger={pushToast}
+              />
+            ) : (
+              <NpsSurveyWidget
+                lang={lang}
+                onComplete={handleNpsComplete}
+                onToastTrigger={pushToast}
+              />
+            )}
+          </div>
+        )}
+
+        {botStatus === 'transcript' && (
+          <div className="h-full flex flex-col items-center justify-center text-center space-y-3 p-4">
+            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+            <span className="font-bold text-slate-400">Opening Transcript Email Dialog...</span>
           </div>
         )}
       </div>
 
       {/* OTP tracking form overlay if active */}
-      {otpStep !== 'none' && otpStep !== 'verified' && (
+      {botStatus === 'chat' && otpStep !== 'none' && otpStep !== 'verified' && (
         <form onSubmit={handleOtpLookup} className="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 p-4 space-y-3 shrink-0">
           <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-blue-500 font-mono">
             <KeyRound className="w-3.5 h-3.5" />
@@ -128,9 +207,9 @@ export function PublicBotWidget() {
                 placeholder="Order Number (e.g. ORD-99881)"
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none"
+                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none text-slate-800 dark:text-slate-100 font-semibold"
               />
-              <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">
+              <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">
                 Next
               </button>
             </div>
@@ -143,9 +222,9 @@ export function PublicBotWidget() {
                 placeholder="Enter 4-digit code (use 1234)"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none font-mono"
+                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none font-mono text-slate-850 dark:text-slate-100 font-semibold"
               />
-              <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">
+              <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">
                 Verify
               </button>
             </div>
@@ -154,23 +233,23 @@ export function PublicBotWidget() {
       )}
 
       {/* Quick shortcuts buttons */}
-      {otpStep === 'none' && (
-        <div className="px-5 py-2 flex gap-1.5 overflow-x-auto bg-slate-50 dark:bg-slate-950/40 shrink-0 border-t border-slate-200/50 dark:border-slate-850">
+      {botStatus === 'chat' && otpStep === 'none' && (
+        <div className="px-5 py-2 flex gap-1.5 overflow-x-auto bg-slate-50 dark:bg-slate-950/40 shrink-0 border-t border-slate-200/50 dark:border-slate-850 select-none">
           <button
             onClick={() => setOtpStep('order')}
-            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px]"
+            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] cursor-pointer"
           >
             Order Tracking
           </button>
           <button
             onClick={() => handleSend('What is the price of standard subscription?')}
-            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px]"
+            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] cursor-pointer"
           >
             Check SaaS Pricing
           </button>
           <button
             onClick={() => handleSend('What is the return policy?')}
-            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px]"
+            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] cursor-pointer"
           >
             Refund Policies
           </button>
@@ -178,26 +257,38 @@ export function PublicBotWidget() {
       )}
 
       {/* Composer Input */}
-      {otpStep === 'none' && (
+      {botStatus === 'chat' && otpStep === 'none' && (
         <div className="p-3 border-t border-slate-200 dark:border-slate-800/80 flex gap-2 bg-white dark:bg-slate-900 shrink-0">
           <input
             type="text"
             placeholder="Type a message..."
             value={composer}
             onChange={(e) => setComposer(e.target.value)}
-            className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550"
+            className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550 text-slate-850 dark:text-slate-100 font-semibold"
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSend(composer);
             }}
           />
           <button
             onClick={() => handleSend(composer)}
-            className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md"
+            className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md cursor-pointer"
           >
             <Send className="w-4 h-4" />
           </button>
         </div>
       )}
+
+      {/* Transcript email overlay */}
+      <TranscriptEmailModal
+        isOpen={botStatus === 'transcript'}
+        onClose={handleTranscriptClose}
+        lang={lang}
+        agentName="Farah AI Bot Gateway"
+        chatDuration="3m 15s"
+        messageCount={messages.length + 2}
+        messagesPreview={messages.map(m => ({ sender: m.sender === 'user' ? 'user' : 'bot', text: m.text }))}
+        onToastTrigger={pushToast}
+      />
     </div>
   );
 }

@@ -215,7 +215,7 @@ export function ChannelsTab() {
         description={d.description}
         action={
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl border border-blue-300 dark:border-blue-800 bg-blue-55 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
               Tenant Scope: Active
             </span>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationsStore } from '@/stores/notificationsStore';
@@ -22,6 +23,14 @@ import {
 } from 'lucide-react';
 import { UserRole } from '@/types';
 
+export type TopApp = 'super_admin' | 'client_admin' | 'end_user' | 'public_bot';
+
+export const getTopAppForRole = (r: UserRole): TopApp => {
+  if (r === 'super_admin') return 'super_admin';
+  if (r === 'customer' || r === 'support_agent') return 'end_user';
+  return 'client_admin';
+};
+
 export function Header({
   activeScreenTitle,
   onLogout,
@@ -35,6 +44,7 @@ export function Header({
   onOpenMenu: () => void;
   onOpenNotifications: () => void;
 }) {
+  const router = useRouter();
   const role = useAuthStore((s) => s.role);
   const setRole = useAuthStore((s) => s.setRole);
   const lang = useUIStore((s) => s.lang);
@@ -47,30 +57,14 @@ export function Header({
 
   const [showRoleMenu, setShowRoleMenu] = useState(false);
 
-  const getRoleLabel = (r: UserRole): string => {
-    const maps: Record<UserRole, Record<'en' | 'ar', string>> = {
-      super_admin: { en: 'Super Admin', ar: 'مشرف عام النظام' },
-      client_admin: { en: 'Client Admin', ar: 'مدير العميل' },
-      operations_manager: { en: 'Operations Manager', ar: 'مدير العمليات' },
-      qa_manager: { en: 'QA Manager', ar: 'مدير جودة الخدمة' },
-      supervisor: { en: 'Supervisor', ar: 'مشرف الفريق' },
-      support_agent: { en: 'Support Agent', ar: 'وكيل الدعم' },
-      customer: { en: 'Customer Portal', ar: 'بوابة العملاء' },
-      viewer: { en: 'Viewer', ar: 'مراقب عام' }
-    };
-    return maps[r]?.[lang] ?? r;
-  };
-
-  const rolesList: { value: UserRole; label: string }[] = [
-    { value: 'super_admin', label: getRoleLabel('super_admin') },
-    { value: 'client_admin', label: getRoleLabel('client_admin') },
-    { value: 'operations_manager', label: getRoleLabel('operations_manager') },
-    { value: 'qa_manager', label: getRoleLabel('qa_manager') },
-    { value: 'supervisor', label: getRoleLabel('supervisor') },
-    { value: 'support_agent', label: getRoleLabel('support_agent') },
-    { value: 'customer', label: getRoleLabel('customer') },
-    { value: 'viewer', label: getRoleLabel('viewer') }
+  const topAppList: { value: TopApp; label: string }[] = [
+    { value: 'super_admin', label: lang === 'ar' ? 'مشرف عام النظام' : 'Super Admin' },
+    { value: 'client_admin', label: lang === 'ar' ? 'مدير العميل' : 'Client Admin' },
+    { value: 'end_user', label: lang === 'ar' ? 'بوابة المستخدمين' : 'End User' },
+    { value: 'public_bot', label: lang === 'ar' ? 'البوت العام' : 'Public / Bot' }
   ];
+
+  const currentTopApp = getTopAppForRole(role);
 
 
 
@@ -102,14 +96,14 @@ export function Header({
 
       {/* Right side: Actions */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        {/* Role Switcher */}
+        {/* App Switcher */}
         <div className="relative">
           <button
             onClick={() => setShowRoleMenu(!showRoleMenu)}
             className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none max-w-[40vw] sm:max-w-none"
           >
             <Shield className="w-3.5 h-3.5 text-blue-500" />
-            <span className="truncate max-w-[18vw] sm:max-w-none">{rolesList.find((r) => r.value === role)?.label}</span>
+            <span className="truncate max-w-[18vw] sm:max-w-none">{topAppList.find((r) => r.value === currentTopApp)?.label}</span>
             <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
           </button>
 
@@ -118,23 +112,34 @@ export function Header({
               <div className="fixed inset-0 z-40" onClick={() => setShowRoleMenu(false)} />
               <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in-50 slide-in-from-top-3">
                 <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  {t.roleSwitcher}
+                  {lang === 'ar' ? 'التبديل بين التطبيقات' : 'Application Switcher'}
                 </div>
-                {rolesList.map((item) => (
+                {topAppList.map((item) => (
                   <button
                     key={item.value}
                     onClick={() => {
-                      setRole(item.value);
                       setShowRoleMenu(false);
+                      if (item.value === 'public_bot') {
+                        router.push('/portal/public');
+                      } else if (item.value === 'super_admin') {
+                        setRole('super_admin');
+                        router.push('/admin/infrastructure');
+                      } else if (item.value === 'end_user') {
+                        setRole('customer');
+                        router.push('/portal/home');
+                      } else if (item.value === 'client_admin') {
+                        setRole('client_admin');
+                        router.push('/tenant/dashboard');
+                      }
                     }}
                     className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors flex items-center justify-between ${
-                      role === item.value
+                      currentTopApp === item.value
                         ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                         : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
                     }`}
                   >
                     <span>{item.label}</span>
-                    {role === item.value && <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />}
+                    {currentTopApp === item.value && <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />}
                   </button>
                 ))}
               </div>

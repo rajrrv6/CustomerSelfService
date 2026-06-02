@@ -126,7 +126,7 @@ export function KbSearch({
                   className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:border-blue-500 cursor-pointer transition-all space-y-2"
                 >
                   <div className="flex justify-between items-center">
-                    <span className="px-2 py-0.5 bg-blue-55 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-[9px] font-bold uppercase font-mono">
+                    <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded text-[9px] font-bold uppercase font-mono">
                       {art.category}
                     </span>
                     <span className="flex items-center gap-1 text-[10px] text-slate-400 font-bold font-mono">

@@ -178,6 +178,7 @@ export const en = {
     customer_ticket_detail: 'Ticket Thread & Resolution',
     customer_order_refund: 'Order Lookup & Return Portal',
     customer_chat_history: 'Resolved Chat History',
+    customer_feedback_hub: 'Feedback Hub',
     workspace: 'Workspace',
     training: 'Training Loop'
   },

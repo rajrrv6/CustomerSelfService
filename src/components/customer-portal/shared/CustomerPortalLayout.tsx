@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
-import { Sparkles, Search, BookOpen, ShieldCheck, Plus, PhoneCall, Volume2, CheckCircle } from 'lucide-react';
+import { Sparkles, Search, BookOpen, ShieldCheck, Plus, PhoneCall, Volume2, CheckCircle, ArrowLeft } from 'lucide-react';
 import { AccessibilityWidget } from '../accessibility/AccessibilityWidget';
 import { VoiceCallModal } from '../callbacks/VoiceCallModal';
 import { CobrowseModal } from '../callbacks/CobrowseModal';
@@ -17,6 +17,10 @@ import { KbArticleView } from '../knowledge-base/KbArticleView';
 import { RefundWizard } from '../refunds/RefundWizard';
 import { LiveChatOverlay } from '../live-chat/LiveChatOverlay';
 import { CustomerChatHistory } from './CustomerChatHistory';
+import { CsatSurveyWidget } from '../feedback/CsatSurveyWidget';
+import { NpsSurveyWidget } from '../feedback/NpsSurveyWidget';
+import { CallbackQueueCard } from '../feedback/CallbackQueueCard';
+import { useFeedbackToasts } from '../feedback/PostChatToasts';
 
 interface CustomerPortalLayoutProps {
   activeSubScreen: string;
@@ -46,6 +50,7 @@ export function CustomerPortalLayout({
   } = useApp();
 
   const t = translations[lang];
+  const { pushToast } = useFeedbackToasts();
 
   // ----------------------------------------------------
   // Mock Data definitions
@@ -210,13 +215,14 @@ To unlock your access:
     e.preventDefault();
     if (!callbackPhone) return;
 
-    setShowCallbackModal(false);
     addAuditLog(`Voice callback scheduled to line ${callbackPhone}`, 'success');
-    setSubmitSuccessMessage(`Callback successfully requested! An agent will call ${callbackPhone} at ${callbackTime}.`);
-    setTimeout(() => {
-      setSubmitSuccessMessage(null);
-    }, 4000);
-    setCallbackPhone('');
+    pushToast(
+      'success',
+      lang === 'ar' ? 'تم جدولة الاتصال' : 'Callback Scheduled',
+      lang === 'ar'
+        ? `سيتصل بك الوكيل على الرقم ${callbackPhone} في أقرب وقت ممكن.`
+        : `An agent will call you at ${callbackPhone} soon.`
+    );
   };
 
   const handleJoinCobrowse = (e: React.FormEvent) => {
@@ -375,9 +381,16 @@ To unlock your access:
           </button>
 
           <button
+            onClick={() => setActiveSubScreen('customer_feedback_hub')}
+            className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-400 text-[10px] font-bold rounded-xl transition-all font-mono"
+          >
+            {lang === 'ar' ? 'مركز التقييمات' : 'Feedback Hub'}
+          </button>
+
+          <button
             onClick={() => setShowAccessibilityWidget(true)}
             data-testid="accessibility-options-btn"
-            className="px-3.5 py-1.5 bg-blue-55 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-bold rounded-xl hover:bg-blue-100 font-mono"
+            className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-bold rounded-xl hover:bg-blue-100 font-mono"
           >
             {t.portal.homeHero.accessibilityOptions}
           </button>
@@ -393,7 +406,7 @@ To unlock your access:
                 {t.portal.homeHero.badge}
               </span>
               <h2 className="text-3xl font-extrabold tracking-tight">{t.portal.homeHero.heroTitle}</h2>
-              <p className="text-xs text-blue-105 max-w-md mx-auto leading-relaxed">
+              <p className="text-xs text-blue-100 max-w-md mx-auto leading-relaxed">
                 {t.portal.homeHero.heroDesc}
               </p>
 
@@ -544,6 +557,65 @@ To unlock your access:
             setActiveSubScreen={setActiveSubScreen}
           />
         )}
+
+        {activeSubScreen === 'customer_feedback_hub' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveSubScreen('customer_home')}
+                className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                <ArrowLeft className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+              </button>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                  {lang === 'ar' ? 'مركز التقييمات والدعم' : 'Customer Feedback & Queue Center'}
+                </h2>
+                <span className="text-[10px] text-slate-450 dark:text-slate-450 font-semibold block mt-0.5">
+                  {lang === 'ar' ? 'عينة تفاعلية لتجربة الاستبيانات وحجز الاتصال الصوتي.' : 'Interactive playground for CSAT, NPS, and real-time voice callback simulations.'}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+              {/* CSAT Column */}
+              <div className="space-y-3">
+                <span className="font-mono text-[9px] uppercase font-bold text-slate-400 tracking-wider block">
+                  {lang === 'ar' ? 'استطلاع رضا العملاء (CSAT)' : 'CSAT Survey Widget'}
+                </span>
+                <CsatSurveyWidget
+                  lang={lang}
+                  onToastTrigger={pushToast}
+                />
+              </div>
+
+              {/* NPS Column */}
+              <div className="space-y-3">
+                <span className="font-mono text-[9px] uppercase font-bold text-slate-400 tracking-wider block">
+                  {lang === 'ar' ? 'مؤشر الترويج الصافي (NPS)' : 'NPS Recommendation Widget'}
+                </span>
+                <NpsSurveyWidget
+                  lang={lang}
+                  onToastTrigger={pushToast}
+                />
+              </div>
+
+              {/* Callback Queue Card Column */}
+              <div className="space-y-3">
+                <span className="font-mono text-[9px] uppercase font-bold text-slate-400 tracking-wider block">
+                  {lang === 'ar' ? 'طابور الاتصال النشط' : 'Active Callback Queue'}
+                </span>
+                <CallbackQueueCard
+                  lang={lang}
+                  phoneNumber="+966 50 882 1993"
+                  initialPosition={4}
+                  onToastTrigger={pushToast}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Accessibilities & Modals */}
@@ -572,7 +644,10 @@ To unlock your access:
 
       <CallbackRequestModal
         isOpen={showCallbackModal}
-        onClose={() => setShowCallbackModal(false)}
+        onClose={() => {
+          setShowCallbackModal(false);
+          setCallbackPhone('');
+        }}
         callbackPhone={callbackPhone}
         setCallbackPhone={setCallbackPhone}
         callbackTime={callbackTime}
