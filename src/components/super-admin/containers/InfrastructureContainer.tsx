@@ -10,6 +10,7 @@ import { useTabQueryState } from '@/hooks/useTabQueryState';
 
 // Heavy tabs imported lazily
 const VectorDbStatusTab = React.lazy(() => import('../vector-db/VectorDbStatusTab').then(m => ({ default: m.VectorDbStatusTab })));
+const KnowledgeConnectorRegistry = React.lazy(() => import('../infrastructure/KnowledgeConnectorRegistry').then(m => ({ default: m.KnowledgeConnectorRegistry })));
 
 function TabFallback() {
   return (
@@ -66,6 +67,10 @@ export function InfrastructureContainer({ activeTab: propActiveTab }: { activeTa
         {activeTab === 'vector_db' ? (
           <Suspense fallback={<TabFallback />}>
             <VectorDbStatusTab />
+          </Suspense>
+        ) : activeTab === 'knowledge_connectors' ? (
+          <Suspense fallback={<TabFallback />}>
+            <KnowledgeConnectorRegistry />
           </Suspense>
         ) : (
           <NotImplementedFallback />

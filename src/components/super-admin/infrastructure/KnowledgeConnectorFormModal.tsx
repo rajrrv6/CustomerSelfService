@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
-import { KnowledgeConnector, ConnectorType, SyncFrequency } from '@/types/knowledgeConnector';
+import { KnowledgeConnector, ConnectorType, SyncFrequency, ConnectorStatus } from '@/types/knowledgeConnector';
 import { Globe, Link as LinkIcon, User, FileText, Settings } from 'lucide-react';
 
 interface KnowledgeConnectorFormModalProps {
@@ -28,9 +28,19 @@ export function KnowledgeConnectorFormModal({
   const [description, setDescription] = useState('');
   const [owner, setOwner] = useState('');
   const [syncFrequency, setSyncFrequency] = useState<SyncFrequency>('daily');
+  const [status, setStatus] = useState<ConnectorStatus>('pending');
 
   // Validation States
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const placeholders: Record<ConnectorType, string> = {
+    notion: 'https://notion.so/workspace-name',
+    confluence: 'https://confluence.mycompany.com/wiki',
+    website_crawl: 'https://docs.mycompany.com',
+    google_drive: 'gdrive://shared-folders/my-folder-id',
+    sharepoint: 'https://mycompany.sharepoint.com/sites/site-name',
+    file_upload: ''
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -41,6 +51,7 @@ export function KnowledgeConnectorFormModal({
         setDescription(connector.description || '');
         setOwner(connector.owner);
         setSyncFrequency(connector.syncFrequency);
+        setStatus(connector.status);
       } else {
         setName('');
         setType('website_crawl');
@@ -48,6 +59,7 @@ export function KnowledgeConnectorFormModal({
         setDescription('');
         setOwner('admin@mpaas.com');
         setSyncFrequency('daily');
+        setStatus('pending');
       }
       setErrors({});
     }
@@ -70,9 +82,10 @@ export function KnowledgeConnectorFormModal({
       if (!endpointUrl.trim()) {
         newErrors.endpointUrl = isRtl ? 'العنوان أو الرابط مطلوب' : 'Endpoint URL is required';
       } else {
-        // Basic URL pattern check
+        // Allow custom mock schemas
+        const isCustomProto = endpointUrl.startsWith('gdrive://') || endpointUrl.startsWith('file://');
         const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
-        if (!urlPattern.test(endpointUrl)) {
+        if (!isCustomProto && !urlPattern.test(endpointUrl)) {
           newErrors.endpointUrl = isRtl ? 'الرابط غير صالح' : 'Invalid URL format';
         }
       }
@@ -94,7 +107,7 @@ export function KnowledgeConnectorFormModal({
       description,
       owner,
       syncFrequency,
-      status: connector?.status || 'pending'
+      status
     });
 
     onClose();
@@ -130,7 +143,7 @@ export function KnowledgeConnectorFormModal({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="connector-type" className="block text-[10px] font-bold text-slate-450 uppercase font-mono mb-1.5">
+            <label htmlFor="connector-type" className="block text-[10px] font-bold text-slate-455 uppercase font-mono mb-1.5">
               {isRtl ? 'نوع الموصل' : 'Connector Type'} *
             </label>
             <select
@@ -153,7 +166,7 @@ export function KnowledgeConnectorFormModal({
           </div>
 
           <div>
-            <label htmlFor="connector-frequency" className="block text-[10px] font-bold text-slate-450 uppercase font-mono mb-1.5">
+            <label htmlFor="connector-frequency" className="block text-[10px] font-bold text-slate-455 uppercase font-mono mb-1.5">
               {isRtl ? 'تكرار المزامنة' : 'Sync Frequency'} *
             </label>
             <select
@@ -172,7 +185,7 @@ export function KnowledgeConnectorFormModal({
 
         {type !== 'file_upload' && (
           <div>
-            <label htmlFor="connector-url" className="block text-[10px] font-bold text-slate-450 uppercase font-mono mb-1.5">
+            <label htmlFor="connector-url" className="block text-[10px] font-bold text-slate-455 uppercase font-mono mb-1.5">
               {isRtl ? 'رابط الوصول / النقطة النهائية' : 'Endpoint Connection URL'} *
             </label>
             <div className="relative">
@@ -182,7 +195,7 @@ export function KnowledgeConnectorFormModal({
                 value={endpointUrl}
                 onChange={(e) => setEndpointUrl(e.target.value)}
                 className="w-full pl-9 pr-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-xs font-semibold text-slate-900 dark:text-white font-mono"
-                placeholder="https://mywiki.domain.com"
+                placeholder={placeholders[type] || 'https://mywiki.domain.com'}
               />
               <LinkIcon className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
             </div>
@@ -190,22 +203,42 @@ export function KnowledgeConnectorFormModal({
           </div>
         )}
 
-        <div>
-          <label htmlFor="connector-owner" className="block text-[10px] font-bold text-slate-455 uppercase font-mono mb-1.5">
-            {isRtl ? 'المالك المسؤول' : 'Responsible Owner'} *
-          </label>
-          <div className="relative">
-            <input
-              id="connector-owner"
-              type="text"
-              value={owner}
-              onChange={(e) => setOwner(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-xs font-semibold text-slate-900 dark:text-white"
-              placeholder="operator@mpaas.com"
-            />
-            <User className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="connector-owner" className="block text-[10px] font-bold text-slate-455 uppercase font-mono mb-1.5">
+              {isRtl ? 'المالك المسؤول' : 'Responsible Owner'} *
+            </label>
+            <div className="relative">
+              <input
+                id="connector-owner"
+                type="text"
+                value={owner}
+                onChange={(e) => setOwner(e.target.value)}
+                className="w-full pl-9 pr-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-xs font-semibold text-slate-900 dark:text-white"
+                placeholder="operator@mpaas.com"
+              />
+              <User className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+            </div>
+            {errors.owner && <span className="text-[10px] text-red-500 font-bold block mt-1">{errors.owner}</span>}
           </div>
-          {errors.owner && <span className="text-[10px] text-red-500 font-bold block mt-1">{errors.owner}</span>}
+
+          <div>
+            <label htmlFor="connector-status" className="block text-[10px] font-bold text-slate-455 uppercase font-mono mb-1.5">
+              {isRtl ? 'الحالة' : 'Status'} *
+            </label>
+            <select
+              id="connector-status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as ConnectorStatus)}
+              className="w-full px-3 py-2.5 border border-slate-205 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none text-slate-800 dark:text-slate-100 font-semibold"
+            >
+              <option value="active">{isRtl ? 'نشط' : 'Active'}</option>
+              <option value="pending">{isRtl ? 'قيد الانتظار' : 'Pending'}</option>
+              <option value="error">{isRtl ? 'خطأ' : 'Error'}</option>
+              <option value="disabled">{isRtl ? 'معطل' : 'Disabled'}</option>
+              <option value="synchronizing">{isRtl ? 'جاري المزامنة' : 'Synchronizing'}</option>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -241,3 +274,4 @@ export function KnowledgeConnectorFormModal({
     </ModalWrapper>
   );
 }
+

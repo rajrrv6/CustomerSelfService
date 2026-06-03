@@ -277,6 +277,38 @@ export const en = {
       enableTls: 'Enable TLS encryption (SIPS)',
       codecAutoNegotiate: 'G.711 / G.729 Audio Codec Auto-Negotiate'
     },
+    didPool: {
+      title: 'DID Number Pool',
+      description: 'Manage, assign, and track incoming Direct Inward Dialing numbers for platform clients.',
+      totalDids: 'Total DID Numbers',
+      assignedDids: 'Assigned Numbers',
+      availableDids: 'Available Numbers',
+      searchPlaceholder: 'Search pool by number, carrier, tenant...',
+      emptyTitle: 'DID Pool Empty',
+      emptyDesc: 'No telephone records match your active category filter.',
+      addDidButton: 'Add DID Number',
+      tableHeaders: ['DID Phone Number', 'Country/Region', 'Carrier Provider', 'Assigned Enterprise Tenant', 'Activation Date', 'Status', 'Assignment State', 'Actions']
+    },
+    billing: {
+      title: 'Platform Billing & Subscriptions',
+      description: 'Manage client tenant subscription tiers, billing cycles, and platform usage invoices.',
+      activeSubs: 'Active Subscriptions',
+      mrr: 'Monthly Revenue (MRR)',
+      outstandingInvoices: 'Outstanding Invoices',
+      tierShare: 'Tier Share',
+      tenantsTab: 'Tenant Billing Accounts',
+      plansTab: 'Subscription Price Plans'
+    },
+    audit: {
+      title: 'Platform Audit & Compliance',
+      description: 'Track immutable security logs, system activities, and configure data compliance policies.',
+      totalEvents: 'Total Audit Events',
+      securityAlerts: 'Critical Alerts',
+      policyViolations: 'Active Violations',
+      complianceRate: 'Compliance Rate',
+      eventsTab: 'Audit Event Log',
+      policiesTab: 'Compliance Policies'
+    },
     analytics: {
       title: 'Cross-Tenant Cost Benchmarks',
       description: 'Compare cross-model inference efficiency, billing rates, and optimization statistics.',

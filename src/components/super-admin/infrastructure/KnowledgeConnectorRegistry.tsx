@@ -88,6 +88,30 @@ export function KnowledgeConnectorRegistry() {
     );
   };
 
+  const handleToggleConnector = (connector: KnowledgeConnector) => {
+    const nextStatus = connector.status === 'disabled' ? 'active' : 'disabled';
+    setConnectors((prev) =>
+      prev.map((c) =>
+        c.id === connector.id
+          ? {
+              ...c,
+              status: nextStatus,
+              lastSync: nextStatus === 'active' ? new Date().toISOString().replace('T', ' ').substring(0, 16) : c.lastSync
+            }
+          : c
+      )
+    );
+    pushToast(
+      'success',
+      nextStatus === 'active'
+        ? (isRtl ? 'تم تفعيل الموصل' : 'Connector Enabled')
+        : (isRtl ? 'تم تعطيل الموصل' : 'Connector Disabled'),
+      isRtl
+        ? `تم تحديث حالة الموصل "${connector.name}".`
+        : `Successfully changed status of "${connector.name}".`
+    );
+  };
+
   const handleSyncConnector = (connector: KnowledgeConnector) => {
     if (syncingIds.has(connector.id)) return;
 
@@ -104,7 +128,7 @@ export function KnowledgeConnectorRegistry() {
         c.id === connector.id
           ? {
               ...c,
-              status: 'pending',
+              status: 'synchronizing',
               lastSync: isRtl ? 'جاري المزامنة...' : 'Synchronizing...'
             }
           : c
@@ -152,6 +176,41 @@ export function KnowledgeConnectorRegistry() {
     }, 1500);
   };
 
+  if (connectors.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col items-center justify-center border border-dashed border-slate-205 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-12 rounded-2xl text-center">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/30 mb-4 shadow-sm">
+            <Database className="w-8 h-8 animate-pulse" />
+          </div>
+          <h3 className="text-xs font-extrabold text-slate-800 dark:text-white uppercase tracking-wider font-mono">
+            {isRtl ? 'لا توجد موصلات معرفة مضافة' : 'No Knowledge Connectors Configured'}
+          </h3>
+          <p className="text-[10px] text-slate-400 max-w-sm mt-2 mb-6 font-semibold">
+            {isRtl
+              ? 'يرجى إضافة موصل معرفة جديد لربط مستندات ومصادر RAG الخارجية بنظام المساعد الذكي الخاص بك.'
+              : 'Please register a new knowledge connector to link external document stores and resources to your RAG-powered chatbot.'}
+          </p>
+          <button
+            onClick={handleCreateClick}
+            className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{isRtl ? 'إضافة موصل معرفة جديد' : 'Add First Knowledge Connector'}</span>
+          </button>
+        </div>
+
+        <KnowledgeConnectorFormModal
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          connector={null}
+          onSave={handleSaveConnector}
+          lang={lang}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/10 border border-slate-200 dark:border-slate-800 p-4.5 rounded-2xl">
@@ -163,7 +222,7 @@ export function KnowledgeConnectorRegistry() {
             <h3 className="text-xs font-extrabold text-slate-800 dark:text-white uppercase tracking-wider font-mono">
               {isRtl ? 'سجل الموصلات النشطة' : 'Active Connection Registry'}
             </h3>
-            <p className="text-[10px] text-slate-400 mt-0.5">
+            <p className="text-[10px] text-slate-400 mt-0.5 font-semibold">
               {isRtl ? 'إدارة وجدولة وتتبع صحة مستودعات المزامنة والملفات للـ RAG.' : 'Manage, schedule, and track sync health for RAG document stores.'}
             </p>
           </div>
@@ -183,6 +242,7 @@ export function KnowledgeConnectorRegistry() {
         onEdit={handleEditClick}
         onDelete={handleDeleteConnector}
         onSync={handleSyncConnector}
+        onToggle={handleToggleConnector}
       />
 
       <KnowledgeConnectorFormModal
@@ -195,3 +255,4 @@ export function KnowledgeConnectorRegistry() {
     </div>
   );
 }
+

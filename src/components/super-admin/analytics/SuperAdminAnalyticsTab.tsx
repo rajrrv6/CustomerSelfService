@@ -27,21 +27,30 @@ export function SuperAdminAnalyticsTab({ activeSubScreen }: SuperAdminAnalyticsT
           description={t.superAdmin.analytics.benchmarksDesc}
         />
         
-        {/* System Anomalies HUD */}
+        {/* Side-by-side Cost Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SVGBarChart
+            data={llmModels.map((m) => m.costInput * 1000)}
+            labels={llmModels.map((m) => m.name.substring(0, 8))}
+            title={t.superAdmin.analytics.inputCostTitle}
+            barColor="#3b82f6"
+          />
+          <SVGBarChart
+            data={llmModels.map((m) => m.costOutput * 1000)}
+            labels={llmModels.map((m) => m.name.substring(0, 8))}
+            title={t.superAdmin.analytics.outputCostTitle}
+            barColor="#10b981"
+          />
+        </div>
+
+        {/* System Anomalies HUD & Weekly Throughput */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <SVGBarChart
-              data={llmModels.map((m) => m.costInput * 1000)}
-              labels={llmModels.map((m) => m.name.substring(0, 8))}
-              title={t.superAdmin.analytics.inputCostTitle}
-              barColor="#3b82f6"
-            />
-            {/* Swapped output cost for a Time-Series Line Chart simulating throughput/load */}
+          <div className="lg:col-span-2">
             <SVGLineChart
               data={[120, 180, 140, 290, 220, 340, 410]}
               labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
-              title={isRtl ? 'حجم نقل البيانات الأسبوعي' : 'Weekly LLM Throughput (Tokens)'}
-              gradientColor="#10b981"
+              title={isRtl ? 'حجم نقل البيانات الأسبوعي (مليون رمز)' : 'Weekly LLM Throughput (Millions of Tokens)'}
+              gradientColor="#8b5cf6"
             />
           </div>
 
@@ -64,7 +73,7 @@ export function SuperAdminAnalyticsTab({ activeSubScreen }: SuperAdminAnalyticsT
               </div>
             </OperationalCard>
             
-            <OperationalCard hoverEffect={false} className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30 flex-1">
+            <OperationalCard hoverEffect={false} className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30 flex-1 bg-gradient-to-br dark:from-blue-950/20 dark:to-transparent">
               <h4 className="text-xs font-bold text-blue-800 dark:text-blue-400 uppercase font-mono mb-2">
                 {t.superAdmin.analytics.recommendationTitle}
               </h4>

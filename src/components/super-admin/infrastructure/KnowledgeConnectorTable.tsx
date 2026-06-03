@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { KnowledgeConnector, ConnectorType } from '@/types/knowledgeConnector';
 import { KnowledgeConnectorStatusBadge } from './KnowledgeConnectorStatusBadge';
-import { Edit2, Trash2, RefreshCw, FileText, Globe, Key, Cloud } from 'lucide-react';
+import { Edit2, Trash2, RefreshCw, FileText, Globe, Key, Cloud, ToggleLeft, ToggleRight } from 'lucide-react';
 import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
 
 interface KnowledgeConnectorTableProps {
@@ -13,6 +13,7 @@ interface KnowledgeConnectorTableProps {
   onEdit: (connector: KnowledgeConnector) => void;
   onDelete: (id: string) => void;
   onSync: (connector: KnowledgeConnector) => void;
+  onToggle: (connector: KnowledgeConnector) => void;
 }
 
 export function KnowledgeConnectorTable({
@@ -20,7 +21,8 @@ export function KnowledgeConnectorTable({
   lang,
   onEdit,
   onDelete,
-  onSync
+  onSync,
+  onToggle
 }: KnowledgeConnectorTableProps) {
   const isRtl = lang === 'ar';
 
@@ -74,7 +76,7 @@ export function KnowledgeConnectorTable({
       accessorKey: 'lastSync',
       header: isRtl ? 'آخر مزامنة' : 'Last Sync',
       cell: ({ row }) => (
-        <span className="font-mono text-[10.5px] text-slate-500 dark:text-slate-400">
+        <span className="font-mono text-[10.5px] text-slate-550 dark:text-slate-400">
           {row.original.lastSync}
         </span>
       )
@@ -89,6 +91,25 @@ export function KnowledgeConnectorTable({
       )
     },
     {
+      accessorKey: 'syncFrequency',
+      header: isRtl ? 'تكرار المزامنة' : 'Sync Frequency',
+      cell: ({ row }) => {
+        const freq = row.original.syncFrequency;
+        const labels: Record<string, { en: string; ar: string }> = {
+          hourly: { en: 'Hourly', ar: 'كل ساعة' },
+          daily: { en: 'Daily', ar: 'يومياً' },
+          weekly: { en: 'Weekly', ar: 'أسبوعياً' },
+          manual: { en: 'Manual', ar: 'يدوياً' }
+        };
+        const current = labels[freq] || { en: freq, ar: freq };
+        return (
+          <span className="font-semibold text-slate-600 dark:text-slate-450">
+            {isRtl ? current.ar : current.en}
+          </span>
+        );
+      }
+    },
+    {
       id: 'actions',
       header: isRtl ? 'إجراءات' : 'Actions',
       cell: ({ row }) => {
@@ -98,18 +119,35 @@ export function KnowledgeConnectorTable({
             <button
               type="button"
               onClick={() => onEdit(item)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-105 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title={isRtl ? 'تعديل' : 'Edit'}
             >
               <Edit2 className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
+              onClick={() => onToggle(item)}
+              className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                item.status === 'disabled'
+                  ? 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20'
+                  : 'text-emerald-500 hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+              title={item.status === 'disabled' ? (isRtl ? 'تمكين' : 'Enable') : (isRtl ? 'تعطيل' : 'Disable')}
+            >
+              {item.status === 'disabled' ? (
+                <ToggleLeft className="w-4 h-4" />
+              ) : (
+                <ToggleRight className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              type="button"
               onClick={() => onSync(item)}
-              className="p-1 rounded-lg text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors cursor-pointer"
+              disabled={item.status === 'disabled' || item.status === 'synchronizing'}
+              className="p-1 rounded-lg text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               title={isRtl ? 'مزامنة الآن' : 'Sync Now'}
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className={`w-3.5 h-3.5 ${item.status === 'synchronizing' ? 'animate-spin' : ''}`} />
             </button>
             <button
               type="button"
@@ -145,7 +183,8 @@ export function KnowledgeConnectorTable({
         { label: isRtl ? 'نشط' : 'Active', value: 'active' },
         { label: isRtl ? 'قيد الانتظار' : 'Pending', value: 'pending' },
         { label: isRtl ? 'خطأ' : 'Error', value: 'error' },
-        { label: isRtl ? 'معطل' : 'Disabled', value: 'disabled' }
+        { label: isRtl ? 'معطل' : 'Disabled', value: 'disabled' },
+        { label: isRtl ? 'جاري المزامنة' : 'Synchronizing', value: 'synchronizing' }
       ]
     }
   ];

@@ -1,5 +1,5 @@
 export type ConnectorType = 'notion' | 'confluence' | 'google_drive' | 'sharepoint' | 'website_crawl' | 'file_upload';
-export type ConnectorStatus = 'active' | 'pending' | 'error' | 'disabled';
+export type ConnectorStatus = 'active' | 'pending' | 'error' | 'disabled' | 'synchronizing';
 export type SyncFrequency = 'hourly' | 'daily' | 'weekly' | 'manual';
 
 export interface KnowledgeConnector {

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { translations } from '@/i18n/translations';
 import { SectionHeader } from '@/components/shared/SectionHeader';
@@ -8,6 +8,17 @@ import { Phone, Hash } from 'lucide-react';
 import { NotImplementedFallback } from '../shared/SuperAdminLayout';
 import { SipTrunkConfigTab } from '../telephony/SipTrunkConfigTab';
 import { useTabQueryState } from '@/hooks/useTabQueryState';
+
+const NumberPoolTab = React.lazy(() => import('../telephony/NumberPoolTab').then(m => ({ default: m.NumberPoolTab })));
+
+function TabFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500 animate-pulse">
+      <div className="w-8 h-8 rounded-full border-4 border-blue-500 border-t-transparent animate-spin mb-3" />
+      <span className="text-xs font-semibold font-mono tracking-wider uppercase">Loading module...</span>
+    </div>
+  );
+}
 
 export function TelephonyContainer({ activeTab: propActiveTab }: { activeTab?: string }) {
   const lang = useUIStore((s) => s.lang);
@@ -21,7 +32,7 @@ export function TelephonyContainer({ activeTab: propActiveTab }: { activeTab?: s
 
   const tabs = [
     { id: 'sip_trunk', label: t.superAdmin.sipTrunk.configTitle || 'SIP Trunk Config', icon: <Phone className="w-4 h-4" /> },
-    { id: 'number_pool', label: lang === 'ar' ? 'حزمة الأرقام DID' : 'DID Number Pool', icon: <Hash className="w-4 h-4" /> }
+    { id: 'number_pool', label: (t.superAdmin as any).didPool?.title || (lang === 'ar' ? 'حزمة الأرقام DID' : 'DID Number Pool'), icon: <Hash className="w-4 h-4" /> }
   ];
 
   return (
@@ -54,6 +65,10 @@ export function TelephonyContainer({ activeTab: propActiveTab }: { activeTab?: s
       <div className="mt-6">
         {activeTab === 'sip_trunk' ? (
           <SipTrunkConfigTab />
+        ) : activeTab === 'number_pool' ? (
+          <Suspense fallback={<TabFallback />}>
+            <NumberPoolTab />
+          </Suspense>
         ) : (
           <NotImplementedFallback />
         )}

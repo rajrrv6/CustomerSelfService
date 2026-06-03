@@ -8,7 +8,7 @@ export function KnowledgeConnectorStatusBadge({ status }: { status: ConnectorSta
   const lang = useUIStore((s) => s.lang);
   const isRtl = lang === 'ar';
 
-  const config = {
+  const config: Record<ConnectorStatus, { en: string; ar: string; classes: string }> = {
     active: {
       en: 'Active',
       ar: 'نشط',
@@ -28,6 +28,11 @@ export function KnowledgeConnectorStatusBadge({ status }: { status: ConnectorSta
       en: 'Disabled',
       ar: 'معطل',
       classes: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-800'
+    },
+    synchronizing: {
+      en: 'Synchronizing',
+      ar: 'جاري المزامنة',
+      classes: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30'
     }
   };
 
@@ -35,7 +40,7 @@ export function KnowledgeConnectorStatusBadge({ status }: { status: ConnectorSta
 
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${current.classes}`}>
-      <span className={`w-1.5 h-1.5 rounded-full bg-current shrink-0 ${isRtl ? 'ml-1' : 'mr-1'}`} />
+      <span className={`w-1.5 h-1.5 rounded-full bg-current shrink-0 ${isRtl ? 'ml-1' : 'mr-1'} ${status === 'synchronizing' ? 'animate-pulse scale-125' : ''}`} />
       <span>{isRtl ? current.ar : current.en}</span>
     </span>
   );

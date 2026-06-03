@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import { HelpCircle, Brain, Radio, Phone, Database } from 'lucide-react';
+import { HelpCircle, Brain, Radio, Phone, Database, Layers, FileText } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
@@ -11,6 +11,9 @@ import { MasterDataContainer } from '../containers/MasterDataContainer';
 import { AnalyticsContainer } from '../containers/AnalyticsContainer';
 import { InfrastructureContainer } from '../containers/InfrastructureContainer';
 import { TelephonyContainer } from '../containers/TelephonyContainer';
+
+const BillingOverviewTab = React.lazy(() => import('../billing/BillingOverviewTab').then(m => ({ default: m.BillingOverviewTab })));
+const AuditOverviewTab = React.lazy(() => import('../audit/AuditOverviewTab').then(m => ({ default: m.AuditOverviewTab })));
 
 export function TabFallback() {
   return (
@@ -137,6 +140,20 @@ export function SuperAdminLayout({ activeSubScreen }: SuperAdminLayoutProps) {
     case 'sa_telephony':
     case 'sip_trunk':
       return <TelephonyContainer activeTab="sip_trunk" />;
+
+    case 'sa_billing':
+      return (
+        <Suspense fallback={<TabFallback />}>
+          <BillingOverviewTab />
+        </Suspense>
+      );
+      
+    case 'sa_audit':
+      return (
+        <Suspense fallback={<TabFallback />}>
+          <AuditOverviewTab />
+        </Suspense>
+      );
       
     default:
       return <NotImplementedFallback />;
