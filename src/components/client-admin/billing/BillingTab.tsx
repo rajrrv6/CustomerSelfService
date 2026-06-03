@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useNotificationStore } from '@/stores/notifications/notificationStore';
+import { usePermission } from '@/stores/permissionStore';
 
 // Local Translation dictionary for premium Arabic and English SaaS support
 interface LocalDict {
@@ -209,6 +210,7 @@ export function BillingTab() {
   const { lang, addAuditLog } = useApp();
   const isRtl = lang === 'ar';
   const loc = isRtl ? arLocal : enLocal;
+  const { canEdit, canManage, canExport } = usePermission('billing');
 
   // 1. Subscription & Plan States
   const [activePlan, setActivePlan] = useState<'starter' | 'growth' | 'enterprise' | 'ai_plus'>('enterprise');
@@ -283,6 +285,7 @@ export function BillingTab() {
 
   // Apply Optimization Action
   const handleApplyOpt = (id: string, savings: number, title: string) => {
+    if (!canEdit) return;
     if (appliedOpts.includes(id)) return;
     
     setAppliedOpts(prev => [...prev, id]);
@@ -310,6 +313,7 @@ export function BillingTab() {
 
   // Switch subscription tier
   const handleSwitchPlan = (tier: 'starter' | 'growth' | 'enterprise' | 'ai_plus') => {
+    if (!canManage) return;
     setActivePlan(tier);
     setShowCompareModal(false);
 
@@ -334,6 +338,7 @@ export function BillingTab() {
 
   // Open Edit billing details
   const handleOpenEditModal = () => {
+    if (!canEdit) return;
     setEditEmailsText(billingEmails.join(', '));
     setEditCardLast4(paymentCard.last4);
     setEditAddressLine(billingAddress.line1);
@@ -343,6 +348,7 @@ export function BillingTab() {
   // Save billing details
   const handleSaveBilling = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) return;
 
     const emailsArray = editEmailsText.split(',').map(em => em.trim()).filter(Boolean);
     if (emailsArray.length > 0) setBillingEmails(emailsArray);
@@ -438,7 +444,13 @@ export function BillingTab() {
           </div>
           <button 
             onClick={handleOpenEditModal}
-            className="px-4 py-2.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold rounded-2xl text-[10.5px] uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap"
+            disabled={!canEdit}
+            className={`px-4 py-2.5 text-white font-bold rounded-2xl text-[10.5px] uppercase tracking-wider transition-all whitespace-nowrap ${
+              !canEdit 
+                ? 'bg-red-400 opacity-60 cursor-not-allowed' 
+                : 'bg-red-600 hover:bg-red-700 active:scale-95 cursor-pointer'
+            }`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
           >
             {loc.failedAlertBtn}
           </button>
@@ -908,14 +920,15 @@ export function BillingTab() {
                       <button
                         type="button"
                         onClick={() => handleApplyOpt(opt.id, opt.savings, isRtl ? opt.titleAr : opt.titleEn)}
-                        disabled={isApplied}
+                        disabled={isApplied || !canEdit}
                         className={`px-3 py-1.5 rounded-xl font-bold text-[10px] transition-all flex items-center gap-1 cursor-pointer ${
-                          isApplied
-                            ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                          isApplied || !canEdit
+                            ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-650 cursor-not-allowed'
                             : 'bg-blue-600 hover:bg-blue-750 text-white active:scale-95'
                         }`}
+                        title={!isApplied && !canEdit ? "Requires Edit Permission" : undefined}
                       >
-                        {isApplied && <Check className="w-3 h-3" />}
+                        {isApplied && <Check className="w-3.5 h-3.5" />}
                         <span>{isApplied ? loc.btnAppliedOpt : loc.btnApplyOpt}</span>
                       </button>
                     </div>
@@ -1000,7 +1013,13 @@ export function BillingTab() {
 
             <button
               onClick={handleOpenEditModal}
-              className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-2xl text-[10.5px] uppercase tracking-wider transition-all cursor-pointer"
+              disabled={!canEdit}
+              className={`w-full py-2.5 font-bold rounded-2xl text-[10.5px] uppercase tracking-wider transition-all cursor-pointer ${
+                !canEdit
+                  ? 'bg-slate-105 border-slate-205 text-slate-400 dark:bg-slate-900 dark:border-slate-850 dark:text-slate-600 cursor-not-allowed opacity-60'
+                  : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+              }`}
+              title={!canEdit ? "Requires Edit Permission" : undefined}
             >
               {loc.btnEditBilling}
             </button>
@@ -1078,7 +1097,13 @@ export function BillingTab() {
                       </button>
                       <button 
                         onClick={() => handleDownloadPdf(inv.id)}
-                        className="px-2.5 py-1.5 border border-slate-200 dark:border-slate-850 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 text-slate-655 dark:text-slate-300 rounded-xl transition-all font-bold text-[10px] cursor-pointer"
+                        disabled={!canExport}
+                        className={`px-2.5 py-1.5 border border-slate-200 dark:border-slate-850 rounded-xl transition-all font-bold text-[10px] cursor-pointer ${
+                          !canExport
+                            ? 'bg-slate-105 dark:bg-slate-850 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                            : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 text-slate-655 dark:text-slate-300'
+                        }`}
+                        title={!canExport ? "Requires Export Permission" : undefined}
                       >
                         <Download className="w-3.5 h-3.5" />
                       </button>
@@ -1144,12 +1169,13 @@ export function BillingTab() {
                       </div>
                       <button
                         onClick={() => handleSwitchPlan(tier)}
-                        disabled={isCurrent}
+                        disabled={isCurrent || !canManage}
                         className={`w-full py-2 rounded-xl text-[10px] font-bold transition-all uppercase tracking-wider cursor-pointer ${
-                          isCurrent
-                            ? 'bg-slate-200 dark:bg-slate-850 text-slate-500 dark:text-slate-400 cursor-not-allowed border border-transparent'
+                          isCurrent || !canManage
+                            ? 'bg-slate-200 dark:bg-slate-850 text-slate-400 dark:text-slate-550 cursor-not-allowed border border-transparent'
                             : 'bg-blue-600 hover:bg-blue-750 text-white active:scale-95'
                         }`}
+                        title={!isCurrent && !canManage ? "Requires Manage Permission" : undefined}
                       >
                         {isCurrent ? loc.btnActivePlan : loc.btnSwitchPlan}
                       </button>
@@ -1306,10 +1332,16 @@ export function BillingTab() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-950 flex justify-between gap-3">
-              <button 
+             <div className="p-4 border-t border-slate-100 dark:border-slate-850 bg-slate-50 dark:bg-slate-950 flex justify-between gap-3">
+               <button 
                 onClick={() => handleDownloadPdf(selectedInvoice.id)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-750 text-white font-bold rounded-2xl text-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                disabled={!canExport}
+                className={`px-4 py-2 text-white font-bold rounded-2xl text-xs flex items-center gap-1.5 cursor-pointer transition-all ${
+                  !canExport
+                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-650 cursor-not-allowed border border-transparent'
+                    : 'bg-blue-600 hover:bg-blue-750 active:scale-95'
+                }`}
+                title={!canExport ? "Requires Export Permission" : undefined}
               >
                 <Download className="w-4 h-4" />
                 <span>{loc.btnDownload}</span>

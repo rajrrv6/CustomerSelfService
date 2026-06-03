@@ -16,6 +16,7 @@ import { useApp } from '@/context/AppContext';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { OperationalCard } from '@/components/shared/OperationalCard';
 import { translations } from '@/i18n/translations';
+import { usePermission } from '@/stores/permissionStore';
 
 // Import subcomponents
 import { QueueManagement, QueueItem } from './QueueManagement';
@@ -28,6 +29,7 @@ export function QueuesRosterTab() {
   const { lang, agents, setAgents, addAuditLog } = useApp();
   const t = translations[lang];
   const isRtl = lang === 'ar';
+  const { canEdit, canManage } = usePermission('workforce');
 
   const [activeTab, setActiveTab] = useState<'queues' | 'routing' | 'roster' | 'presence' | 'hours'>('queues');
 
@@ -156,6 +158,7 @@ export function QueuesRosterTab() {
 
   // --- FUNCTIONS: ROUTING RULES ---
   const handleToggleRoutingRule = (id: string) => {
+    if (!canEdit) return;
     setRoutingRules(routingRules.map(rule => {
       if (rule.id === id) {
         const nextState = !rule.enabled;
@@ -168,6 +171,7 @@ export function QueuesRosterTab() {
 
   // --- MANUAL AGENT STATUS SWITCH ---
   const handleAgentStatusChange = (agentId: string, status: 'online' | 'busy' | 'away' | 'offline') => {
+    if (!canEdit) return;
     setAgents(agents.map(a => {
       if (a.id === agentId) {
         addAuditLog(`Manually set agent ${a.name} status to ${status.toUpperCase()} (Aux override)`, 'success');
@@ -179,6 +183,7 @@ export function QueuesRosterTab() {
 
   // --- BUSINESS HOURS & HOLIDAYS ---
   const handleToggleChannelHours = (id: string) => {
+    if (!canEdit) return;
     setChannelHours(channelHours.map(ch => {
       if (ch.id === id) {
         const nextState = !ch.enabled;
@@ -190,6 +195,7 @@ export function QueuesRosterTab() {
   };
 
   const handleChannelTimeChange = (id: string, field: 'start' | 'end', value: string) => {
+    if (!canEdit) return;
     setChannelHours(channelHours.map(ch => {
       if (ch.id === id) {
         return { ...ch, [field]: value, allDay: false };
@@ -199,6 +205,7 @@ export function QueuesRosterTab() {
   };
 
   const handleChannelAllDayToggle = (id: string) => {
+    if (!canEdit) return;
     setChannelHours(channelHours.map(ch => {
       if (ch.id === id) {
         const nextState = !ch.allDay;
@@ -210,6 +217,7 @@ export function QueuesRosterTab() {
 
   const handleAddHoliday = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) return;
     if (!newHolidayNameEn.trim() || !newHolidayNameAr.trim() || !newHolidayDate) return;
 
     const newHoliday: HolidayItem = {
@@ -228,6 +236,7 @@ export function QueuesRosterTab() {
   };
 
   const handleToggleHoliday = (id: string) => {
+    if (!canEdit) return;
     setHolidays(holidays.map(h => {
       if (h.id === id) {
         const nextState = !h.active;
@@ -239,6 +248,7 @@ export function QueuesRosterTab() {
   };
 
   const handleDeleteHoliday = (id: string) => {
+    if (!canManage) return;
     const hName = holidays.find(h => h.id === id)?.nameEn || 'Holiday';
     setHolidays(holidays.filter(h => h.id !== id));
     addAuditLog(`Cancelled holiday schedule: ${hName}`, 'success');
@@ -364,6 +374,8 @@ export function QueuesRosterTab() {
           queuesList={queuesList}
           setQueuesList={setQueuesList}
           addAuditLog={addAuditLog}
+          canEdit={canEdit}
+          canManage={canManage}
         />
       )}
 
@@ -373,6 +385,8 @@ export function QueuesRosterTab() {
           lang={lang}
           routingRules={routingRules}
           onToggleRule={handleToggleRoutingRule}
+          canEdit={canEdit}
+          canManage={canManage}
         />
       )}
 
@@ -393,6 +407,8 @@ export function QueuesRosterTab() {
           agentSkillsMap={agentSkillsMap}
           setAgentSkillsMap={setAgentSkillsMap}
           availableSkills={availableSkills}
+          canEdit={canEdit}
+          canManage={canManage}
         />
       )}
 
@@ -407,6 +423,8 @@ export function QueuesRosterTab() {
           activeSupervisorMode={activeSupervisorMode}
           setActiveSupervisorMode={setActiveSupervisorMode}
           addAuditLog={addAuditLog}
+          canEdit={canEdit}
+          canManage={canManage}
         />
       )}
 
@@ -431,6 +449,8 @@ export function QueuesRosterTab() {
           onToggleHoliday={handleToggleHoliday}
           onDeleteHoliday={handleDeleteHoliday}
           addAuditLog={addAuditLog}
+          canEdit={canEdit}
+          canManage={canManage}
         />
       )}
     </div>

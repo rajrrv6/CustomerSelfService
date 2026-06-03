@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { useAuth } from '@/hooks/useAuth';
 import { translations } from '@/i18n/translations';
+import { usePermission } from '@/stores/permissionStore';
 import { ExecutiveDashboard } from './ExecutiveDashboard';
 import { SlaAnalytics } from './SlaAnalytics';
 import { QueueHeatmap } from './QueueHeatmap';
@@ -27,37 +27,46 @@ type MainTabId = 'executive' | 'sla' | 'workforce' | 'ai' | 'integrations';
 export default function AnalyticsCenterLayout() {
   const { lang } = useApp();
   const isRtl = lang === 'ar';
-  const { user } = useAuth();
   
-  const userRole = user?.role || 'viewer';
+  const canViewExecutive = usePermission('analytics_center').canView;
+  const canViewSla = usePermission('sla').canView;
+  const canViewWorkforce = usePermission('workforce').canView;
+  const canViewAi = usePermission('copilot').canView;
+  const canViewIntegrations = usePermission('integrations').canView;
 
-  // Determine allowed tabs based on user role (RBAC)
   const isAllowedTab = (tabId: MainTabId): boolean => {
-    switch (userRole) {
-      case 'super_admin':
-      case 'client_admin':
-      case 'operations_manager':
-        return true;
-      case 'supervisor':
-        return tabId !== 'integrations'; // supervisors can see everything except infra integrations
-      case 'viewer':
-        return tabId === 'executive' || tabId === 'sla'; // view-only role is restricted to SLA and Executive
-      case 'qa_manager':
-      case 'support_agent':
+    switch (tabId) {
+      case 'executive':
+        return canViewExecutive;
+      case 'sla':
+        return canViewSla;
+      case 'workforce':
+        return canViewWorkforce;
+      case 'ai':
+        return canViewAi;
+      case 'integrations':
+        return canViewIntegrations;
       default:
-        // Support agents or QA managers aren't generally allowed here, but if they get access:
-        return tabId === 'executive' || tabId === 'sla';
+        return false;
     }
   };
 
-  // Set the first allowed tab as the initial tab
-  const getInitialTab = (): MainTabId => {
-    if (isAllowedTab('executive')) return 'executive';
-    if (isAllowedTab('sla')) return 'sla';
+  const getFirstAllowedTab = (): MainTabId => {
+    if (canViewExecutive) return 'executive';
+    if (canViewSla) return 'sla';
+    if (canViewWorkforce) return 'workforce';
+    if (canViewAi) return 'ai';
+    if (canViewIntegrations) return 'integrations';
     return 'executive';
   };
 
-  const [activeTab, setActiveTab] = useState<MainTabId>(getInitialTab());
+  const [activeTab, setActiveTab] = useState<MainTabId>('executive');
+
+  React.useEffect(() => {
+    if (!isAllowedTab(activeTab)) {
+      setActiveTab(getFirstAllowedTab());
+    }
+  }, [canViewExecutive, canViewSla, canViewWorkforce, canViewAi, canViewIntegrations, activeTab]);
 
   // Workforce sub-tab state
   const [workforceSubTab, setWorkforceSubTab] = useState<'wallboard' | 'performance'>('wallboard');

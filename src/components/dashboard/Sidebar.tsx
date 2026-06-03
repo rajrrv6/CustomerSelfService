@@ -30,6 +30,8 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { UserRole } from '@/types';
+import { canAccessScreen } from '@/lib/rbac/permissions';
+import { usePermissionStore, mapUserRoleToMatrixRole } from '@/stores/permissionStore';
 
 interface SidebarItem {
   id: string;
@@ -70,96 +72,109 @@ export function Sidebar({
     { value: 'support_agent', label: lang === 'ar' ? 'وكيل الدعم' : 'Support Agent' }
   ];
 
-  // Helper to compile sidebar options based on role
-  const getSidebarItems = (currentRole: UserRole): SidebarItem[] => {
-    switch (currentRole) {
-      case 'super_admin':
-        return [
-          { id: 'llm_registry', label: t.llmRegistry, icon: <Brain className="w-4 h-4" /> },
-          { id: 'asr_tts_registry', label: t.asrTtsRegistry, icon: <Radio className="w-4 h-4" /> },
-          { id: 'channels', label: t.omnichannel, icon: <Layers className="w-4 h-4" /> },
-          { id: 'nlu_governance', label: t.nluGovernance, icon: <ShieldCheck className="w-4 h-4" /> },
-          { id: 'cost_benchmarks', label: t.costBenchmarks, icon: <BarChart2 className="w-4 h-4" /> },
-          { id: 'cross_tenant_analytics', label: t.crossTenantAnalytics, icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'vector_db', label: t.vectorDbStatus, icon: <Database className="w-4 h-4" /> },
-          { id: 'sip_trunk', label: t.sipTrunkConfig, icon: <Phone className="w-4 h-4" /> },
-          { id: 'analytics_center', label: t.screens.analytics_center, icon: <BarChart2 className="w-4 h-4" /> }
-        ];
+  // Master Sidebar Items Registry
+  const getMasterSidebarItems = React.useCallback((): Record<string, SidebarItem> => {
+    return {
+      // Super Admin
+      llm_registry: { id: 'llm_registry', label: t.llmRegistry, icon: <Brain className="w-4 h-4" /> },
+      asr_tts_registry: { id: 'asr_tts_registry', label: t.asrTtsRegistry, icon: <Radio className="w-4 h-4" /> },
+      channels: { id: 'channels', label: t.omnichannel, icon: <Layers className="w-4 h-4" /> },
+      nlu_governance: { id: 'nlu_governance', label: t.nluGovernance, icon: <ShieldCheck className="w-4 h-4" /> },
+      cost_benchmarks: { id: 'cost_benchmarks', label: t.costBenchmarks, icon: <BarChart2 className="w-4 h-4" /> },
+      cross_tenant_analytics: { id: 'cross_tenant_analytics', label: t.crossTenantAnalytics, icon: <TrendingUp className="w-4 h-4" /> },
+      vector_db: { id: 'vector_db', label: t.vectorDbStatus, icon: <Database className="w-4 h-4" /> },
+      sip_trunk: { id: 'sip_trunk', label: t.sipTrunkConfig, icon: <Phone className="w-4 h-4" /> },
+      
+      // Client / Workspace
+      supervisor_monitor: { id: 'supervisor_monitor', label: isRtl ? 'لوحة تحكم المشرف' : 'Supervisor Dashboard', icon: <Shield className="w-4 h-4" /> },
+      qa_queue: { id: 'qa_queue', label: isRtl ? 'مساحة عمل الجودة' : 'QA Workspace', icon: <Award className="w-4 h-4" /> },
+      coaching: { id: 'coaching', label: isRtl ? 'خطط التدريب والتوجيه' : 'Coaching Plans', icon: <Users className="w-4 h-4" /> },
+      training: { id: 'training', label: t.screens.training || 'Training Loop', icon: <Brain className="w-4 h-4" /> },
+      agents: { id: 'agents', label: isRtl ? 'مراقبة العمليات' : 'Operations Monitoring', icon: <Users className="w-4 h-4" /> },
+      workforce: { id: 'workforce', label: isRtl ? 'تخطيط القوى العاملة' : 'Workforce Planning', icon: <Calendar className="w-4 h-4" /> },
+      inbox: { id: 'inbox', label: isRtl ? 'مساحة عمل الوكيل' : 'Agent Workspace', icon: <Mail className="w-4 h-4" /> },
+      tickets: { id: 'tickets', label: t.screens.tickets || (isRtl ? 'التذاكر' : 'Tickets'), icon: <FileText className="w-4 h-4" /> },
+      agent_dashboard: { id: 'agent_dashboard', label: t.screens.agent_dashboard || (isRtl ? 'لوحة تحكم الوكيل' : 'Agent Dashboard'), icon: <BarChart2 className="w-4 h-4" /> },
+      sla: { id: 'sla', label: isRtl ? 'لوحة تحكم اتفاقية الخدمة' : 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
+      analytics_center: {
+        id: 'analytics_center',
+        label: role === 'super_admin'
+          ? t.screens.analytics_center
+          : (isRtl ? 'مركز التحليلات والمراقبة' : 'Analytics & Observability Center'),
+        icon: <BarChart2 className="w-4 h-4" />
+      },
+      knowledge_base: { id: 'knowledge_base', label: t.knowledgeBase, icon: <Brain className="w-4 h-4" /> },
+      bots: { id: 'bots', label: isRtl ? 'إدارة البوت' : 'Bot Administration', icon: <Bot className="w-4 h-4" /> },
+      surveys: { id: 'surveys', label: isRtl ? 'التقارير والاستبيانات' : 'Reports', icon: <TrendingUp className="w-4 h-4" /> },
+      integrations: { id: 'integrations', label: t.integrations, icon: <Database className="w-4 h-4" /> },
+      billing: { id: 'billing', label: isRtl ? 'الفوترة والاشتراكات' : 'Billing', icon: <Layers className="w-4 h-4" /> },
+      rbac: { id: 'rbac', label: isRtl ? 'إدارة الصلاحيات' : 'RBAC', icon: <ShieldCheck className="w-4 h-4" /> },
 
-      case 'client_admin':
-        return [
-          { id: 'supervisor_monitor', label: isRtl ? 'لوحة تحكم المشرف' : 'Supervisor Dashboard', icon: <Shield className="w-4 h-4" /> },
-          { id: 'qa_queue', label: isRtl ? 'مساحة عمل الجودة' : 'QA Workspace', icon: <Award className="w-4 h-4" /> },
-          { id: 'agents', label: isRtl ? 'مراقبة العمليات' : 'Operations Monitoring', icon: <Users className="w-4 h-4" /> },
-          { id: 'workforce', label: isRtl ? 'تخطيط القوى العاملة' : 'Workforce Planning', icon: <Calendar className="w-4 h-4" /> },
-          { id: 'inbox', label: isRtl ? 'مساحة عمل الوكيل' : 'Agent Workspace', icon: <Mail className="w-4 h-4" /> },
-          { id: 'sla', label: isRtl ? 'لوحة تحكم اتفاقية الخدمة' : 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
-          { id: 'analytics_center', label: isRtl ? 'مركز التحليلات والمراقبة' : 'Analytics & Observability Center', icon: <BarChart2 className="w-4 h-4" /> },
-          { id: 'knowledge_base', label: t.knowledgeBase, icon: <Brain className="w-4 h-4" /> },
-          { id: 'bots', label: isRtl ? 'إدارة البوت' : 'Bot Administration', icon: <Bot className="w-4 h-4" /> },
-          { id: 'surveys', label: isRtl ? 'التقارير والاستبيانات' : 'Reports', icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'integrations', label: t.integrations, icon: <Database className="w-4 h-4" /> },
-          { id: 'billing', label: isRtl ? 'الفوترة والاشتراكات' : 'Billing', icon: <Layers className="w-4 h-4" /> },
-          { id: 'rbac', label: isRtl ? 'إدارة الصلاحيات' : 'RBAC', icon: <ShieldCheck className="w-4 h-4" /> }
-        ];
+      // Customer Portal
+      customer_home: { id: 'customer_home', label: isRtl ? 'الرئيسية' : 'Dashboard', icon: <HelpCircle className="w-4 h-4" /> },
+      customer_kb: { id: 'customer_kb', label: isRtl ? 'مساعد الذكاء الاصطناعي' : 'AI Copilot', icon: <Brain className="w-4 h-4" /> },
+      customer_notifications: { id: 'customer_notifications', label: isRtl ? 'التنبيهات' : 'Notifications', icon: <Bell className="w-4 h-4" /> },
+      customer_kb_article: { id: 'customer_kb_article', label: isRtl ? 'مركز المساعدة' : 'Help Center', icon: <HelpCircle className="w-4 h-4" /> },
+      customer_my_tickets: { id: 'customer_my_tickets', label: isRtl ? 'تذاكري' : 'My Tickets', icon: <Layers className="w-4 h-4" /> }
+    };
+  }, [t, isRtl, role]);
 
-      case 'operations_manager':
-        return [
-          { id: 'inbox', label: isRtl ? 'مساحة عمل الوكيل' : 'Agent Workspace', icon: <Mail className="w-4 h-4" /> },
-          { id: 'agents', label: isRtl ? 'مراقبة العمليات' : 'Operations Monitoring', icon: <Users className="w-4 h-4" /> },
-          { id: 'sla', label: isRtl ? 'لوحة تحكم اتفاقية الخدمة' : 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
-          { id: 'surveys', label: isRtl ? 'التقارير والاستبيانات' : 'Reports', icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'integrations', label: t.integrations, icon: <Database className="w-4 h-4" /> },
-          { id: 'analytics_center', label: isRtl ? 'مركز التحليلات والمراقبة' : 'Analytics & Observability Center', icon: <BarChart2 className="w-4 h-4" /> }
-        ];
+  const matrixRole = mapUserRoleToMatrixRole(role);
+  const rolePermissions = usePermissionStore((s) => s.permissions[matrixRole]);
+  const apiPermissions = usePermissionStore((s) => s.apiPermissions);
 
-      case 'qa_manager':
-        return [
-          { id: 'qa_queue', label: isRtl ? 'مساحة عمل الجودة' : 'QA Workspace', icon: <Award className="w-4 h-4" /> },
-          { id: 'coaching', label: isRtl ? 'خطط التدريب والتوجيه' : 'Coaching Plans', icon: <Users className="w-4 h-4" /> },
-          { id: 'training', label: t.screens.training || 'Training Loop', icon: <Brain className="w-4 h-4" /> },
-          { id: 'inbox', label: isRtl ? 'مساحة عمل الوكيل' : 'Agent Workspace', icon: <Mail className="w-4 h-4" /> },
-          { id: 'surveys', label: isRtl ? 'التقارير والاستبيانات' : 'Reports', icon: <TrendingUp className="w-4 h-4" /> }
-        ];
-
-      case 'support_agent':
-        return [
-          { id: 'agent_dashboard', label: t.screens.agent_dashboard, icon: <BarChart2 className="w-4 h-4" /> },
-          { id: 'inbox', label: isRtl ? 'مساحة عمل الوكيل' : 'Agent Workspace', icon: <Mail className="w-4 h-4" /> },
-          { id: 'tickets', label: t.screens.tickets, icon: <FileText className="w-4 h-4" /> }
-        ];
-
-      case 'supervisor':
-        return [
-          { id: 'inbox', label: isRtl ? 'مساحة عمل الوكيل' : 'Agent Workspace', icon: <Mail className="w-4 h-4" /> },
-          { id: 'supervisor_monitor', label: isRtl ? 'لوحة تحكم المشرف' : 'Supervisor Dashboard', icon: <Shield className="w-4 h-4" /> },
-          { id: 'workforce', label: isRtl ? 'تخطيط القوى العاملة' : 'Workforce Planning', icon: <Calendar className="w-4 h-4" /> },
-          { id: 'sla', label: isRtl ? 'لوحة تحكم اتفاقية الخدمة' : 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
-          { id: 'analytics_center', label: isRtl ? 'مركز التحليلات والمراقبة' : 'Analytics & Observability Center', icon: <BarChart2 className="w-4 h-4" /> }
-        ];
-
-      case 'customer':
-        return [
-          { id: 'customer_home', label: isRtl ? 'الرئيسية' : 'Dashboard', icon: <HelpCircle className="w-4 h-4" /> },
-          { id: 'customer_kb', label: isRtl ? 'مساعد الذكاء الاصطناعي' : 'AI Copilot', icon: <Brain className="w-4 h-4" /> },
-          { id: 'customer_notifications', label: isRtl ? 'التنبيهات' : 'Notifications', icon: <Bell className="w-4 h-4" /> },
-          { id: 'customer_kb_article', label: isRtl ? 'مركز المساعدة' : 'Help Center', icon: <HelpCircle className="w-4 h-4" /> },
-          { id: 'customer_my_tickets', label: isRtl ? 'تذاكري' : 'My Tickets', icon: <Layers className="w-4 h-4" /> }
-        ];
-
-      case 'viewer':
-        return [
-          { id: 'surveys', label: isRtl ? 'التقارير والاستبيانات' : 'Reports', icon: <TrendingUp className="w-4 h-4" /> },
-          { id: 'sla', label: isRtl ? 'لوحة تحكم اتفاقية الخدمة' : 'SLA Dashboard', icon: <Lock className="w-4 h-4" /> },
-          { id: 'analytics_center', label: isRtl ? 'مركز التحليلات والمراقبة' : 'Analytics & Observability Center', icon: <BarChart2 className="w-4 h-4" /> }
-        ];
-
-      default:
-        return [];
+  const menuItems = React.useMemo(() => {
+    // Determine the master list of screen IDs to check based on role category
+    let order: string[];
+    if (role === 'super_admin') {
+      order = [
+        'llm_registry',
+        'asr_tts_registry',
+        'channels',
+        'nlu_governance',
+        'cost_benchmarks',
+        'cross_tenant_analytics',
+        'vector_db',
+        'sip_trunk',
+        'analytics_center'
+      ];
+    } else if (role === 'customer') {
+      order = [
+        'customer_home',
+        'customer_kb',
+        'customer_notifications',
+        'customer_kb_article',
+        'customer_my_tickets'
+      ];
+    } else {
+      order = [
+        'supervisor_monitor',
+        'qa_queue',
+        'coaching',
+        'training',
+        'agents',
+        'workforce',
+        'inbox',
+        'tickets',
+        'agent_dashboard',
+        'sla',
+        'analytics_center',
+        'knowledge_base',
+        'bots',
+        'surveys',
+        'integrations',
+        'billing',
+        'rbac'
+      ];
     }
-  };
 
-  const menuItems = getSidebarItems(role);
+    const registry = getMasterSidebarItems();
+
+    return order
+      .filter((id) => canAccessScreen(role, id))
+      .map((id) => registry[id])
+      .filter(Boolean);
+  }, [role, getMasterSidebarItems, rolePermissions, apiPermissions]);
 
   return (
     <aside

@@ -7,10 +7,13 @@ import { WfmAlertsPanel } from '@/components/client-admin/operations/WfmAlertsPa
 import { QueueHeatmapDashboard } from '@/components/client-admin/operations/QueueHeatmapDashboard';
 import { StaffingEscalationWorkflow } from '@/components/client-admin/operations/StaffingEscalationWorkflow';
 import { LivePresenceBoard } from '@/components/client-admin/operations/LivePresenceBoard';
+import { usePermission } from '@/stores/permissionStore';
 
 export function SupervisorView({ activeSubScreen }: { activeSubScreen: string }) {
   const { lang, agents, setAgents, conversations, setConversations, addAuditLog } = useApp();
   const isRtl = lang === 'ar';
+  
+  const { canEdit, canManage } = usePermission('workforce');
   
   const [whisperTargetChatId, setWhisperTargetChatId] = useState('conv-2');
   const [whisperInput, setWhisperInput] = useState('');
@@ -135,6 +138,8 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
               activeSupervisorMode={activeSupervisorMode}
               setActiveSupervisorMode={setActiveSupervisorMode}
               addAuditLog={addAuditLog}
+              canEdit={canEdit}
+              canManage={canManage}
             />
           </div>
 

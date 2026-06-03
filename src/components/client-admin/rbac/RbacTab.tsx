@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useNotificationStore } from '@/stores/notifications/notificationStore';
+import { usePermissionStore, usePermission, type PermissionLevel, type RolePermissions } from '@/stores/permissionStore';
 
 // Local i18n translation dictionary
 interface LocalDict {
@@ -207,64 +208,44 @@ export function RbacTab() {
   // Save Policy State
   const [isCompiling, setIsCompiling] = useState(false);
 
-  // 1. Permissions Matrix State
-  const [permissions, setPermissions] = useState<Record<string, Record<string, string>>>({
-    admin: {
-      inbox: 'admin', sla: 'admin', billing: 'admin', analytics: 'admin',
-      workforce: 'admin', qa: 'admin', rag: 'admin', copilot: 'admin',
-      bot: 'admin', surveys: 'admin', audit: 'admin'
-    },
-    supervisor: {
-      inbox: 'manage', sla: 'manage', billing: 'view', analytics: 'manage',
-      workforce: 'manage', qa: 'manage', rag: 'view', copilot: 'edit',
-      bot: 'view', surveys: 'manage', audit: 'view'
-    },
-    qa: {
-      inbox: 'view', sla: 'view', billing: 'none', analytics: 'view',
-      workforce: 'view', qa: 'manage', rag: 'none', copilot: 'view',
-      bot: 'none', surveys: 'edit', audit: 'none'
-    },
-    agent: {
-      inbox: 'edit', sla: 'view', billing: 'none', analytics: 'view',
-      workforce: 'view', qa: 'none', rag: 'none', copilot: 'edit',
-      bot: 'none', surveys: 'none', audit: 'none'
-    },
-    viewer: {
-      inbox: 'view', sla: 'view', billing: 'none', analytics: 'view',
-      workforce: 'none', qa: 'none', rag: 'none', copilot: 'view',
-      bot: 'none', surveys: 'view', audit: 'view'
-    }
-  });
+  // 1. Permissions Matrix State (Bound to centralized permission store)
+  const permissions = usePermissionStore((s) => s.permissions);
+  const updatePermission = usePermissionStore((s) => s.updatePermission);
+  const { canEdit, canManage, canExport } = usePermission('rbac');
 
   // 2. User Directory Roster States
   const [users, setUsers] = useState([
     { id: 'usr-1', name: 'Tariq Mansoor', email: 'tariq.mansoor@mpaas.com', role: 'supervisor', lastActive: '12 mins ago', mfa: true, risk: 'low', session: 'active', locked: false, reviewed: true },
-    { id: 'usr-2', name: 'Nadia Vance', email: 'nadia.vance@mpaas.com', role: 'agent', lastActive: '2 mins ago', mfa: false, risk: 'medium', session: 'active', locked: false, reviewed: true },
+    { id: 'usr-2', name: 'Nadia Vance', email: 'nadia.vance@mpaas.com', role: 'supervisor', lastActive: '2 mins ago', mfa: false, risk: 'medium', session: 'active', locked: false, reviewed: true },
     { id: 'usr-3', name: 'Sarah Connor', email: 'sarah.connor@mpaas.com', role: 'qa', lastActive: '2 hours ago', mfa: true, risk: 'low', session: 'active', locked: false, reviewed: true },
     { id: 'usr-4', name: 'Guest Contractor', email: 'external.temp@mpaas.com', role: 'viewer', lastActive: '1 day ago', mfa: false, risk: 'high', session: 'active', locked: false, reviewed: false },
-    { id: 'usr-5', name: 'Idle Administrator', email: 'admin-backup@mpaas.com', role: 'admin', lastActive: '94 days ago', mfa: true, risk: 'medium', session: 'inactive', locked: false, reviewed: true }
+    { id: 'usr-5', name: 'Idle Administrator', email: 'admin-backup@mpaas.com', role: 'admin', lastActive: '94 days ago', mfa: true, risk: 'medium', session: 'inactive', locked: false, reviewed: true },
+    { id: 'usr-6', name: 'Amara Vance', email: 'amara.vance@mpaas.com', role: 'operations', lastActive: 'Just now', mfa: true, risk: 'medium', session: 'active', locked: false, reviewed: true }
   ]);
 
   // 3. Temporary Access Request pipeline
   const [requests, setRequests] = useState([
     { id: 'req-1', name: 'Nadia Vance', email: 'nadia.vance@mpaas.com', type: 'Temporary Billing Access', justification: 'Requires read-only audit capability on subscription overage statements for Plivo gateway logs.', expires: '4 hours', status: 'pending' },
-    { id: 'req-2', name: 'Guest Contractor', email: 'external.temp@mpaas.com', type: 'RAG Knowledge Import Rights', justification: 'Requires database credential indexing capability to link new company manuals.', expires: '1 day', status: 'pending' }
+    { id: 'req-2', name: 'Guest Contractor', email: 'external.temp@mpaas.com', type: 'RAG Knowledge Import Rights', justification: 'Requires database credential indexing capability to link new company manuals.', expires: '1 day', status: 'pending' },
+    { id: 'req-3', name: 'Amara Vance', email: 'amara.vance@mpaas.com', type: 'Temporary Admin RBAC Access', justification: 'Requires temporary capability to check compliance logs for security certification.', expires: '2 hours', status: 'pending' }
   ]);
 
   // 4. Compliance Insights panel
   const [insights, setInsights] = useState([
     { id: 'ins-1', titleEn: 'Idle Administrator account has logged no recent sessions', titleAr: 'حساب مسؤول خامل لم يسجل أي جلسات دخول مؤخراً', risk: 'high', type: 'dormant', targetUsr: 'Idle Administrator', status: 'active' },
     { id: 'ins-2', titleEn: 'MFA protection disabled for high-risk viewer role', titleAr: 'التحقق الثنائي معطل لدور مراقب عام مرتفع المخاطر', risk: 'medium', type: 'mfa', targetUsr: 'Guest Contractor', status: 'active' },
-    { id: 'ins-3', titleEn: 'Excessive Billing Export privileges allocated to QA Manager', titleAr: 'صلاحيات تصدير فواتير زائدة ممنوحة لمدير الجودة', risk: 'low', type: 'scope', targetUsr: 'Sarah Connor', status: 'active' }
+    { id: 'ins-3', titleEn: 'Excessive Billing Export privileges allocated to QA Manager', titleAr: 'صلاحيات تصدير فواتير زائدة ممنوحة لمدير الجودة', risk: 'low', type: 'scope', targetUsr: 'Sarah Connor', status: 'active' },
+    { id: 'ins-4', titleEn: 'Operations Manager possesses unmitigated analytics write scope', titleAr: 'يمتلك مدير العمليات نطاق كتابة غير مخفف في التحليلات', risk: 'low', type: 'scope_ops', targetUsr: 'Amara Vance', status: 'active' }
   ]);
 
   // 5. Audit Log list states
   const [logs, setLogs] = useState([
-    { id: 'gov-1', timestamp: '2026-06-03 10:14:22', operator: 'active.user@mpaas.com', action: 'Modified SLA matrix credentials for Support Agent', severity: 'success' },
+    { id: 'gov-1', timestamp: '2026-06-03 10:14:22', operator: 'active.user@mpaas.com', action: 'Modified SLA matrix credentials for Support Supervisor', severity: 'success' },
     { id: 'gov-2', timestamp: '2026-06-03 09:40:11', operator: 'System Daemon', action: 'Failed MFA authentication block for guest.contractor@mpaas.com', severity: 'warning' },
     { id: 'gov-3', timestamp: '2026-06-03 08:15:00', operator: 'active.user@mpaas.com', action: 'Revoked active workspace login token for Guest Contractor', severity: 'info' },
     { id: 'gov-4', timestamp: '2026-06-02 23:12:40', operator: 'Security Broker', action: 'Emergency administrative grant compiled via SAML callback', severity: 'critical' },
-    { id: 'gov-5', timestamp: '2026-06-02 18:30:20', operator: 'active.user@mpaas.com', action: 'MFA verification reset requested for Tariq Mansoor', severity: 'success' }
+    { id: 'gov-5', timestamp: '2026-06-02 18:30:20', operator: 'active.user@mpaas.com', action: 'MFA verification reset requested for Tariq Mansoor', severity: 'success' },
+    { id: 'gov-6', timestamp: '2026-06-03 11:20:00', operator: 'amara.vance@mpaas.com', action: 'Requested temporary privilege escalation clearance for SIEM audit trails', severity: 'info' }
   ]);
 
   const [logFilter, setLogFilter] = useState<'all' | 'critical' | 'warning' | 'info'>('all');
@@ -273,7 +254,8 @@ export function RbacTab() {
   const [recommendations, setRecommendations] = useState([
     { id: 'rec-1', textEn: 'Suspend Idle Administrator backup profile to mitigate stale credential risk.', textAr: 'تعليق حساب المسؤول الاحتياطي الخامل لتقليل مخاطر الحسابات القديمة.', applied: false, savings: 'Reduces Admin footprint' },
     { id: 'rec-2', textEn: 'Enforce mandatory MFA redirection for Guest Contractor to secure vector databases.', textAr: 'فرض تفعيل التحقق الثنائي للمقاول الخارجي لتأمين قواعد البيانات المتجهة.', applied: false, savings: 'Compliance: ISO 27001' },
-    { id: 'rec-3', textEn: 'Revoke secondary billing scopes for QA Manager to enforce separation of duties.', textAr: 'إلغاء الصلاحيات الجانبية للفوترة لمدير الجودة لضمان فصل المهام والمسؤوليات.', applied: false, savings: 'Reduces over-permissioning' }
+    { id: 'rec-3', textEn: 'Revoke secondary billing scopes for QA Manager to enforce separation of duties.', textAr: 'إلغاء الصلاحيات الجانبية للفوترة لمدير الجودة لضمان فصل المهام والمسؤوليات.', applied: false, savings: 'Reduces over-permissioning' },
+    { id: 'rec-4', textEn: 'Review analytics write privileges for Amara Vance to enforce least-privilege access.', textAr: 'مراجعة صلاحيات كتابة التحليلات للمستخدم Amara Vance لفرض مبدأ الحد الأدنى من الصلاحيات.', applied: false, savings: 'Operational Audit Cleared' }
   ]);
 
   // Roles list mapping
@@ -281,7 +263,7 @@ export function RbacTab() {
     { id: 'admin', name: isRtl ? 'مسؤول النظام' : 'Administrator', color: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-200' },
     { id: 'supervisor', name: isRtl ? 'المشرف' : 'Supervisor', color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200' },
     { id: 'qa', name: isRtl ? 'مدير الجودة' : 'QA Manager', color: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200' },
-    { id: 'agent', name: isRtl ? 'وكيل الدعم' : 'Support Agent', color: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200' },
+    { id: 'operations', name: isRtl ? 'مدير العمليات' : 'Operations Manager', color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200' },
     { id: 'viewer', name: isRtl ? 'مراقب عام' : 'Viewer', color: 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-200' }
   ];
 
@@ -321,13 +303,10 @@ export function RbacTab() {
 
   // Actions handlers
   const handleMatrixChange = (roleId: string, moduleId: string, value: string) => {
-    setPermissions(prev => ({
-      ...prev,
-      [roleId]: {
-        ...prev[roleId],
-        [moduleId]: value
-      }
-    }));
+    if (!canEdit) return;
+    if (roleId === 'admin') return;
+
+    updatePermission(roleId, moduleId, value as PermissionLevel);
 
     const roleName = roleMetadata.find(r => r.id === roleId)?.name || roleId;
     const moduleName = modulesList.find(m => m.id === moduleId)?.label || moduleId;
@@ -354,6 +333,7 @@ export function RbacTab() {
   };
 
   const handleGlobalCompile = () => {
+    if (!canManage) return;
     setIsCompiling(true);
     setTimeout(() => {
       setIsCompiling(false);
@@ -377,6 +357,7 @@ export function RbacTab() {
 
   // Directory actions
   const handleToggleLock = (userId: string, currentLock: boolean, userName: string) => {
+    if (!canManage) return;
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, locked: !currentLock } : u));
     
     useNotificationStore.getState().addAlert({
@@ -396,6 +377,7 @@ export function RbacTab() {
   };
 
   const handleRevokeSession = (userId: string, userName: string) => {
+    if (!canManage) return;
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, session: 'inactive' } : u));
 
     useNotificationStore.getState().addAlert({
@@ -415,6 +397,7 @@ export function RbacTab() {
   };
 
   const handleRoleChange = (userId: string, nextRole: string, userName: string) => {
+    if (!canManage) return;
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: nextRole } : u));
 
     useNotificationStore.getState().addAlert({
@@ -434,6 +417,7 @@ export function RbacTab() {
   };
 
   const handleApproveAccessReview = (userId: string, userName: string) => {
+    if (!canManage) return;
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, reviewed: true, risk: 'low' } : u));
 
     useNotificationStore.getState().addAlert({
@@ -454,6 +438,7 @@ export function RbacTab() {
 
   // Approvals actions
   const handleResolveRequest = (reqId: string, action: 'approved' | 'rejected', userName: string, type: string) => {
+    if (!canManage) return;
     setRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: action } : r));
 
     // Append to timeline logs
@@ -487,6 +472,7 @@ export function RbacTab() {
 
   // Security Insights actions
   const handleResolveInsight = (id: string, type: string, targetUsr: string) => {
+    if (!canManage) return;
     setInsights(prev => prev.map(ins => ins.id === id ? { ...ins, status: 'resolved' } : ins));
 
     // Execute state changes depending on resolution type
@@ -500,14 +486,12 @@ export function RbacTab() {
       addAuditLog(`Mitigated risk: Remotely activated MFA protection configuration for: ${targetUsr}`, 'success');
     } else if (type === 'scope') {
       // Reduce billing scopes
-      setPermissions(prev => ({
-        ...prev,
-        qa: {
-          ...prev.qa,
-          billing: 'none'
-        }
-      }));
+      updatePermission('qa', 'billing', 'none');
       addAuditLog(`Mitigated risk: Stripped billing scopes for QA Manager role`, 'success');
+    } else if (type === 'scope_ops') {
+      // Reduce analytics scope of operations manager
+      updatePermission('operations', 'analytics', 'view');
+      addAuditLog(`Mitigated risk: Reduced analytics write scopes for Operations Manager`, 'success');
     }
 
     useNotificationStore.getState().addAlert({
@@ -526,6 +510,7 @@ export function RbacTab() {
 
   // Apply AI Recommendation
   const handleApplyRec = (id: string, text: string) => {
+    if (!canManage) return;
     setRecommendations(prev => prev.map(rec => rec.id === id ? { ...rec, applied: true } : rec));
 
     if (id === 'rec-1') {
@@ -533,10 +518,9 @@ export function RbacTab() {
     } else if (id === 'rec-2') {
       setUsers(prev => prev.map(u => u.name === 'Guest Contractor' ? { ...u, mfa: true } : u));
     } else if (id === 'rec-3') {
-      setPermissions(prev => ({
-        ...prev,
-        qa: { ...prev.qa, billing: 'none' }
-      }));
+      updatePermission('qa', 'billing', 'none');
+    } else if (id === 'rec-4') {
+      updatePermission('operations', 'analytics', 'view');
     }
 
     useNotificationStore.getState().addAlert({
@@ -557,6 +541,7 @@ export function RbacTab() {
 
   // Export CSV simulated
   const handleExportLogs = () => {
+    if (!canExport) return;
     useNotificationStore.getState().addAlert({
       category: 'operations',
       source: 'analytics',
@@ -597,8 +582,11 @@ export function RbacTab() {
         </div>
         <button
           onClick={handleGlobalCompile}
-          disabled={isCompiling}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-750 disabled:opacity-60 text-white rounded-2xl shadow-md active:scale-95 transition-all uppercase tracking-wider font-mono cursor-pointer"
+          disabled={isCompiling || !canManage}
+          className={`flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold bg-blue-600 hover:bg-blue-750 text-white rounded-2xl shadow-md active:scale-95 transition-all uppercase tracking-wider font-mono ${
+            (isCompiling || !canManage) ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+          }`}
+          title={!canManage ? "Requires Manage Permission" : undefined}
         >
           <RefreshCw className={`w-4 h-4 ${isCompiling ? 'animate-spin' : ''}`} />
           <span>{isCompiling ? loc.btnSaving : loc.btnSave}</span>
@@ -714,27 +702,30 @@ export function RbacTab() {
                     <tr key={role.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 group">
                       {/* Role Header */}
                       <td className="py-3 px-4 font-bold text-slate-900 dark:text-white sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-950 z-5 shadow-sm">
-                        <span className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold font-mono tracking-wide ${role.color}`}>
+                        <span className={`inline-flex items-center justify-center px-1.5 py-0.5 min-h-[22px] rounded-lg border text-[9.5px] font-bold font-mono tracking-wide whitespace-nowrap ${role.color}`}>
                           {role.name}
                         </span>
                       </td>
 
                       {/* Modules Cells (Dropdown instead of grid checkboxes for lightweight rendering) */}
                       {filteredModules.map((mod) => {
-                        const activeLevel = permissions[role.id]?.[mod.id] || 'none';
+                        const activeLevel = permissions[role.id]?.[mod.id as keyof RolePermissions] || 'none';
                         return (
                           <td key={mod.id} className="py-3 px-2 text-center">
                             <select
                               value={activeLevel}
-                              disabled={role.id === 'admin'}
+                              disabled={role.id === 'admin' || !canEdit}
                               onChange={(e) => handleMatrixChange(role.id, mod.id, e.target.value)}
-                              className={`px-2 py-1.5 rounded-xl border bg-transparent font-mono text-[10px] font-bold outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer ${
+                              className={`px-2 py-1.5 rounded-xl border bg-transparent font-mono text-[10px] font-bold outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                role.id === 'admin' || !canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                              } ${
                                 activeLevel === 'admin' ? 'border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/5' :
                                 activeLevel === 'manage' ? 'border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/5' :
                                 activeLevel === 'edit' ? 'border-indigo-500/30 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5' :
                                 activeLevel === 'view' ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' :
                                 'border-slate-200 dark:border-slate-800 text-slate-400'
                               }`}
+                              title={!canEdit && role.id !== 'admin' ? "Requires Edit Permission" : undefined}
                             >
                               {permissionOptions.map(opt => (
                                 <option key={opt.value} value={opt.value} className="dark:bg-slate-950 dark:text-slate-200">
@@ -787,12 +778,13 @@ export function RbacTab() {
                   </div>
                   <button
                     onClick={() => handleApplyRec(rec.id, isRtl ? rec.textAr : rec.textEn)}
-                    disabled={rec.applied}
-                    className={`w-full py-2 rounded-xl text-[10.5px] font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer ${
-                      rec.applied
+                    disabled={rec.applied || !canManage}
+                    className={`w-full py-2 rounded-xl text-[10.5px] font-bold transition-all uppercase tracking-wider flex items-center justify-center gap-1.5 ${
+                      (rec.applied || !canManage)
                         ? 'bg-slate-200 dark:bg-slate-850 text-slate-400 dark:text-slate-650 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-750 text-white active:scale-95'
+                        : 'bg-blue-600 hover:bg-blue-750 text-white active:scale-95 cursor-pointer'
                     }`}
+                    title={!canManage && !rec.applied ? "Requires Manage Permission" : undefined}
                   >
                     {rec.applied && <Check className="w-3.5 h-3.5" />}
                     <span>{rec.applied ? loc.btnApplied : loc.btnApply}</span>
@@ -856,8 +848,11 @@ export function RbacTab() {
                           <select
                             value={usr.role}
                             onChange={(e) => handleRoleChange(usr.id, e.target.value, usr.name)}
-                            disabled={usr.name === 'Idle Administrator' && usr.locked}
-                            className="px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-transparent font-mono text-[10.5px] font-bold outline-none cursor-pointer"
+                            disabled={(usr.name === 'Idle Administrator' && usr.locked) || !canManage}
+                            className={`px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-transparent font-mono text-[10.5px] font-bold outline-none ${
+                              ((usr.name === 'Idle Administrator' && usr.locked) || !canManage) ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
+                            title={!canManage ? "Requires Manage Permission" : undefined}
                           >
                             {roleMetadata.map((r) => (
                               <option key={r.id} value={r.id} className="dark:bg-slate-950 dark:text-slate-200">
@@ -911,9 +906,12 @@ export function RbacTab() {
                             {/* Session Revoke */}
                             {usr.session === 'active' ? (
                               <button
+                                disabled={!canManage}
                                 onClick={() => handleRevokeSession(usr.id, usr.name)}
-                                className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl font-bold text-[10px] transition-all cursor-pointer whitespace-nowrap"
-                                title="Terminate active credential token session"
+                                className={`px-2.5 py-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-855 rounded-xl font-bold text-[10px] transition-all whitespace-nowrap ${
+                                  !canManage ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                }`}
+                                title={!canManage ? "Requires Manage Permission" : "Terminate active credential token session"}
                               >
                                 {loc.btnRevoke}
                               </button>
@@ -923,12 +921,14 @@ export function RbacTab() {
 
                             {/* Lock/Unlock account */}
                             <button
+                              disabled={!canManage}
                               onClick={() => handleToggleLock(usr.id, usr.locked, usr.name)}
-                              className={`px-2.5 py-1 border rounded-xl font-bold text-[10px] transition-all cursor-pointer whitespace-nowrap ${
+                              className={`px-2.5 py-1 border rounded-xl font-bold text-[10px] transition-all whitespace-nowrap ${
                                 usr.locked 
                                   ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-500 text-white' 
                                   : 'bg-red-500/10 hover:bg-red-500/15 border-red-500/20 text-red-600'
-                              }`}
+                              } ${!canManage ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                              title={!canManage ? "Requires Manage Permission" : undefined}
                             >
                               {usr.locked ? loc.btnUnlock : loc.btnLock}
                             </button>
@@ -936,9 +936,12 @@ export function RbacTab() {
                             {/* Certify directory/Access review badge */}
                             {!usr.reviewed && (
                               <button
+                                disabled={!canManage}
                                 onClick={() => handleApproveAccessReview(usr.id, usr.name)}
-                                className="px-2 py-1 bg-blue-600 hover:bg-blue-750 text-white rounded-xl font-bold text-[10px] cursor-pointer"
-                                title="Approve access review audit"
+                                className={`px-2 py-1 bg-blue-600 hover:bg-blue-750 text-white rounded-xl font-bold text-[10px] ${
+                                  !canManage ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                }`}
+                                title={!canManage ? "Requires Manage Permission" : "Approve access review audit"}
                               >
                                 Certify
                               </button>
@@ -995,14 +998,22 @@ export function RbacTab() {
                       {req.status === 'pending' ? (
                         <>
                           <button
+                            disabled={!canManage}
                             onClick={() => handleResolveRequest(req.id, 'approved', req.name, req.type)}
-                            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl text-[10.5px] uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap"
+                            className={`px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl text-[10.5px] uppercase tracking-wider transition-all whitespace-nowrap ${
+                              !canManage ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
+                            title={!canManage ? "Requires Manage Permission" : undefined}
                           >
                             {loc.btnApprove}
                           </button>
                           <button
+                            disabled={!canManage}
                             onClick={() => handleResolveRequest(req.id, 'rejected', req.name, req.type)}
-                            className="px-3.5 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold rounded-2xl text-[10.5px] uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap"
+                            className={`px-3.5 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold rounded-2xl text-[10.5px] uppercase tracking-wider transition-all whitespace-nowrap ${
+                              !canManage ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
+                            title={!canManage ? "Requires Manage Permission" : undefined}
                           >
                             {loc.btnReject}
                           </button>
@@ -1068,12 +1079,13 @@ export function RbacTab() {
                         <button
                           type="button"
                           onClick={() => handleResolveInsight(ins.id, ins.type, ins.targetUsr)}
-                          disabled={isResolved}
-                          className={`px-3 py-1.5 rounded-xl font-bold text-[10px] transition-all cursor-pointer ${
-                            isResolved
+                          disabled={isResolved || !canManage}
+                          className={`px-3 py-1.5 rounded-xl font-bold text-[10px] transition-all ${
+                            (isResolved || !canManage)
                               ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-650 cursor-not-allowed'
-                              : 'bg-blue-600 hover:bg-blue-750 text-white active:scale-95'
+                              : 'bg-blue-600 hover:bg-blue-750 text-white active:scale-95 cursor-pointer'
                           }`}
+                          title={!canManage && !isResolved ? "Requires Manage Permission" : undefined}
                         >
                           {isResolved ? loc.btnResolved : loc.btnResolve}
                         </button>
@@ -1123,8 +1135,12 @@ export function RbacTab() {
 
               {/* Export Trigger */}
               <button 
+                disabled={!canExport}
                 onClick={handleExportLogs}
-                className="px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 hover:bg-slate-100 dark:bg-slate-955 dark:hover:bg-slate-900 text-slate-655 dark:text-slate-300 rounded-xl transition-all font-bold text-[10px] cursor-pointer flex items-center gap-1.5"
+                className={`px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 hover:bg-slate-100 dark:bg-slate-955 dark:hover:bg-slate-900 text-slate-655 dark:text-slate-300 rounded-xl transition-all font-bold text-[10px] flex items-center gap-1.5 ${
+                  !canExport ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                }`}
+                title={!canExport ? "Requires Export Permission" : undefined}
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{loc.btnExport}</span>

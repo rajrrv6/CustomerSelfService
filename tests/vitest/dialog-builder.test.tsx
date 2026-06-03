@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@/test-utils';
-import { WorkflowToolbar } from '@/components/dialog-builder/WorkflowToolbar';
+import { WorkflowToolbar } from '@/archive/old-builders/dialog-builder/WorkflowToolbar';
 
 describe('Dialog Builder Subsystem QA Tests', () => {
   it('renders WorkflowToolbar options and handles adding nodes', () => {

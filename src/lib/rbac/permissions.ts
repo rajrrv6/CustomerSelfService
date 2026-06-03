@@ -37,7 +37,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'agent_dashboard',
     'tickets'
   ],
-  operations_manager: ['inbox', 'agents', 'sla', 'surveys', 'integrations', 'analytics_center'],
+  operations_manager: ['inbox', 'agents', 'workforce', 'supervisor_monitor', 'sla', 'surveys', 'integrations', 'analytics_center'],
   qa_manager: ['qa_queue', 'coaching', 'inbox', 'surveys', 'training'],
   support_agent: ['agent_dashboard', 'inbox', 'tickets'],
   supervisor: ['inbox', 'supervisor_monitor', 'workforce', 'sla', 'analytics_center'],
@@ -66,8 +66,29 @@ export const ROLE_DEFAULT_SCREEN: Record<UserRole, string> = {
   viewer: 'surveys',
 };
 
+import { canView } from '@/stores/permissionStore';
+
+export const SUPER_ADMIN_SCREENS = [
+  'llm_registry',
+  'asr_tts_registry',
+  'nlu_governance',
+  'cost_benchmarks',
+  'cross_tenant_analytics',
+  'vector_db',
+  'sip_trunk'
+];
+
 export function canAccessScreen(role: UserRole, screenId: string): boolean {
-  return ROLE_PERMISSIONS[role]?.includes(screenId) ?? false;
+  if (role === 'super_admin') {
+    return SUPER_ADMIN_SCREENS.includes(screenId) || screenId === 'analytics_center';
+  }
+  if (SUPER_ADMIN_SCREENS.includes(screenId)) {
+    return false;
+  }
+  if (role === 'customer') {
+    return ROLE_PERMISSIONS.customer.includes(screenId);
+  }
+  return canView(screenId, role);
 }
 
 export function getScreenTitle(screenId: string, t: TranslationKeys): string {

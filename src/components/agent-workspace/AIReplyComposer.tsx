@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, RefreshCcw, FileText, Wand2 } from 'lucide-react';
 import { useIsDesktopOperational } from '@/hooks/useMediaQuery';
 import { MobileSheet } from '@/components/responsive/MobileSheet';
-
 import { translations } from '@/i18n/translations';
+import { usePermission } from '@/stores/permissionStore';
 
 interface AIReplyComposerProps {
   draftText: string;
@@ -29,6 +29,7 @@ export function AIReplyComposer({
   status
 }: AIReplyComposerProps) {
   const isDesktop = useIsDesktopOperational();
+  const { canEdit } = usePermission('inbox');
   const [activeTab, setActiveTab] = useState<'customer' | 'note'>('customer');
   const [selectedTone, setSelectedTone] = useState<'professional' | 'empathetic' | 'concise'>('professional');
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
@@ -52,6 +53,7 @@ export function AIReplyComposer({
   }, []);
 
   const streamText = (text: string) => {
+    if (!canEdit) return;
     if (process.env.NODE_ENV === 'test') {
       onChangeDraft(text);
       return;
@@ -79,10 +81,12 @@ export function AIReplyComposer({
   ];
 
   const handleApplyMacro = (val: string) => {
+    if (!canEdit) return;
     streamText(val);
   };
 
   const handleRewriteTone = () => {
+    if (!canEdit) return;
     setLoadingSuggestion(true);
     const runRewrite = () => {
       let result = draftText || suggestedReplyText;
@@ -105,6 +109,7 @@ export function AIReplyComposer({
   };
 
   const handleApplyAISuggestion = () => {
+    if (!canEdit) return;
     streamText(suggestedReplyText);
   };
 
@@ -117,7 +122,9 @@ export function AIReplyComposer({
           <button
             type="button"
             onClick={handleApplyAISuggestion}
-            className="rounded bg-blue-100 px-2 py-1 text-[10px] font-bold text-blue-800 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300"
+            disabled={!canEdit}
+            className={`rounded bg-blue-100 px-2 py-1 text-[10px] font-bold text-blue-800 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
           >
             {t.agentWorkspace.aiComposer.applySuggestion}
           </button>
@@ -155,7 +162,9 @@ export function AIReplyComposer({
           <select
             value={selectedTone}
             onChange={(e) => setSelectedTone(e.target.value as 'professional' | 'empathetic' | 'concise')}
-            className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            disabled={!canEdit}
+            className={`rounded-lg border border-slate-300 bg-slate-55 px-2 py-1 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
           >
             <option value="professional">{t.agentWorkspace.aiComposer.professional}</option>
             <option value="empathetic">{t.agentWorkspace.aiComposer.empathetic}</option>
@@ -164,8 +173,9 @@ export function AIReplyComposer({
           <button
             type="button"
             onClick={handleRewriteTone}
-            disabled={loadingSuggestion}
-            className="flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white hover:bg-blue-700"
+            disabled={loadingSuggestion || !canEdit}
+            className={`flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white hover:bg-blue-700 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
           >
             <RefreshCcw className={`h-3.5 w-3.5 ${loadingSuggestion ? 'animate-spin' : ''}`} />
             {t.agentWorkspace.aiComposer.rewrite}
@@ -177,7 +187,9 @@ export function AIReplyComposer({
         <select
           onChange={(e) => handleApplyMacro(e.target.value)}
           defaultValue=""
-          className="max-w-full min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-[10px] text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+          disabled={!canEdit}
+          className={`max-w-full min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-55 px-3 py-2 text-[10px] text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+          title={!canEdit ? "Requires Edit Permission" : undefined}
         >
           <option value="" disabled>
             {t.agentWorkspace.aiComposer.insertCannedReply}
@@ -201,7 +213,9 @@ export function AIReplyComposer({
           <button
             type="button"
             onClick={handleApplyAISuggestion}
-            className="flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-100 px-2 py-2 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+            disabled={!canEdit}
+            className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-100 px-2 py-2 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
           >
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
             {t.agentWorkspace.aiComposer.applyAi}
@@ -303,8 +317,13 @@ export function AIReplyComposer({
             <button
               key={idx}
               type="button"
-              onClick={() => streamText(qr.value)}
-              className="border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-2.5 py-0.5 rounded-full text-[10px] cursor-pointer font-bold transition-all shadow-xs"
+              onClick={() => {
+                if (!canEdit) return;
+                streamText(qr.value);
+              }}
+              disabled={!canEdit}
+              className={`border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-2.5 py-0.5 rounded-full text-[10px] cursor-pointer font-bold transition-all shadow-xs ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={!canEdit ? "Requires Edit Permission" : undefined}
             >
               {qr.label}
             </button>
@@ -332,7 +351,11 @@ export function AIReplyComposer({
           </div>
           <textarea
             value={draftText}
-            onChange={(e) => onChangeDraft(e.target.value)}
+            onChange={(e) => {
+              if (!canEdit) return;
+              onChangeDraft(e.target.value);
+            }}
+            disabled={!canEdit}
             placeholder={
               activeTab === 'note'
                 ? t.agentWorkspace.aiComposer.writeInternalNote
@@ -341,7 +364,8 @@ export function AIReplyComposer({
             rows={5}
             className={`min-w-0 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-xs font-semibold focus:border-violet-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950/40 resize-y ${
               activeTab === 'note' ? 'text-purple-600 dark:text-purple-400' : 'text-slate-800 dark:text-slate-100'
-            }`}
+            } ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
           />
           <div className="flex items-center justify-between pt-1">
             <div className="flex gap-1.5 text-[9px] text-slate-400 select-none">
@@ -350,17 +374,27 @@ export function AIReplyComposer({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => onChangeDraft('')}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-[10px] text-slate-600 dark:text-slate-400 font-bold transition-all"
+                onClick={() => {
+                  if (!canEdit) return;
+                  onChangeDraft('');
+                }}
+                disabled={!canEdit}
+                className={`px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 text-[10px] text-slate-600 dark:text-slate-400 font-bold transition-all ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                title={!canEdit ? "Requires Edit Permission" : undefined}
               >
                 Clear
               </button>
               <button
                 type="button"
-                onClick={() => onSend(draftText, activeTab === 'customer' ? 'chat' : 'note')}
+                onClick={() => {
+                  if (!canEdit) return;
+                  onSend(draftText, activeTab === 'customer' ? 'chat' : 'note');
+                }}
+                disabled={!canEdit}
                 className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-[10px] font-bold text-white shadow-sm transition-all ${
                   activeTab === 'note' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-violet-600 hover:bg-violet-700'
-                }`}
+                } ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                title={!canEdit ? "Requires Edit Permission" : undefined}
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 {activeTab === 'note' ? 'Log Note' : 'Send Email'}
@@ -373,35 +407,46 @@ export function AIReplyComposer({
           <input
             type="text"
             value={draftText}
-            onChange={(e) => onChangeDraft(e.target.value)}
+            onChange={(e) => {
+              if (!canEdit) return;
+              onChangeDraft(e.target.value);
+            }}
+            disabled={!canEdit}
             placeholder={
               activeTab === 'note'
                 ? t.agentWorkspace.aiComposer.writeInternalNote
                 : t.agentWorkspace.aiComposer.writeResponse
             }
-            className={`min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-xs font-semibold focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 ${
+            className={`min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-55 px-3 py-2.5 text-xs font-semibold focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 ${
               activeTab === 'note'
                 ? 'text-purple-600 dark:text-purple-400'
                 : channel === 'whatsapp'
                 ? 'focus:border-emerald-500 text-slate-800 dark:text-slate-100'
                 : 'text-slate-800 dark:text-slate-100'
-            }`}
+            } ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
+                if (!canEdit) return;
                 onSend(draftText, activeTab === 'customer' ? 'chat' : 'note');
               }
             }}
           />
           <button
             type="button"
-            onClick={() => onSend(draftText, activeTab === 'customer' ? 'chat' : 'note')}
+            onClick={() => {
+              if (!canEdit) return;
+              onSend(draftText, activeTab === 'customer' ? 'chat' : 'note');
+            }}
+            disabled={!canEdit}
             className={`shrink-0 rounded-xl p-2.5 text-white shadow-lg transition-all ${
               activeTab === 'note'
                 ? 'bg-purple-600 hover:bg-purple-700'
                 : channel === 'whatsapp'
                 ? 'bg-emerald-600 hover:bg-emerald-700'
                 : 'bg-blue-600 hover:bg-blue-700'
-            }`}
+            } ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
           >
             <Sparkles className="h-4 w-4" />
           </button>

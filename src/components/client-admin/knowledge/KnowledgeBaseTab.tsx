@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Brain, RefreshCw, AlertCircle, Calendar, Sliders, Clock, Database, Save, Settings, ShieldAlert, Search, Plus, Trash2, Globe, FileText } from 'lucide-react';
 import { SectionHeader } from '@/components/shared/SectionHeader';
+import { usePermission } from '@/stores/permissionStore';
 import { OperationalCard } from '@/components/shared/OperationalCard';
 import { translations } from '@/i18n/translations';
 import { RetryPanel } from '@/components/shared/workflows/RetryPanel';
@@ -20,6 +21,7 @@ import { ReindexConfirmationModal } from './ReindexConfirmationModal';
 export function KnowledgeBaseTab() {
   const { lang, knowledgeSources, setKnowledgeSources, ingestionLogs, setIngestionLogs, addAuditLog } = useApp();
   const t = translations[lang];
+  const { canEdit, canManage } = usePermission('knowledge_base');
 
   // Local state for tracking retries
   const [retryingSourceId, setRetryingSourceId] = useState<string | null>(null);
@@ -48,6 +50,7 @@ export function KnowledgeBaseTab() {
   const isRtl = lang === 'ar';
 
   const handleSyncSource = (sourceId: string) => {
+    if (!canEdit) return;
     // Modify status to syncing
     setKnowledgeSources((prev) =>
       prev.map((src) => {
@@ -111,6 +114,7 @@ export function KnowledgeBaseTab() {
   };
 
   const handleRetrySource = (sourceId: string) => {
+    if (!canEdit) return;
     setRetryingSourceId(sourceId);
 
     // Increment attempt count
@@ -159,6 +163,7 @@ export function KnowledgeBaseTab() {
 
   const handleSaveSchedulerSettings = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) return;
     setKnowledgeSources((prev) =>
       prev.map((src) => {
         if (src.id === selectedSourceId) {
@@ -177,6 +182,7 @@ export function KnowledgeBaseTab() {
 
   // Handlers for adding new sources from the modals
   const handleAddFileSource = (name: string, sizeBytes: number, type: 'pdf') => {
+    if (!canEdit) return;
     const newSource: KnowledgeSource = {
       id: `ks-file-${Date.now()}`,
       name,
@@ -192,6 +198,7 @@ export function KnowledgeBaseTab() {
   };
 
   const handleAddUrlSource = (url: string, urlCount: number, depthLimit: number) => {
+    if (!canEdit) return;
     const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
     const newSource: KnowledgeSource = {
       id: `ks-url-${Date.now()}`,
@@ -213,6 +220,7 @@ export function KnowledgeBaseTab() {
   };
 
   const handleAddConnectorSource = (name: string, syncSchedule: string, type: 'database' | 'confluence') => {
+    if (!canEdit) return;
     const newSource: KnowledgeSource = {
       id: `ks-db-${Date.now()}`,
       name,
@@ -228,6 +236,7 @@ export function KnowledgeBaseTab() {
   };
 
   const handleConfirmReindex = () => {
+    if (!canManage) return;
     setKnowledgeSources((prev) => prev.map((src) => ({ ...src, status: 'syncing' })));
     
     const logId = `log-reindex-${Date.now()}`;
@@ -258,6 +267,7 @@ export function KnowledgeBaseTab() {
   };
 
   const handleDeleteSource = (sourceId: string) => {
+    if (!canManage) return;
     const targetSrc = knowledgeSources.find((s) => s.id === sourceId);
     const srcName = targetSrc?.name || 'Knowledge Source';
     setKnowledgeSources((prev) => prev.filter((src) => src.id !== sourceId));
@@ -302,7 +312,13 @@ export function KnowledgeBaseTab() {
     <div className="flex flex-wrap items-center gap-2 select-none">
       <button
         onClick={() => setShowUpload(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-750 text-white rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all shadow-sm shadow-blue-550/15"
+        disabled={!canEdit}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all shadow-sm ${
+          !canEdit
+            ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-655 cursor-not-allowed border border-transparent'
+            : 'bg-blue-600 hover:bg-blue-750 text-white shadow-blue-550/15'
+        }`}
+        title={!canEdit ? "Requires Edit Permission" : undefined}
       >
         <Plus className="w-3.5 h-3.5" />
         <span>{isRtl ? 'رفع ملف' : 'Upload Document'}</span>
@@ -310,7 +326,13 @@ export function KnowledgeBaseTab() {
       
       <button
         onClick={() => setShowCrawl(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all"
+        disabled={!canEdit}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all ${
+          !canEdit
+            ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-655 cursor-not-allowed border border-transparent'
+            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+        }`}
+        title={!canEdit ? "Requires Edit Permission" : undefined}
       >
         <Globe className="w-3.5 h-3.5" />
         <span>{isRtl ? 'زحف رابط' : 'Crawl URL'}</span>
@@ -318,7 +340,13 @@ export function KnowledgeBaseTab() {
 
       <button
         onClick={() => setShowDb(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all"
+        disabled={!canEdit}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all ${
+          !canEdit
+            ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-655 cursor-not-allowed border border-transparent'
+            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+        }`}
+        title={!canEdit ? "Requires Edit Permission" : undefined}
       >
         <Database className="w-3.5 h-3.5" />
         <span>{isRtl ? 'إضافة موصل' : 'Add Connector'}</span>
@@ -326,7 +354,13 @@ export function KnowledgeBaseTab() {
 
       <button
         onClick={() => setShowReindex(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all"
+        disabled={!canManage}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all ${
+          !canManage
+            ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-655 cursor-not-allowed border border-transparent'
+            : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+        }`}
+        title={!canManage ? "Requires Manage Permission" : undefined}
       >
         <RefreshCw className="w-3.5 h-3.5" />
         <span>{isRtl ? 'إعادة فهرسة الكل' : 'Re-index All'}</span>
@@ -474,12 +508,17 @@ export function KnowledgeBaseTab() {
 
                             <div className="flex items-center gap-2">
                               <button
-                                disabled={src.status === 'syncing'}
+                                disabled={src.status === 'syncing' || !canEdit}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleSyncSource(src.id);
                                 }}
-                                className="px-3 py-1.5 text-[10px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all disabled:opacity-50 select-none outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+                                className={`px-3 py-1.5 text-[10px] font-bold rounded-xl transition-all select-none outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
+                                  src.status === 'syncing' || !canEdit
+                                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50'
+                                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer'
+                                }`}
+                                title={!canEdit ? "Requires Edit Permission" : undefined}
                               >
                                 {t.clientAdmin.kb.sync}
                               </button>
@@ -489,8 +528,13 @@ export function KnowledgeBaseTab() {
                                   e.stopPropagation();
                                   handleDeleteSource(src.id);
                                 }}
-                                className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/5 rounded-xl transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
-                                title="Delete Source"
+                                disabled={!canManage}
+                                className={`p-1.5 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 ${
+                                  !canManage
+                                    ? 'text-slate-600 dark:text-slate-655 cursor-not-allowed opacity-40'
+                                    : 'text-slate-400 hover:text-rose-500 hover:bg-rose-500/5 cursor-pointer'
+                                }`}
+                                title={!canManage ? "Requires Manage Permission" : "Delete Source"}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -519,14 +563,15 @@ export function KnowledgeBaseTab() {
                       {src.status === 'error' && (
                         <div className="pl-4 border-l-2 border-rose-500/55 animate-in slide-in-from-top-1">
                           <RetryPanel
-                            errorDetail={src.id === 'ks-4' ? 'Connection timeout. Host: erp-prod.internal.local. Code: ETIMEDOUT.' : 'Sync failed'}
-                            errorDetailAr={src.id === 'ks-4' ? 'انتهت مهلة الاتصال. المضيف: erp-prod.internal.local. الرمز: ETIMEDOUT.' : 'فشلت المزامنة'}
-                            attempts={retryAttempts[src.id] || 1}
-                            maxAttempts={3}
-                            isRetrying={retryingSourceId === src.id}
-                            onRetry={() => handleRetrySource(src.id)}
-                            isRtl={isRtl}
-                          />
+                             errorDetail={src.id === 'ks-4' ? 'Connection timeout. Host: erp-prod.internal.local. Code: ETIMEDOUT.' : 'Sync failed'}
+                             errorDetailAr={src.id === 'ks-4' ? 'انتهت مهلة الاتصال. المضيف: erp-prod.internal.local. الرمز: ETIMEDOUT.' : 'فشلت المزامنة'}
+                             attempts={retryAttempts[src.id] || 1}
+                             maxAttempts={3}
+                             isRetrying={retryingSourceId === src.id}
+                             onRetry={() => handleRetrySource(src.id)}
+                             isRtl={isRtl}
+                             disabled={!canEdit}
+                           />
                         </div>
                       )}
                     </div>
@@ -558,8 +603,13 @@ export function KnowledgeBaseTab() {
                   </label>
                   <select
                     value={syncSchedule}
+                    disabled={!canEdit}
                     onChange={(e) => setSyncSchedule(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-205 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-100 font-semibold"
+                    className={`w-full px-3 py-2 border border-slate-205 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold ${
+                      !canEdit
+                        ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 cursor-not-allowed opacity-60'
+                        : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100'
+                    }`}
                   >
                     <option value="manual">Manual (No Schedule)</option>
                     <option value="hourly">Hourly (Real-time webhook spikes)</option>
@@ -569,7 +619,7 @@ export function KnowledgeBaseTab() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-450 uppercase font-mono mb-1.5">
+                  <label className="block text-[10px] font-bold text-slate-455 uppercase font-mono mb-1.5">
                     Max Link Crawl Depth
                   </label>
                   <input
@@ -577,8 +627,13 @@ export function KnowledgeBaseTab() {
                     min={1}
                     max={5}
                     value={crawlerDepth}
+                    disabled={!canEdit}
                     onChange={(e) => setCrawlerDepth(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-850 dark:text-slate-100 font-semibold"
+                    className={`w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold ${
+                      !canEdit
+                        ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 cursor-not-allowed opacity-60'
+                        : 'bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100'
+                    }`}
                   />
                 </div>
 
@@ -589,8 +644,13 @@ export function KnowledgeBaseTab() {
                   <input
                     type="text"
                     value={exclusions}
+                    disabled={!canEdit}
                     onChange={(e) => setExclusions(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-850 dark:text-slate-100 font-semibold"
+                    className={`w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold ${
+                      !canEdit
+                        ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 cursor-not-allowed opacity-60'
+                        : 'bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100'
+                    }`}
                   />
                 </div>
               </div>
@@ -598,7 +658,13 @@ export function KnowledgeBaseTab() {
               <div className="flex justify-end pt-1">
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-750 text-white rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all shadow-sm shadow-blue-550/15"
+                  disabled={!canEdit}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all shadow-sm ${
+                    !canEdit
+                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-655 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-750 text-white shadow-blue-550/15'
+                  }`}
+                  title={!canEdit ? "Requires Edit Permission" : undefined}
                 >
                   <Save className="w-3.5 h-3.5" />
                   Save Crawler Schedule
@@ -617,7 +683,14 @@ export function KnowledgeBaseTab() {
                 <label className="block text-xs font-bold text-slate-450 uppercase font-mono mb-1.5">
                   {t.clientAdmin.kb.embeddingModel}
                 </label>
-                <select className="w-full px-3 py-2 border border-slate-205 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none text-slate-800 dark:text-slate-100 font-semibold">
+                <select 
+                  disabled={!canEdit}
+                  className={`w-full px-3 py-2 border border-slate-205 dark:border-slate-800 rounded-xl focus:outline-none font-semibold ${
+                    !canEdit
+                      ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 cursor-not-allowed opacity-60'
+                      : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100'
+                  }`}
+                >
                   <option>text-embedding-3-small (1536-dim)</option>
                   <option>text-embedding-3-large (3072-dim)</option>
                   <option>Cohere Multilingual v3</option>
@@ -630,19 +703,29 @@ export function KnowledgeBaseTab() {
                 <input
                   type="number"
                   value={chunkSize}
+                  disabled={!canEdit}
                   onChange={(e) => setChunkSize(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none text-slate-805 dark:text-slate-100 font-semibold"
+                  className={`w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none font-semibold ${
+                    !canEdit
+                      ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 cursor-not-allowed opacity-60'
+                      : 'bg-white dark:bg-slate-900 text-slate-805 dark:text-slate-100'
+                  }`}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-450 uppercase font-mono mb-1.5">
+                <label className="block text-xs font-bold text-slate-455 uppercase font-mono mb-1.5">
                   {t.clientAdmin.kb.overlapSize}
                 </label>
                 <input
                   type="number"
                   value={overlapSize}
+                  disabled={!canEdit}
                   onChange={(e) => setOverlapSize(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none text-slate-800 dark:text-slate-100 font-semibold"
+                  className={`w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none font-semibold ${
+                    !canEdit
+                      ? 'bg-slate-100 dark:bg-slate-800/40 text-slate-400 cursor-not-allowed opacity-60'
+                      : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100'
+                  }`}
                 />
               </div>
             </div>

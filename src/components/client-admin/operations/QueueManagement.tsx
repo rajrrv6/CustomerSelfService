@@ -33,13 +33,17 @@ interface QueueManagementProps {
   queuesList: QueueItem[];
   setQueuesList: React.Dispatch<React.SetStateAction<QueueItem[]>>;
   addAuditLog: (msg: string, type: 'success' | 'failed') => void;
+  canEdit: boolean;
+  canManage: boolean;
 }
 
 export function QueueManagement({
   lang,
   queuesList,
   setQueuesList,
-  addAuditLog
+  addAuditLog,
+  canEdit,
+  canManage
 }: QueueManagementProps) {
   const isRtl = lang === 'ar';
 
@@ -52,12 +56,14 @@ export function QueueManagement({
   });
 
   const handleOpenQueueCreate = () => {
+    if (!canEdit) return;
     setEditingQueueId(null);
     queueForm.reset(defaultQueueConfig());
     setIsQueueModalOpen(true);
   };
 
   const handleOpenQueueEdit = (q: QueueItem) => {
+    if (!canEdit) return;
     setEditingQueueId(q.id);
     queueForm.reset({
       nameEn: q.nameEn,
@@ -71,6 +77,7 @@ export function QueueManagement({
   };
 
   const onQueueSubmit = (values: QueueFormValues) => {
+    if (!canEdit) return;
     if (editingQueueId) {
       setQueuesList(queuesList.map(q => {
         if (q.id === editingQueueId) {
@@ -111,6 +118,7 @@ export function QueueManagement({
   };
 
   const handleDeleteQueue = (id: string) => {
+    if (!canManage) return;
     const qName = queuesList.find(q => q.id === id)?.nameEn || 'Queue';
     setQueuesList(queuesList.filter(q => q.id !== id));
     addAuditLog(`Deleted support queue: ${qName}`, 'success');
@@ -135,7 +143,7 @@ export function QueueManagement({
       accessorKey: 'maxWaitTimeMins',
       header: isRtl ? 'الانتظار الأقصى' : 'Max Wait Limit',
       cell: ({ row }) => (
-        <span className="font-mono font-bold text-slate-700 dark:text-slate-350">
+        <span className="font-mono font-bold text-slate-700 dark:text-slate-355">
           {row.original.maxWaitTimeMins}m
         </span>
       ),
@@ -144,7 +152,7 @@ export function QueueManagement({
       accessorKey: 'slaTargetPercent',
       header: isRtl ? 'هدف الـ SLA' : 'SLA Target',
       cell: ({ row }) => (
-        <span className="font-mono font-bold text-slate-700 dark:text-slate-350">
+        <span className="font-mono font-bold text-slate-700 dark:text-slate-355">
           {row.original.slaTargetPercent}%
         </span>
       ),
@@ -153,7 +161,7 @@ export function QueueManagement({
       accessorKey: 'priorityWeight',
       header: isRtl ? 'وزن الأولوية' : 'Priority Weight',
       cell: ({ row }) => (
-        <span className="font-mono font-bold text-slate-700 dark:text-slate-350">
+        <span className="font-mono font-bold text-slate-700 dark:text-slate-355">
           {row.original.priorityWeight}/10
         </span>
       ),
@@ -211,13 +219,17 @@ export function QueueManagement({
           <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => handleOpenQueueEdit(q)}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-blue-500 transition-colors cursor-pointer"
+              disabled={!canEdit}
+              className={`p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-blue-500 transition-colors cursor-pointer ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={!canEdit ? "Requires Edit Permission" : undefined}
             >
               <Edit className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handleDeleteQueue(q.id)}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-red-500 hover:text-red-400 transition-colors cursor-pointer"
+              disabled={!canManage}
+              className={`p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-red-500 hover:text-red-400 transition-colors cursor-pointer ${!canManage ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={!canManage ? "Requires Manage Permission" : undefined}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -227,7 +239,7 @@ export function QueueManagement({
       enableSorting: false,
       enableHiding: false,
     }
-  ], [isRtl, queuesList]);
+  ], [isRtl, queuesList, canEdit, canManage]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -238,7 +250,9 @@ export function QueueManagement({
 
         <button
           onClick={handleOpenQueueCreate}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
+          disabled={!canEdit}
+          className={`bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+          title={!canEdit ? "Requires Edit Permission" : undefined}
         >
           <Plus className="w-4 h-4" />
           <span>{isRtl ? 'إنشاء طابور دعم جديد' : 'Provision Queue'}</span>

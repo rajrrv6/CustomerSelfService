@@ -21,6 +21,7 @@ import {
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
 import { useNotificationStore } from '@/stores/notifications/notificationStore';
+import { usePermission } from '@/stores/permissionStore';
 
 // Local dictionary for UI extension
 interface LocalDict {
@@ -288,6 +289,7 @@ export function SlaAnalytics() {
   const isRtl = lang === 'ar';
   const t = translations[lang];
   const loc = isRtl ? arLocal : enLocal;
+  const { canManage } = usePermission('sla');
 
   // Real-Time SLA Cases State
   const [cases, setCases] = useState<BreachCase[]>([
@@ -499,6 +501,7 @@ export function SlaAnalytics() {
 
   // Handlers for interactive actions
   const handleCoach = (caseId: string) => {
+    if (!canManage) return;
     const c = cases.find(item => item.id === caseId);
     if (!c) return;
 
@@ -526,6 +529,7 @@ export function SlaAnalytics() {
   };
 
   const handleReassign = (caseId: string) => {
+    if (!canManage) return;
     setCases(prev => prev.map(c => {
       if (c.id === caseId) {
         const nextAgent = c.agent === 'Sarah Jenkins' ? 'Liam Bennett' : 'Sarah Jenkins';
@@ -564,6 +568,7 @@ export function SlaAnalytics() {
   };
 
   const handleEscalate = (caseId: string) => {
+    if (!canManage) return;
     setCases(prev => prev.map(c => {
       if (c.id === caseId) {
         if (c.priority === 'critical') return c;
@@ -602,6 +607,7 @@ export function SlaAnalytics() {
   };
 
   const handleLeaderboardAction = (index: number) => {
+    if (!canManage) return;
     setCoachingAgents(prev => prev.map((agent, idx) => {
       if (idx === index) {
         const isTeam = agent.name.includes('Team') || agent.nameAr.includes('فريق');
@@ -660,6 +666,7 @@ export function SlaAnalytics() {
   };
 
   const handleApplyBalancing = () => {
+    if (!canManage) return;
     if (balancingApplied) return;
     setBalancingApplied(true);
 
@@ -702,6 +709,7 @@ export function SlaAnalytics() {
   };
 
   const handleApproveExtension = () => {
+    if (!canManage) return;
     if (shiftApproved) return;
     setShiftApproved(true);
 
@@ -1013,23 +1021,26 @@ export function SlaAnalytics() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleCoach(c.id)}
-                      className="px-2 py-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-700 dark:text-slate-300 rounded-lg text-[9px] font-bold cursor-pointer transition-colors"
-                      title={loc.actionCoach}
+                      disabled={!canManage}
+                      className={`px-2 py-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-700 dark:text-slate-300 rounded-lg text-[9px] font-bold cursor-pointer transition-colors ${!canManage ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      title={!canManage ? "Requires Manage Permission" : loc.actionCoach}
                     >
                       {isRtl ? 'توجيه' : 'Coach'}
                     </button>
                     <button
                       onClick={() => handleReassign(c.id)}
-                      className="px-2 py-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-700 dark:text-slate-300 rounded-lg text-[9px] font-bold cursor-pointer transition-colors"
-                      title={loc.actionReassign}
+                      disabled={!canManage}
+                      className={`px-2 py-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-700 dark:text-slate-300 rounded-lg text-[9px] font-bold cursor-pointer transition-colors ${!canManage ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      title={!canManage ? "Requires Manage Permission" : loc.actionReassign}
                     >
                       {isRtl ? 'تعيين' : 'Reassign'}
                     </button>
                     {c.priority !== 'critical' && (
                       <button
                         onClick={() => handleEscalate(c.id)}
-                        className="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-lg text-[9px] font-bold cursor-pointer transition-colors"
-                        title={loc.actionEscalate}
+                        disabled={!canManage}
+                        className={`px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-lg text-[9px] font-bold cursor-pointer transition-colors ${!canManage ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        title={!canManage ? "Requires Manage Permission" : loc.actionEscalate}
                       >
                         {isRtl ? 'تصعيد' : 'Escalate'}
                       </button>
@@ -1064,12 +1075,15 @@ export function SlaAnalytics() {
               </div>
               <button
                 onClick={handleApplyBalancing}
-                disabled={balancingApplied}
+                disabled={balancingApplied || !canManage}
                 className={`w-full py-2 px-3 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   balancingApplied 
                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default' 
+                    : !canManage
+                    ? 'bg-violet-600/60 opacity-60 cursor-not-allowed text-white'
                     : 'bg-violet-600 hover:bg-violet-700 text-white'
                 }`}
+                title={!canManage ? "Requires Manage Permission" : undefined}
               >
                 {balancingApplied ? <Check className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
                 <span>{balancingApplied ? loc.appliedStatus : loc.btnApplyBalancing}</span>
@@ -1088,12 +1102,15 @@ export function SlaAnalytics() {
               </div>
               <button
                 onClick={handleApproveExtension}
-                disabled={shiftApproved}
+                disabled={shiftApproved || !canManage}
                 className={`w-full py-2 px-3 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   shiftApproved 
                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default' 
+                    : !canManage
+                    ? 'bg-blue-600/60 opacity-60 cursor-not-allowed text-white'
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
+                title={!canManage ? "Requires Manage Permission" : undefined}
               >
                 {shiftApproved ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                 <span>{shiftApproved ? loc.approvedStatus : loc.btnApproveExtension}</span>
@@ -1696,6 +1713,7 @@ export function SlaAnalytics() {
               <h5 className="text-[10px] font-black uppercase font-mono tracking-widest text-slate-400 mb-2">{loc.coachingRequired}</h5>
               <div className="space-y-2">
                 {coachingAgents.map((agent, idx) => {
+                  const { canManage } = usePermission('sla');
                   const isTeam = agent.name.includes('Team') || agent.nameAr.includes('فريق');
                   return (
                     <div key={idx} className="flex items-center justify-between p-2.5 border border-rose-100/10 dark:border-rose-950/20 bg-rose-50/5 dark:bg-rose-950/5 rounded-xl">
@@ -1719,12 +1737,15 @@ export function SlaAnalytics() {
                         {/* Interactive Coaching trigger button */}
                         <button
                           onClick={() => handleLeaderboardAction(idx)}
-                          disabled={agent.status === 'scheduled'}
+                          disabled={agent.status === 'scheduled' || !canManage}
                           className={`px-3 py-1.5 rounded-lg text-[9px] font-bold flex items-center gap-1 transition-all cursor-pointer shrink-0 ${
                             agent.status === 'scheduled'
                               ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default font-sans'
+                              : !canManage
+                              ? 'bg-white opacity-60 cursor-not-allowed border border-slate-200 text-slate-400 font-sans'
                               : 'bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-350 font-sans'
                           }`}
+                          title={!canManage ? "Requires Manage Permission" : undefined}
                         >
                           {agent.status === 'scheduled' ? (
                             <>

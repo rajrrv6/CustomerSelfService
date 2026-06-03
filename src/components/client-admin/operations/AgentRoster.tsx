@@ -47,6 +47,8 @@ interface AgentRosterProps {
   agentSkillsMap: Record<string, string[]>;
   setAgentSkillsMap: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
   availableSkills: string[];
+  canEdit: boolean;
+  canManage: boolean;
 }
 
 export function AgentRoster({
@@ -63,7 +65,9 @@ export function AgentRoster({
   shrinkageRate,
   agentSkillsMap,
   setAgentSkillsMap,
-  availableSkills
+  availableSkills,
+  canEdit,
+  canManage
 }: AgentRosterProps) {
   const isRtl = lang === 'ar';
 
@@ -76,12 +80,14 @@ export function AgentRoster({
   });
 
   const handleOpenAgentCreate = () => {
+    if (!canEdit) return;
     setEditingAgentId(null);
     agentForm.reset(defaultAgentConfig());
     setIsAgentModalOpen(true);
   };
 
   const handleOpenAgentEdit = (agent: AgentItem) => {
+    if (!canEdit) return;
     setEditingAgentId(agent.id);
     agentForm.reset({
       name: agent.name,
@@ -93,6 +99,7 @@ export function AgentRoster({
   };
 
   const onAgentSubmit = (values: AgentFormValues) => {
+    if (!canEdit) return;
     if (editingAgentId) {
       setAgents(agents.map(a => {
         if (a.id === editingAgentId) {
@@ -131,12 +138,14 @@ export function AgentRoster({
   };
 
   const handleDeleteAgent = (id: string) => {
+    if (!canManage) return;
     const aName = agents.find(a => a.id === id)?.name || 'Agent';
     setAgents(agents.filter(a => a.id !== id));
     addAuditLog(`Removed agent from active support roster: ${aName}`, 'success');
   };
 
   const handleToggleAgentSkill = (agentId: string, skill: string) => {
+    if (!canEdit) return;
     const currentSkills = agentSkillsMap[agentId] || [];
     let nextSkills: string[];
     if (currentSkills.includes(skill)) {
@@ -209,13 +218,17 @@ export function AgentRoster({
           <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => handleOpenAgentEdit(agent)}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-blue-500 transition-colors cursor-pointer"
+              disabled={!canEdit}
+              className={`p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-blue-500 transition-colors cursor-pointer ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={!canEdit ? "Requires Edit Permission" : undefined}
             >
               <Edit className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handleDeleteAgent(agent.id)}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-red-500 hover:text-red-400 transition-colors cursor-pointer"
+              disabled={!canManage}
+              className={`p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-red-500 hover:text-red-400 transition-colors cursor-pointer ${!canManage ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={!canManage ? "Requires Manage Permission" : undefined}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -225,7 +238,7 @@ export function AgentRoster({
       enableSorting: false,
       enableHiding: false,
     }
-  ], [isRtl, agents]);
+  ], [isRtl, agents, canEdit, canManage]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -237,7 +250,9 @@ export function AgentRoster({
 
         <button
           onClick={handleOpenAgentCreate}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
+          disabled={!canEdit}
+          className={`bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+          title={!canEdit ? "Requires Edit Permission" : undefined}
         >
           <Plus className="w-4 h-4" />
           <span>{isRtl ? 'إضافة وكيل دعم جديد' : 'Onboard Agent'}</span>
@@ -266,6 +281,7 @@ export function AgentRoster({
                 actionTextEn="Solve Staffing Gap"
                 actionTextAr="حل فجوة التغطية"
                 onAction={() => {
+                  if (!canManage) return;
                   setRoutingRealigned(true);
                   addAuditLog("Applied staffing recommendation: Re-routed VIP Specialist to Arabic queue.", "success");
                 }}
@@ -283,7 +299,7 @@ export function AgentRoster({
                   <Calendar className="w-4 h-4 text-blue-500" />
                   <span>{isRtl ? 'خريطة استخدام الموظفين ومعدل الإشغال' : 'Agent Occupancy & Shrinkage Heatmap'}</span>
                 </h4>
-                <p className="text-[10px] text-slate-500 mt-0.5">
+                <p className="text-[10px] text-slate-550 mt-0.5">
                   {isRtl ? 'عرض إشغال الوكلاء بالساعة ومعدلات انكماش الخدمة.' : 'Hourly agent caseload load and support shrinkage forecasting.'}
                 </p>
               </div>
@@ -355,7 +371,7 @@ export function AgentRoster({
               </div>
 
               {/* Heatmap Legend */}
-              <div className="flex flex-wrap items-center gap-4 text-[9px] font-bold font-mono text-slate-450 uppercase pt-3 border-t border-slate-100 dark:border-slate-850 mt-3 select-none">
+              <div className="flex flex-wrap items-center gap-4 text-[9px] font-bold font-mono text-slate-455 uppercase pt-3 border-t border-slate-100 dark:border-slate-850 mt-3 select-none">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded bg-rose-100 dark:bg-rose-955/45 border border-rose-250" />
                   <span>Overload (&gt;90%)</span>
@@ -380,7 +396,7 @@ export function AgentRoster({
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
                   <span>{isRtl ? 'محاكي غياب الموظفين المفاجئ' : 'Absenteeism Simulator'}</span>
                 </h5>
-                <p className="text-[10px] text-slate-450 mt-1 font-normal leading-relaxed">
+                <p className="text-[10px] text-slate-455 mt-1 font-normal leading-relaxed">
                   {isRtl 
                     ? 'محاكاة غياب مفاجئ لاثنين من وكلاء الدعم لاختبار قوة استقرار التوجيه التلقائي.'
                     : 'Simulate sudden sick leave for 2 agents to stress-test layout limits and queue routing rules.'}
@@ -389,6 +405,7 @@ export function AgentRoster({
 
               <button
                 onClick={() => {
+                  if (!canManage) return;
                   if (absenteeismActive) {
                     setAbsenteeismActive(false);
                     setRoutingRealigned(false);
@@ -404,12 +421,15 @@ export function AgentRoster({
                     }, 1200);
                   }
                 }}
-                disabled={isSimulating}
+                disabled={isSimulating || !canManage}
                 className={`w-full py-2.5 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all select-none border cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 ${
                   absenteeismActive
                     ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-900 dark:bg-amber-900/20 dark:hover:bg-amber-900/40 dark:text-amber-400 dark:border-amber-800'
+                    : !canManage
+                    ? 'bg-rose-600/60 opacity-60 cursor-not-allowed border-rose-600/30 text-white'
                     : 'bg-rose-600 hover:bg-rose-700 border-rose-600 text-white shadow-sm shadow-rose-600/10'
                 }`}
+                title={!canManage ? "Requires Manage Permission" : undefined}
               >
                 {isSimulating ? (
                   <span className="flex items-center justify-center gap-1.5">
@@ -438,10 +458,13 @@ export function AgentRoster({
                 {!routingRealigned ? (
                   <button
                     onClick={() => {
+                      if (!canManage) return;
                       setRoutingRealigned(true);
                       addAuditLog("Applied staffing recommendation: Re-routed VIP Specialist to Arabic queue.", "success");
                     }}
-                    className="w-full py-2 bg-blue-600 hover:bg-blue-750 text-white rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all shadow-sm shadow-blue-500/15 cursor-pointer"
+                    disabled={!canManage}
+                    className={`w-full py-2 bg-blue-600 hover:bg-blue-750 text-white rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all shadow-sm shadow-blue-500/15 cursor-pointer ${!canManage ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    title={!canManage ? "Requires Manage Permission" : undefined}
                   >
                     Execute Routing Override
                   </button>
@@ -476,6 +499,7 @@ export function AgentRoster({
             agentSkillsMap={agentSkillsMap}
             availableSkills={availableSkills}
             onToggleAgentSkill={handleToggleAgentSkill}
+            canEdit={canEdit}
           />
         </div>
       </div>

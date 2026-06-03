@@ -22,6 +22,7 @@ interface SkillsMatrixProps {
   agentSkillsMap: Record<string, string[]>;
   availableSkills: string[];
   onToggleAgentSkill: (agentId: string, skill: string) => void;
+  canEdit: boolean;
 }
 
 export function SkillsMatrix({
@@ -29,7 +30,8 @@ export function SkillsMatrix({
   agents,
   agentSkillsMap,
   availableSkills,
-  onToggleAgentSkill
+  onToggleAgentSkill,
+  canEdit
 }: SkillsMatrixProps) {
   const isRtl = lang === 'ar';
 
@@ -72,8 +74,13 @@ export function SkillsMatrix({
                         <input
                           type="checkbox"
                           checked={checked}
-                          onChange={() => onToggleAgentSkill(agent.id, skill)}
-                          className="rounded border-slate-350 dark:border-slate-800 text-blue-600 focus:ring-blue-550 bg-transparent h-3.5 w-3.5 cursor-pointer"
+                          disabled={!canEdit}
+                          onChange={() => {
+                            if (!canEdit) return;
+                            onToggleAgentSkill(agent.id, skill);
+                          }}
+                          className={`rounded border-slate-350 dark:border-slate-800 text-blue-600 focus:ring-blue-550 bg-transparent h-3.5 w-3.5 ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                          title={!canEdit ? "Requires Edit Permission" : undefined}
                         />
                       </td>
                     );

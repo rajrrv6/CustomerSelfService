@@ -19,12 +19,16 @@ interface RoutingRulesProps {
   lang: 'en' | 'ar';
   routingRules: RoutingRule[];
   onToggleRule: (id: string) => void;
+  canEdit: boolean;
+  canManage: boolean;
 }
 
 export function RoutingRules({
   lang,
   routingRules,
-  onToggleRule
+  onToggleRule,
+  canEdit,
+  canManage
 }: RoutingRulesProps) {
   const isRtl = lang === 'ar';
 
@@ -59,11 +63,18 @@ export function RoutingRules({
                 </div>
               </div>
 
-              <label className="relative inline-flex items-center cursor-pointer shrink-0 pt-1">
+              <label 
+                className={`relative inline-flex items-center shrink-0 pt-1 ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                title={!canEdit ? "Requires Edit Permission" : undefined}
+              >
                 <input
                   type="checkbox"
                   checked={rule.enabled}
-                  onChange={() => onToggleRule(rule.id)}
+                  disabled={!canEdit}
+                  onChange={() => {
+                    if (!canEdit) return;
+                    onToggleRule(rule.id);
+                  }}
                   className="sr-only peer"
                 />
                 <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-slate-400 after:border-slate-350 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white" />

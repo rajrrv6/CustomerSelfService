@@ -11,6 +11,7 @@ interface RetryPanelProps {
   isRetrying: boolean;
   onRetry: () => void;
   isRtl?: boolean;
+  disabled?: boolean;
 }
 
 export function RetryPanel({
@@ -21,6 +22,7 @@ export function RetryPanel({
   isRetrying,
   onRetry,
   isRtl = false,
+  disabled = false,
 }: RetryPanelProps) {
   const [progress, setProgress] = useState(0);
 
@@ -78,8 +80,11 @@ export function RetryPanel({
         {/* Retry Button */}
         <button
           onClick={onRetry}
-          disabled={isRetrying}
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider font-bold bg-rose-600 hover:bg-rose-700 disabled:bg-rose-400 text-white transition-all outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 select-none shadow-sm shadow-rose-600/10 disabled:pointer-events-none"
+          disabled={isRetrying || disabled}
+          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider font-bold bg-rose-600 hover:bg-rose-700 text-white transition-all outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 select-none shadow-sm shadow-rose-600/10 ${
+            isRetrying || disabled ? 'disabled:bg-rose-400 opacity-60 cursor-not-allowed pointer-events-none' : ''
+          }`}
+          title={disabled ? "Requires Edit Permission" : undefined}
         >
           <RotateCw className={`w-3.5 h-3.5 ${isRetrying ? 'animate-spin' : ''}`} />
           <span>{isRetrying ? (isRtl ? 'جاري إعادة المحاولة...' : 'Retrying...') : (isRtl ? 'إعادة المحاولة الآن' : 'Retry Now')}</span>

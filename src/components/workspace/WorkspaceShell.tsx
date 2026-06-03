@@ -28,6 +28,13 @@ import {
   ROLE_DEFAULT_SCREEN,
   ROLE_PERMISSIONS,
 } from '@/lib/rbac/permissions';
+import {
+  usePermissionStore,
+  mapUserRoleToMatrixRole,
+  LEVEL_RANKS,
+  SCREEN_TO_MODULE_MAP,
+  type RolePermissions
+} from '@/stores/permissionStore';
 import type { AuditLog } from '@/types';
 import type { TranslationKeys } from '@/i18n/translations';
 import type { UserRole } from '@/types';
@@ -103,20 +110,51 @@ function WorkspaceShellInner({
     return () => window.removeEventListener('navigate-to-screen', handler as EventListener);
   }, []);
 
-  const renderedScreen = React.useMemo(() => {
-    const isAuth = canAccessScreen(role, activeScreen);
-    if (isAuth) return activeScreen;
+  const permissionsState = usePermissionStore((s) => s.permissions);
+  const apiPermissionsState = usePermissionStore((s) => s.apiPermissions);
 
+  const renderedScreen = React.useMemo(() => {
+    // 1. If currently active screen is authorized, stay there
+    if (canAccessScreen(role, activeScreen)) {
+      return activeScreen;
+    }
+
+    // 2. Check default screen for this role
     const defaultScreen = ROLE_DEFAULT_SCREEN[role];
     if (canAccessScreen(role, defaultScreen)) {
       return defaultScreen;
     }
+
+    // 3. Find any first allowed screen from role configuration
     const allowedScreens = ROLE_PERMISSIONS[role];
-    if (allowedScreens && allowedScreens.length > 0) {
-      return allowedScreens[0];
+    if (allowedScreens) {
+      const firstAllowed = allowedScreens.find((scr) => canAccessScreen(role, scr));
+      if (firstAllowed) {
+        return firstAllowed;
+      }
     }
+
+    // 4. Fallback to first matrix allowed screen to avoid blank states
+    const matrixRole = mapUserRoleToMatrixRole(role);
+    const roleRules = permissionsState[matrixRole];
+    if (roleRules) {
+      const allowedModule = Object.keys(roleRules).find((mod) => {
+        const level = roleRules[mod as keyof RolePermissions];
+        return LEVEL_RANKS[level] >= LEVEL_RANKS.view;
+      });
+      if (allowedModule) {
+        const mappedScreen = Object.keys(SCREEN_TO_MODULE_MAP).find(
+          (scr) => SCREEN_TO_MODULE_MAP[scr] === allowedModule
+        );
+        if (mappedScreen && canAccessScreen(role, mappedScreen)) {
+          return mappedScreen;
+        }
+      }
+    }
+
+    // If absolutely nothing is allowed, just stick to activeScreen and let unauthorized message render
     return activeScreen;
-  }, [role, activeScreen]);
+  }, [role, activeScreen, permissionsState, apiPermissionsState]);
 
   React.useEffect(() => {
     if (activeScreen !== renderedScreen) {

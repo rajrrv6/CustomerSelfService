@@ -26,6 +26,8 @@ interface LivePresenceBoardProps {
   activeSupervisorMode: 'silent' | 'whisper' | 'barge' | null;
   setActiveSupervisorMode: (val: 'silent' | 'whisper' | 'barge' | null) => void;
   addAuditLog: (msg: string, type: 'success' | 'failed') => void;
+  canEdit: boolean;
+  canManage: boolean;
 }
 
 type AuxCode = 'Available' | 'Break' | 'Lunch' | 'Coaching' | 'Meeting' | 'Offline' | 'After Call Work';
@@ -38,7 +40,9 @@ export function LivePresenceBoard({
   setSupervisedAgent,
   activeSupervisorMode,
   setActiveSupervisorMode,
-  addAuditLog
+  addAuditLog,
+  canEdit,
+  canManage
 }: LivePresenceBoardProps) {
   const isRtl = lang === 'ar';
 
@@ -76,6 +80,7 @@ export function LivePresenceBoard({
   };
 
   const handleAuxChange = (agentId: string, code: AuxCode) => {
+    if (!canEdit) return;
     // Map Aux Code to base DB status
     let baseStatus: 'online' | 'busy' | 'away' | 'offline' = 'online';
     if (code === 'Available') baseStatus = 'online';
@@ -150,8 +155,10 @@ export function LivePresenceBoard({
                 {/* Aux code selector */}
                 <select
                   value={auxData.code}
+                  disabled={!canEdit}
                   onChange={(e) => handleAuxChange(agent.id, e.target.value as AuxCode)}
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-[9px] font-bold text-slate-300 focus:outline-none cursor-pointer hover:border-slate-700 max-w-[130px] font-sans"
+                  className={`bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-[9px] font-bold text-slate-300 focus:outline-none hover:border-slate-700 max-w-[130px] font-sans ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                  title={!canEdit ? "Requires Edit Permission" : undefined}
                 >
                   <option value="Available">{getAuxLabel('Available')}</option>
                   <option value="Break">{getAuxLabel('Break')}</option>
@@ -164,7 +171,7 @@ export function LivePresenceBoard({
               </div>
 
               {/* Ticking Duration Badge */}
-              <div className="flex items-center justify-between text-[9px] font-bold font-mono text-slate-450 dark:text-slate-400 select-none bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-100 dark:border-slate-850">
+              <div className="flex items-center justify-between text-[9px] font-bold font-mono text-slate-450 dark:text-slate-400 select-none bg-slate-50 dark:bg-slate-955 p-2 rounded-xl border border-slate-100 dark:border-slate-850">
                 <div className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-blue-500 animate-spin" style={{ animationDuration: '4s' }} />
                   <span>{isRtl ? 'حالة التواجد الحالية:' : 'Current State Presence:'}</span>
@@ -185,7 +192,7 @@ export function LivePresenceBoard({
                   <div className={`h-full ${utilization >= 100 ? 'bg-red-500' : utilization > 60 ? 'bg-amber-500' : 'bg-blue-600'}`} style={{ width: `${utilization}%` }} />
                 </div>
 
-                <div className="flex justify-between items-center text-[9px] text-slate-450 dark:text-slate-500 font-mono select-none">
+                <div className="flex justify-between items-center text-[9px] text-slate-455 dark:text-slate-500 font-mono select-none">
                   <span>{isRtl ? `المحادثات: ${agent.activeChatsCount}/${agent.maxChatsCount}` : `Active Slots: ${agent.activeChatsCount}/${agent.maxChatsCount}`}</span>
                   <span className="font-bold text-amber-500">{isRtl ? `CSAT التراكمي: ${agent.csatScore}%` : `CSAT Rating: ${agent.csatScore}%`}</span>
                 </div>
@@ -193,7 +200,7 @@ export function LivePresenceBoard({
 
               {/* Supervisor actions */}
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
-                <span className="text-[9px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider font-mono select-none">
+                <span className="text-[9px] font-bold text-slate-455 dark:text-slate-500 uppercase tracking-wider font-mono select-none">
                   {isMonitored && activeSupervisorMode 
                     ? (isRtl ? `تتبع نشط: ${activeSupervisorMode.toUpperCase()}` : `ACTIVE: ${activeSupervisorMode.toUpperCase()}`) 
                     : (isRtl ? 'مراقبة المشرف:' : 'Supervisor Audit:')}
@@ -203,16 +210,20 @@ export function LivePresenceBoard({
                   <button
                     type="button"
                     onClick={() => {
+                      if (!canManage) return;
                       setSupervisedAgent(isMonitored && activeSupervisorMode === 'silent' ? null : agent.id);
                       setActiveSupervisorMode(isMonitored && activeSupervisorMode === 'silent' ? null : 'silent');
                       addAuditLog(`Silent monitored session for Agent: ${agent.name}`, 'success');
                     }}
+                    disabled={!canManage}
                     className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                       isMonitored && activeSupervisorMode === 'silent'
                         ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
+                        : !canManage
+                        ? 'border-slate-800 opacity-60 cursor-not-allowed text-slate-455'
                         : 'border-slate-800 hover:bg-slate-800 text-slate-455 hover:text-slate-200'
                     }`}
-                    title="Silent Listen-In"
+                    title={!canManage ? "Requires Manage Permission" : "Silent Listen-In"}
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </button>
@@ -220,16 +231,20 @@ export function LivePresenceBoard({
                   <button
                     type="button"
                     onClick={() => {
+                      if (!canManage) return;
                       setSupervisedAgent(isMonitored && activeSupervisorMode === 'whisper' ? null : agent.id);
                       setActiveSupervisorMode(isMonitored && activeSupervisorMode === 'whisper' ? null : 'whisper');
                       addAuditLog(`Initiated supervisor coaching whisper with Agent: ${agent.name}`, 'success');
                     }}
+                    disabled={!canManage}
                     className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                       isMonitored && activeSupervisorMode === 'whisper'
                         ? 'bg-amber-600 border-amber-500 text-white shadow-sm'
+                        : !canManage
+                        ? 'border-slate-800 opacity-60 cursor-not-allowed text-slate-455'
                         : 'border-slate-800 hover:bg-slate-800 text-slate-455 hover:text-slate-200'
                     }`}
-                    title="Whisper Coaching"
+                    title={!canManage ? "Requires Manage Permission" : "Whisper Coaching"}
                   >
                     <Volume2 className="w-3.5 h-3.5" />
                   </button>
@@ -237,16 +252,20 @@ export function LivePresenceBoard({
                   <button
                     type="button"
                     onClick={() => {
+                      if (!canManage) return;
                       setSupervisedAgent(isMonitored && activeSupervisorMode === 'barge' ? null : agent.id);
                       setActiveSupervisorMode(isMonitored && activeSupervisorMode === 'barge' ? null : 'barge');
                       addAuditLog(`Supervisor barged directly into live dialogue with Agent: ${agent.name}`, 'success');
                     }}
+                    disabled={!canManage}
                     className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                       isMonitored && activeSupervisorMode === 'barge'
                         ? 'bg-red-600 border-red-500 text-white shadow-sm'
+                        : !canManage
+                        ? 'border-slate-800 opacity-60 cursor-not-allowed text-slate-455'
                         : 'border-slate-800 hover:bg-slate-800 text-slate-455 hover:text-slate-200'
                     }`}
-                    title="Barge-in Confirmed"
+                    title={!canManage ? "Requires Manage Permission" : "Barge-in Confirmed"}
                   >
                     <AlertOctagon className="w-3.5 h-3.5" />
                   </button>
