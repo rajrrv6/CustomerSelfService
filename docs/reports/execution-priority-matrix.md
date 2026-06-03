@@ -81,6 +81,36 @@ This matrix categorizes all remaining implementation, refactoring, and quality c
   - *Effort:* 2 Days (High)
   - *Target:* `AppContext.tsx`
   - *Outcome:* Prevents global re-renders on minor context changes.
+* **Task SUP-01 — Tenant onboarding template (Screen 9):**
+  - *Priority:* 🟠 High Priority Gap
+  - *Effort:* 2 Days (High)
+  - *Target:* `/super-admin/master-data/tenant-onboarding-template`
+  - *Outcome:* Renders a 3-step organization wizard configuration. (Sprint 06)
+* **Task SUP-02 — Number pool (Screen 14):**
+  - *Priority:* 🟠 High Priority Gap
+  - *Effort:* 2 Days (High)
+  - *Target:* `/super-admin/telephony/number-pool`
+  - *Outcome:* Renders Direct Inbound Dial pools dashboard and routing. (Sprint 06)
+* **Task SUP-03 — Platform Billing Plans & Immutable System Audit Trail (Common):**
+  - *Priority:* 🟠 High Priority Gap
+  - *Effort:* 3 Days (High)
+  - *Target:* `/super-admin/common`
+  - *Outcome:* Adjust billing plans and render immutable event logs. (Sprint 07)
+* **Task SUP-04 — Super Admin Sidebar & Layout Restructuring:**
+  - *Priority:* 🟠 High Priority Gap
+  - *Effort:* 1 Day (Medium)
+  - *Target:* `Sidebar.tsx` and layout files
+  - *Outcome:* Reorganizes flat layout to category sections. (Sprint 06)
+* **Task SUP-05 — Route & Navigation Permissional Normalization:**
+  - *Priority:* 🟡 Tech Debt
+  - *Effort:* 1 Day (Low)
+  - *Target:* `permissions.ts`
+  - *Outcome:* Norms screen IDs under registries. (Sprint 06)
+* **Task SUP-06 — Build Container Tab Components:**
+  - *Priority:* 🟡 Tech Debt
+  - *Effort:* 1 Day (Medium)
+  - *Target:* Layout router container tabs
+  - *Outcome:* Switches sub-screens using nested tabs. (Sprint 06)
 
 ---
 
@@ -133,3 +163,5 @@ This matrix categorizes all remaining implementation, refactoring, and quality c
 3. **Sprint 03 (Admin-Facing ROI):** Build H9 (Ingestion modals), H6 (Escalation matrix rules), M4 (SLA CRUD actions).
 4. **Sprint 04 (Architectural Payback):** Refactor monolithic files (H2, M11, M9) to avoid build bottlenecks.
 5. **Sprint 05 (Final Compliance Polish):** Build H5 (WFM tables), H7 (QA scorecard builders), H4 (Module alerts system).
+6. **Sprint 06 (Super Admin Core Configuration & Telephony):** Restructure sidebar navigation, normalize routes, build container tabs, and implement tenant onboarding templates and number pools.
+7. **Sprint 07 (Super Admin Platform Common & Compliance):** Build platform billing plans, immutable system audit trails, and platform common containers.

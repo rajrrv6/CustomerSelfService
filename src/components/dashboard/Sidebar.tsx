@@ -32,6 +32,7 @@ import {
 import { UserRole } from '@/types';
 import { canAccessScreen } from '@/lib/rbac/permissions';
 import { usePermissionStore, mapUserRoleToMatrixRole } from '@/stores/permissionStore';
+import { superAdminNavigation } from '@/config/superAdminNavigation';
 
 interface SidebarItem {
   id: string;
@@ -124,21 +125,19 @@ export function Sidebar({
   const apiPermissions = usePermissionStore((s) => s.apiPermissions);
 
   const menuItems = React.useMemo(() => {
+    if (role === 'super_admin') {
+      return superAdminNavigation
+        .filter((item) => canAccessScreen(role, item.permission))
+        .map((item) => ({
+          id: item.id,
+          label: (t as any)[item.labelKey] || item.id,
+          icon: <item.icon className="w-4 h-4" />
+        }));
+    }
+
     // Determine the master list of screen IDs to check based on role category
     let order: string[];
-    if (role === 'super_admin') {
-      order = [
-        'llm_registry',
-        'asr_tts_registry',
-        'channels',
-        'nlu_governance',
-        'cost_benchmarks',
-        'cross_tenant_analytics',
-        'vector_db',
-        'sip_trunk',
-        'analytics_center'
-      ];
-    } else if (role === 'customer') {
+    if (role === 'customer') {
       order = [
         'customer_home',
         'customer_kb',
@@ -174,7 +173,7 @@ export function Sidebar({
       .filter((id) => canAccessScreen(role, id))
       .map((id) => registry[id])
       .filter(Boolean);
-  }, [role, getMasterSidebarItems, rolePermissions, apiPermissions]);
+  }, [role, getMasterSidebarItems, rolePermissions, apiPermissions, t]);
 
   return (
     <aside

@@ -18,7 +18,7 @@ To prevent build errors from broken relative paths in these archived items, the 
 ## 2. Archived Directories Log
 
 ### A. Experimental / Duplicate Dialog Flow Builder
-* **Archive Path:** `frontend/src/archive/experimental/dialog-builder/`
+* **Archive Path:** `frontend/src/archive/old-builders/dialog-builder/`
 * **Original Path:** `frontend/src/components/dialog-builder/`
 * **Contents:** 19 files including `DialogFlowLayout.tsx`, `WorkflowCanvas.tsx`, `WorkflowInspector.tsx`, `WorkflowMinimap.tsx`, `WorkflowSimulator.tsx`, `WorkflowToolbar.tsx`, node definitions, and hooks.
 * **Reason:** This was a duplicate experimental layout cloned to `components/client-admin/dialog-builder/` to satisfy role-based routing.
@@ -26,7 +26,7 @@ To prevent build errors from broken relative paths in these archived items, the 
 ---
 
 ### B. Old Responsive Layouts
-* **Archive Path:** `frontend/src/archive/old-responsive/`
+* **Archive Path:** `frontend/src/archive/responsive/`
 * **Original Paths:** `frontend/src/components/responsive/` (select files) and `frontend/src/hooks/useResponsiveLayout.ts`
 * **Contents:**
   - `AdaptiveSplitPane.tsx`

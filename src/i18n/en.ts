@@ -51,6 +51,25 @@ export const en = {
   sipTrunkConfig: 'SIP Trunk Voice Config',
   nluGovernance: 'Global NLU Governance',
 
+  // Super Admin Navigation
+  saDashboard: 'Dashboard',
+  saMasterData: 'Master Data',
+  saAnalytics: 'Analytics',
+  saInfrastructure: 'Infrastructure',
+  saTelephony: 'Telephony',
+  saBilling: 'Billing',
+  saAudit: 'Audit & Compliance',
+
+  // Super Admin Header Localizations
+  saMasterDataTitle: 'Master Data Management',
+  saMasterDataDesc: 'Configure global LLM models, ASR/TTS engines, omnichannel communication channels, and NLU profiles.',
+  saAnalyticsTitle: 'System Analytics & Benchmarks',
+  saAnalyticsDesc: 'Monitor cross-tenant inference volumes, response speed latency, and token budget analytics.',
+  saInfrastructureTitle: 'Infrastructure Orchestration',
+  saInfrastructureDesc: 'Verify vector database index counts, partitioning throughput, and global search integrations.',
+  saTelephonyTitle: 'Telephony Integration & SIP Trunks',
+  saTelephonyDesc: 'Configure enterprise voice connectivity, phone number pools, and media gateway routing.',
+
   // Namespaces for modules
   auth: {
     workEmail: 'Work email',

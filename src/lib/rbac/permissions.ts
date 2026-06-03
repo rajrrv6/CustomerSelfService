@@ -3,6 +3,14 @@ import type { TranslationKeys } from '@/i18n/translations';
 
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   super_admin: [
+    'sa_dashboard',
+    'sa_master_data',
+    'sa_analytics',
+    'sa_infra',
+    'sa_telephony',
+    'sa_billing',
+    'sa_audit',
+    // Compatibility aliases:
     'llm_registry',
     'asr_tts_registry',
     'channels',
@@ -56,7 +64,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 };
 
 export const ROLE_DEFAULT_SCREEN: Record<UserRole, string> = {
-  super_admin: 'llm_registry',
+  super_admin: 'sa_dashboard',
   client_admin: 'bots',
   operations_manager: 'inbox',
   qa_manager: 'qa_queue',
@@ -69,13 +77,23 @@ export const ROLE_DEFAULT_SCREEN: Record<UserRole, string> = {
 import { canView } from '@/stores/permissionStore';
 
 export const SUPER_ADMIN_SCREENS = [
+  'sa_dashboard',
+  'sa_master_data',
+  'sa_analytics',
+  'sa_infra',
+  'sa_telephony',
+  'sa_billing',
+  'sa_audit',
+  // Compatibility aliases:
   'llm_registry',
   'asr_tts_registry',
   'nlu_governance',
   'cost_benchmarks',
   'cross_tenant_analytics',
   'vector_db',
-  'sip_trunk'
+  'sip_trunk',
+  'channels',
+  'analytics_center'
 ];
 
 export function canAccessScreen(role: UserRole, screenId: string): boolean {
@@ -93,6 +111,13 @@ export function canAccessScreen(role: UserRole, screenId: string): boolean {
 
 export function getScreenTitle(screenId: string, t: TranslationKeys): string {
   const mapping: Record<string, string> = {
+    sa_dashboard: t.saDashboard,
+    sa_master_data: t.saMasterData,
+    sa_analytics: t.saAnalytics,
+    sa_infra: t.saInfrastructure,
+    sa_telephony: t.saTelephony,
+    sa_billing: t.saBilling,
+    sa_audit: t.saAudit,
     llm_registry: t.llmRegistry,
     asr_tts_registry: t.asrTtsRegistry,
     nlu_governance: t.nluGovernance,

@@ -17,7 +17,7 @@ Below are the target completion levels and status markers for each major release
 | **Alpha (Internal Technical)** | 85% | 🟡 In-Progress | Sprint 01 stabilization + basic navigation fixes | Dead callback routes, invalid styles, hardcoded user credentials |
 | **Beta (Customer Pilot)** | 92% | 🔴 Pending | Complete Customer Portal screen scope + deep-linking | Order tracking page stub, Voice FAB modal stub |
 | **Internal Demo (Stakeholder)** | 95% | 🔴 Pending | Complete Client Admin rules panel + Integration tabs | Ingestion modals stub, SLA rule builder stub |
-| **Production Candidate** | 100% | 🔴 Pending | Architecture refactoring + WFM & QA tools + Toast popups | SLA monolith split, WFM module missing, 11 system toasts |
+| **Production Candidate** | 100% | 🔴 Pending | Architecture refactoring + WFM & QA tools + Toast popups + Super Admin configurations | SLA monolith split, WFM module missing, 11 system toasts, Tenant onboarding template missing, Knowledge connector registry missing, Number pool missing, Platform Billing Plans missing, Immutable System Audit Trail missing |
 
 ---
 
@@ -63,6 +63,7 @@ Below are the target completion levels and status markers for each major release
   - React Error Boundaries wrap all core routes to isolate widget crash faults.
   - 11 event-driven alerts/toasts (PII redactions, jailbreak warning toast, recording disclosure) wired into live queues.
   - Workforce Management (WFM) scheduling and QA dispute panels are fully interactive.
+  - Super Admin configurations (LLM model registry, ASR / TTS provider registry, Channel catalog, NLU governance, Tenant onboarding template, Cross-tenant analytics, Model cost benchmarks, Vector DB cluster status, Knowledge connector registry, Number pool, SIP trunk config, Platform Billing Plans, and Immutable System Audit Trail) are fully validated.
 * **Testing Requirements:** Full Playwright end-to-end suite checks, Lighthouse performance scores above 90 on core paths, and security scans.
 * **UX Requirements:** Micro-animations for page transitions, complete loading spinners and skeleton screens, keyboard focus states.
 * **Deployment Readiness:** Zero-downtime production cluster deployment with error monitoring (Sentry) connected.

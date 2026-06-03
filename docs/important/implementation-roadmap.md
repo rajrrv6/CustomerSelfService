@@ -23,7 +23,7 @@
    - [A. Customer Portal Completion Roadmap](#a-customer-portal-completion-roadmap)
    - [B. Admin & Workspace Completion Roadmap](#b-admin--workspace-completion-roadmap)
    - [C. Architecture Stabilization Roadmap](#c-architecture-stabilization-roadmap)
-6. [Sprint Release Plan (Phases 1–5)](#6-sprint-release-plan-phases-15)
+6. [Sprint Release Plan (Phases 1–7)](#6-sprint-release-plan-phases-17)
 
 ---
 
@@ -256,9 +256,9 @@ gantt
 
 ---
 
-## 6. Sprint Release Plan (Phases 1–5)
+## 6. Sprint Release Plan (Phases 1–7)
 
-To guarantee stability, code sweeps, refactor passes, and feature deployments are planned across five distinct release phases:
+To guarantee stability, code sweeps, refactor passes, and feature deployments are planned across seven distinct release phases:
 
 ### Phase 1: Hotfix & Stabilization (Sprint 1 — 1 Week)
 * **Goal:** Resolve immediate blocking bugs and establish baseline application stability.
@@ -306,7 +306,24 @@ To guarantee stability, code sweeps, refactor passes, and feature deployments ar
   - Upgrade M2 (Timer support inside Workspace Hold/Conference views).
   - Complete remaining minor enhancements (Playwright test configurations).
 
+### Phase 6: Super Admin Core Configuration & Telephony (Sprint 6 — 2 Weeks)
+* **Goal:** Implement the core platform configuration and telephony layout components.
+* **Scope:**
+  - Build Screen 9 (Tenant onboarding template).
+  - Build Screen 13 (Knowledge connector registry).
+  - Build Screen 14 (Number pool).
+  - Polish Screen 10 (Cross-tenant analytics) and Screen 11 (Model cost benchmarks).
+  - Complete Screen 15 (SIP trunk config) details form.
+  - Restructure sidebar layout and normalize route permissions.
+
+### Phase 7: Super Admin Platform Common & Compliance (Sprint 7 — 2 Weeks)
+* **Goal:** Implement the platform common settings and compliance audit trails.
+* **Scope:**
+  - Build Platform Billing Plans (Common Per App).
+  - Build Immutable System Audit Trail (Common Per App).
+  - Convert platform common components to nested container tab layouts.
+
 ---
 
-*Recommended Execution Sequence: Phase 1 ──> Phase 2 ──> Phase 4 (Stability check) ──> Phase 3 ──> Phase 5*  
-*This sequence ensures architectural stability is established before deploying large-scale admin features.*
+*Recommended Execution Sequence: Phase 1 ──> Phase 2 ──> Phase 4 (Stability check) ──> Phase 3 ──> Phase 5 ──> Phase 6 ──> Phase 7*  
+*This sequence ensures all customer portal and agent workspace features are stable before deploying final platform operator orchestration modules.*

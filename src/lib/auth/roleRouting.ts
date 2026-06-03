@@ -93,7 +93,7 @@ export function canRoleAccessPath(role: UserRole, pathname: string): boolean {
 }
 
 export function getDefaultScreenForPath(pathname: string): string | null {
-  if (pathname.startsWith('/admin/infrastructure')) return 'llm_registry';
+  if (pathname.startsWith('/admin/infrastructure')) return 'sa_dashboard';
   if (pathname.startsWith('/tenant/dashboard')) return 'bots';
   if (pathname.startsWith('/workspace/inbox')) return 'inbox';
   if (pathname.startsWith('/portal/home')) return 'customer_home';

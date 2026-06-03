@@ -13,19 +13,27 @@ The repository structure now conforms to an enterprise-grade standard, separatin
 
 ```
 CustomerSelfService/
-├── docs/                        ← Repository documentation
-│   ├── archive/                 ← Superseded audit documents
+├── docs/                        ← Workspace-level documentation
+│   ├── checkpoints/             ← Release gating checklists
 │   ├── cleanup/                 ← Cleanup logs, catalogs, and summaries
-│   ├── important/               ← Active audit reports and roadmap
-│   └── reference/               ← PDFs andparsed text inventory references
+│   ├── documentation/           ← Documentation validation & quality audits
+│   ├── important/               ← Active audit reports and master roadmap
+│   ├── reports/                 ← ROI matrix and remaining work reports
+│   └── sprints/                 ← Active sprint plans (01-05)
 ├── frontend/                    ← Next.js App Router codebase
-│   ├── public/                  ← Web assets (manifest, icon logs)
-│   ├── scripts/                 ← Developer workflow automation scripts
+│   ├── docs/                    ← Code-level duplicate & reference documentation
+│   │   ├── archive/             ← Stale audit files & historical logs
+│   │   ├── decisions/           ← Architectural Decision Records (ADRs)
+│   │   ├── plans/               ← Legacy feature specification plans
+│   │   ├── reference/           ← Reference inventory PDFs and text parses
+│   │   └── [synchronized]       ← Checkpoints, sprints, and reports copies
+│   ├── public/                  ← Web assets
+│   ├── scripts/                 ← Developer workflow scripts
 │   │   ├── debugging/           ← Swift extraction helpers
-│   │   └── translations/        ← Python i18n key-merging scripts
+│   │   └── translations/        ← Python key-merging scripts
 │   ├── src/                     ← Application source code
-│   │   ├── app/                 ← Next.js page routes, layouts, and API routes
-│   │   ├── components/          ← Role-scoped UI modular namespaces
+│   │   ├── app/                 ← App routing layouts & pages
+│   │   ├── components/          ← Active role-scoped UI namespaces
 │   │   │   ├── agent-workspace/ ← Omnichannel support console
 │   │   │   ├── analytics/       ← Incident graphs, SLA breaching boards
 │   │   │   ├── client-admin/    ← Business calendars, NLU visual builders
@@ -33,16 +41,16 @@ CustomerSelfService/
 │   │   │   ├── integrations/    ← Active webhooks, API vaults
 │   │   │   ├── voice/           ← Dialer pads, supervisor monitoring consoles
 │   │   │   └── shared/          ← Layout headers, sidebar nav lists, standard buttons
-│   │   ├── archive/             ← Cleaned-up code history logs
-│   │   │   ├── forms/           ← Unused shared fields
-│   │   │   ├── responsive/      ← Obsolete layouts
-│   │   │   └── old-builders/    ← Duplicate visual builders
-│   │   ├── context/             ← AppContext and AuthContext wrappers
-│   │   ├── stores/              ← Global Zustand states (UI, permissions, auth)
+│   │   ├── archive/             ← Safe code archiving namespaces
+│   │   │   ├── forms/           ← Unused shared inputs
+│   │   │   ├── responsive/      ← Obsolete responsive containers
+│   │   │   └── old-builders/    ← Duplicate builders
+│   │   ├── context/             ← State contexts
+│   │   ├── stores/              ← Zustand stores
 │   │   ├── hooks/               ← Reusable custom hooks
-│   │   ├── data/                ← Seed lists
-│   │   ├── i18n/                ← Bilingual translation maps
-│   │   └── types/               ← TypeScript type scopes
+│   │   ├── data/                ← Seed data list files
+│   │   ├── i18n/                ← Bilingual dictionaries
+│   │   └── types/               ← Typescript interfaces
 │   ├── tests/                   ← Automated testing suite
 │   │   ├── vitest/              ← Unit and layout component tests
 │   │   └── playwright/          ← End-to-end integration tests

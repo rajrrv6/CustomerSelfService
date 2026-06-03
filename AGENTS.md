@@ -124,4 +124,17 @@ For clean scalability and UI consistency, follow these table guidelines:
 * **Dynamic Mirroring & RTL**: Support dynamic English/Arabic i18n, setting `dir="rtl"` in layouts automatically based on the language context.
 * **Sticky Headers**: Set high-precision z-indices (`z-20`) for header columns to prevent overlaps from sidebar menus or modals.
 
+---
+
+## 11. Documentation Discipline & Sprint Checkpoints
+All non-trivial implementation phases must be persisted into markdown documentation files inside docs/plans, docs/checkpoints, or docs/decisions. Architectural walkthroughs and implementation completion reports must never remain only in chat history.
+
+Additional rules:
+* After every completed sprint phase:
+  * Create/update checkpoint markdown.
+  * Include validation results.
+  * Include carried-forward items.
+  * Include known limitations.
+* Do not mark implementation complete until documentation files are saved.
+
 

@@ -51,6 +51,25 @@ export const ar = {
   sipTrunkConfig: 'إعدادات خطوط الاتصال SIP Trunk',
   nluGovernance: 'حوكمة NLU العالمية',
 
+  // Super Admin Navigation
+  saDashboard: 'لوحة القيادة',
+  saMasterData: 'البيانات الرئيسية',
+  saAnalytics: 'التحليلات والمراقبة',
+  saInfrastructure: 'البنية التحتية',
+  saTelephony: 'الاتصالات الهاتفية',
+  saBilling: 'الفوترة والاشتراكات',
+  saAudit: 'التدقيق والامتثال',
+
+  // Super Admin Header Localizations
+  saMasterDataTitle: 'إدارة البيانات الرئيسية',
+  saMasterDataDesc: 'تهيئة نماذج الذكاء الاصطناعي العالمية، محركات التعرف على الكلام، القنوات الموحدة وحوكمة NLU.',
+  saAnalyticsTitle: 'التحليلات ومؤشرات الأداء',
+  saAnalyticsDesc: 'مراقبة أحجام مكالمات الاستدلال عبر المشتركين، وتحليلات تكلفة الرموز وزمن الاستجابة.',
+  saInfrastructureTitle: 'إدارة البنية التحتية',
+  saInfrastructureDesc: 'مراقبة فهارس المتجهات، أداء ومعدلات تخزين قواعد البيانات ونظم البحث الدلالي.',
+  saTelephonyTitle: 'الاتصالات الهاتفية وخطوط SIP',
+  saTelephonyDesc: 'إعداد قنوات الاتصال الهاتفي، خطوط ربط SIP Trunk وإدارة حزم أرقام الاتصال الواردة.',
+
   // Namespaces for modules
   auth: {
     workEmail: 'البريد الإلكتروني للعمل',

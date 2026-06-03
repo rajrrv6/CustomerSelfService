@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-This report aggregates all verified functional gaps, structural issues, and technical debt remaining on the CustomerSelfService platform. The total estimated implementation weight across all modules is **97 Story Points (approximately 40 Person-Days)**. By executing the phased roadmap, the repository will achieve 100% compliance with the `03_CustomerSelfService` PDF specification and reach production release readiness.
+This report aggregates all verified functional gaps, structural issues, and technical debt remaining on the CustomerSelfService platform. The total estimated implementation weight across all modules is **136 Story Points (approximately 57 Person-Days)**. By executing the phased roadmap, the repository will achieve 100% compliance with the `03_CustomerSelfService` and `Common_Per_App` PDF specifications and reach production release readiness.
 
 ---
 
@@ -82,7 +82,7 @@ This report aggregates all verified functional gaps, structural issues, and tech
 ### Pillar 9: Optional Enhancements (L1–L7)
 *Focus: Non-blocking items for future releases.*
 * **L6/L7: E2E Playwright tests:** Automated verification scripts checking complete paths.
-* **L3: Super Admin configs:** Profanity and PII scrubbing matrix dials.
+* **L3: Super Admin configs:** Promoted to active development scope under Sprint 6 and Sprint 7! (Platform dashboard HUD, provisioning wizards, DID pools, connectors, AI defaults, compliance audits, gateway settings).
 * **L4: Mock API Service layer:** Move local states to fetch libraries.
 
 ---
@@ -96,4 +96,6 @@ This report aggregates all verified functional gaps, structural issues, and tech
 | **Sprint 3** | Admin & Workspace | 22 SP | 2 Weeks |
 | **Sprint 4** | Architecture Hardening | 20 SP | 1.5 Weeks |
 | **Sprint 5** | Production Polish | 25 SP | 2 Weeks |
-| **Total** | **All Phases** | **97 SP** | **8 Weeks** |
+| **Sprint 6** | Super Admin Core Provisioning | 23 SP | 2 Weeks |
+| **Sprint 7** | Super Admin Enterprise Operations | 16 SP | 2 Weeks |
+| **Total** | **All Sprints** | **136 SP** | **12 Weeks** |

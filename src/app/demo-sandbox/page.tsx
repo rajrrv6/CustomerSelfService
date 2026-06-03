@@ -29,7 +29,7 @@ export default function DemoSandboxPage() {
   // Auto-switch default screen when role changes to match RBAC permissions
   useEffect(() => {
     const roleDefaults: Record<UserRole, string> = {
-      super_admin: 'llm_registry',
+      super_admin: 'sa_dashboard',
       client_admin: 'bots',
       operations_manager: 'inbox',
       qa_manager: 'qa_queue',
