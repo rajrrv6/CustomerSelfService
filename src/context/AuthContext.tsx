@@ -58,30 +58,26 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getInitialAuthState(): {
-  status: AuthStatus;
-  session: AuthSession | null;
-  pendingLogin: PendingLogin | null;
-} {
-  if (typeof window === 'undefined') {
-    return { status: 'idle', session: null, pendingLogin: null };
-  }
-  const existing = readSession();
-  if (existing) {
-    return { status: 'authenticated', session: existing, pendingLogin: null };
-  }
-  const pending = readPendingLogin();
-  if (pending) {
-    return { status: 'pending_mfa', session: null, pendingLogin: pending };
-  }
-  return { status: 'idle', session: null, pendingLogin: null };
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [initial] = useState(getInitialAuthState);
-  const [status, setStatus] = useState<AuthStatus>(initial.status);
-  const [session, setSession] = useState<AuthSession | null>(initial.session);
-  const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(initial.pendingLogin);
+  const [status, setStatus] = useState<AuthStatus>('loading');
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(null);
+
+  useEffect(() => {
+    const existing = readSession();
+    if (existing) {
+      setSession(existing);
+      setStatus('authenticated');
+    } else {
+      const pending = readPendingLogin();
+      if (pending) {
+        setPendingLogin(pending);
+        setStatus('pending_mfa');
+      } else {
+        setStatus('idle');
+      }
+    }
+  }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const validation = validateLoginCredentials(credentials);

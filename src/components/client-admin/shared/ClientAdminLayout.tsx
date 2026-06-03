@@ -9,7 +9,7 @@ import { KnowledgeBaseTab } from '../knowledge/KnowledgeBaseTab';
 import { GuardrailsTab } from '../safety/GuardrailsTab';
 import { ChannelsTab } from '../channels/ChannelsTab';
 import { QueuesRosterTab } from '../operations/QueuesRosterTab';
-import { SlaTab } from '../operations/SlaTab';
+import { SlaAnalytics } from '@/components/analytics/SlaAnalytics';
 import { LifecycleTab } from '../lifecycle/LifecycleTab';
 import { SurveysTab } from '../operations/SurveysTab';
 import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
@@ -67,7 +67,7 @@ export function ClientAdminLayout({ activeSubScreen }: ClientAdminLayoutProps) {
     case 'inbox':
       return <AgentWorkspaceLayout activeSubScreen={activeSubScreen} />;
     case 'sla':
-      return <SlaTab />;
+      return <SlaAnalytics />;
     case 'deployments':
       return <LifecycleTab />;
     case 'integrations':
