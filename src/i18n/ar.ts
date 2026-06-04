@@ -74,6 +74,13 @@ export const ar = {
   saNavSupport: 'الدعم والمساعدة',
   saNavTenantMgmt: 'إدارة المستأجرين',
 
+  // Client Admin Sidebar Section Labels
+  caNavOperations: 'العمليات والقوى العاملة',
+  caNavAIKnowledge: 'الذكاء الاصطناعي والمعرفة',
+  caNavChannels: 'القنوات والأتمتة',
+  caNavGovernance: 'الحوكمة والتحليلات',
+  caNavSystem: 'النظام والوصول',
+
   // Super Admin Header Localizations
   saMasterDataTitle: 'إدارة البيانات الرئيسية',
   saMasterDataDesc: 'تهيئة نماذج الذكاء الاصطناعي العالمية، محركات التعرف على الكلام، القنوات الموحدة وحوكمة NLU.',
@@ -213,7 +220,14 @@ export const ar = {
     customer_chat_history: 'سجل المحادثات المنجزة',
     customer_feedback_hub: 'مركز التقييمات والدعم',
     workspace: 'مساحة العمل',
-    training: 'حلقة التدريب الذكي'
+    training: 'حلقة التدريب الذكي',
+    campaigns: 'الحملات التسويقية',
+    voice_ivr: 'الصوت واستجابة IVR',
+    automation_rules: 'قواعد الأتمتة والربط',
+    reports: 'التقارير والإحصائيات',
+    audit_logs: 'سجلات عمليات التدقيق',
+    notifications: 'التنبيهات والإشعارات',
+    settings: 'الإعدادات العامة',
   },
 
   superAdmin: {
@@ -738,6 +752,34 @@ export const ar = {
       apiHealthTitle: 'مؤشرات أداء تشغيل واجهات برمجة التطبيقات API',
       ecosystemAuditLog: 'سجل تدقيق تكامل النظام البيئي',
       detected: 'تم الكشف بواسطة:'
+    },
+    persistence: {
+      pagination: {
+        showing: 'عرض {start} - {end} من إجمالي {total}',
+        itemsPerPage: 'العناصر لكل صفحة',
+        next: 'التالي',
+        previous: 'السابق'
+      },
+      voice: {
+        replayLastCall: 'إعادة تشغيل مسار آخر مكالمة',
+        inboundQueueCall: 'مكالمة واردة في قائمة الانتظار',
+        callPathDebugger: 'مصحح مسار المكالمة',
+        simulateCall: 'محاكاة المكالمة',
+        endCall: 'إنهاء المكالمة'
+      },
+      reports: {
+        generateCsv: 'توليد ملف التقرير CSV',
+        savedFile: 'الملف المحفوظ',
+        exportTrigger: 'تصدير وتحميل',
+        exportSuccess: 'تم تصدير التقرير بنجاح',
+        exportWarning: 'جاري تحضير بيانات التقرير...'
+      },
+      settings: {
+        unsavedChangesExist: 'لديك تغييرات غير محفوظة!',
+        discardWarning: 'هل أنت متأكد من رغبتك في التراجع عن جميع التعديلات الحالية وإعادتها للقيم الافتراضية؟',
+        resetConfirm: 'تراجع واستعادة الافتراضي',
+        unsavedTitle: 'تأكيد التراجع والمسح'
+      }
     }
   },
 
@@ -1271,6 +1313,18 @@ export const ar = {
       funnelSessions: 'جلسات',
       feedTitle: 'تغذية العمليات في الوقت الفعلي',
       feedSubtitle: 'سجلات مباشرة من عمليات بحث RAG والـ webhooks وبوابات الاتصال الهاتفي.',
+      anomalyTitle: 'تنبيهات الشذوذ التشغيلية والنظام',
+      anomalySub: 'كشف قائم على الاستدلال لانخفاض السعة، وارتفاع التكاليف، وتدهور الخدمة.',
+      viewBot: 'عرض البوت',
+      openChannel: 'فتح القناة',
+      inspectSla: 'فحص اتفاقية الخدمة',
+      openGuardrails: 'فتح حواجز الحماية',
+      failingIntentsTitle: 'أهم نيات NLU الفاشلة',
+      failingIntentsSub: 'النيات ذات الثقة المنخفضة أو معدلات التراجع العالية.',
+      tokenSpendTitle: 'مرصد استهلاك رموز الذكاء الاصطناعي والتكلفة',
+      tokenSpendSub: 'توزيعات استخدام وحجم الرموز وتكلفتها لكل مزود نموذج لغوي.',
+      tuneOptimizer: 'ضبط في محسن النيات',
+      configureGuardrails: 'تكوين حواجز تكلفة الرموز',
     },
     wallboard: {
       consoleTitle: 'لوحة تحكم الاتصالات الهاتفية المباشرة',

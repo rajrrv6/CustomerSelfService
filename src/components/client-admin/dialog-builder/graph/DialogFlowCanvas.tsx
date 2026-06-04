@@ -49,8 +49,8 @@ function FlowInner() {
   const { project } = useReactFlow();
 
   // Zustand State selectors
-  const nodes = useDialogStore((s) => s.nodes);
-  const edges = useDialogStore((s) => s.edges);
+  const nodes = useDialogStore((s) => s.nodes) || [];
+  const edges = useDialogStore((s) => s.edges) || [];
   const onNodesChange = useDialogStore((s) => s.onNodesChange);
   const onEdgesChange = useDialogStore((s) => s.onEdgesChange);
   const onConnect = useDialogStore((s) => s.onConnect);

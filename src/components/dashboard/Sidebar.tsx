@@ -33,6 +33,7 @@ import { UserRole } from '@/types';
 import { canAccessScreen } from '@/lib/rbac/permissions';
 import { usePermissionStore, mapUserRoleToMatrixRole } from '@/stores/permissionStore';
 import { superAdminNavSections } from '@/config/superAdminNavigation';
+import { clientAdminNavSections } from '@/config/clientAdminNavigation';
 
 interface SidebarItem {
   id: string;
@@ -59,6 +60,75 @@ export function Sidebar({
   const t = translations[lang];
 
   const [showSubRoleMenu, setShowSubRoleMenu] = useState(false);
+
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    operations_workforce: true,
+    ai_knowledge: true,
+    channels_automation: true,
+    governance_analytics: true,
+    system_access: true,
+  });
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
+
+  const handleNavKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    if (!target) return;
+
+    const nav = e.currentTarget;
+    const focusables = Array.from(
+      nav.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    ) as HTMLElement[];
+
+    const currentIndex = focusables.indexOf(target);
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % focusables.length;
+      focusables[nextIndex]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + focusables.length) % focusables.length;
+      focusables[prevIndex]?.focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      focusables[0]?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      focusables[focusables.length - 1]?.focus();
+    } else if (e.key === 'ArrowRight') {
+      if (isRtl) {
+        if (target.getAttribute('aria-expanded') === 'true') {
+          e.preventDefault();
+          target.click();
+        }
+      } else {
+        if (target.getAttribute('aria-expanded') === 'false') {
+          e.preventDefault();
+          target.click();
+        }
+      }
+    } else if (e.key === 'ArrowLeft') {
+      if (isRtl) {
+        if (target.getAttribute('aria-expanded') === 'false') {
+          e.preventDefault();
+          target.click();
+        }
+      } else {
+        if (target.getAttribute('aria-expanded') === 'true') {
+          e.preventDefault();
+          target.click();
+        }
+      }
+    }
+  };
 
   const clientAdminRoles = [
     { value: 'client_admin', label: lang === 'ar' ? 'مسؤول النظام' : 'Full Administrator' },
@@ -191,7 +261,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onCloseMobile}
-            className="lg:hidden p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 cursor-pointer"
+            className="lg:hidden p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             aria-label="Close sidebar"
           >
             ×
@@ -199,7 +269,10 @@ export function Sidebar({
         </div>
 
         {/* Sidebar Nav */}
-        <nav className="flex-1 overflow-y-auto px-4 py-4 sm:py-6">
+        <nav
+          onKeyDown={handleNavKeyDown}
+          className="flex-1 overflow-y-auto px-4 py-4 sm:py-6"
+        >
           {/* Sub-Role Selector — non-SA roles only */}
           {(['client_admin', 'supervisor', 'qa_manager', 'operations_manager', 'viewer'].includes(role) || ['customer', 'support_agent'].includes(role)) && (
             <div className="px-3 mb-4 relative">
@@ -209,7 +282,7 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={() => setShowSubRoleMenu(!showSubRoleMenu)}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-900/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-900/60 hover:bg-slate-200 dark:hover:bg-slate-805 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <span>
                   {['client_admin', 'supervisor', 'qa_manager', 'operations_manager', 'viewer'].includes(role)
@@ -238,7 +311,7 @@ export function Sidebar({
                           else if (subItem.value === 'customer') setActiveScreen('customer_home');
                           setShowSubRoleMenu(false);
                         }}
-                        className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer ${
+                        className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                           role === subItem.value
                             ? 'bg-blue-50 dark:bg-slate-800 text-blue-700 dark:text-white font-bold'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
@@ -276,7 +349,7 @@ export function Sidebar({
                           key={item.id}
                           data-testid={`sidebar-item-${item.id}`}
                           onClick={() => setActiveScreen(item.id)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer ${
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                             isActive
                               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5'
                               : 'hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 text-slate-500 dark:text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
@@ -295,11 +368,11 @@ export function Sidebar({
             </div>
           )}
 
-          {/* ── All other roles: flat list ── */}
-          {role !== 'super_admin' && (
+          {/* ── Customer / End User: flat list ── */}
+          {role === 'customer' && (
             <>
               <div className="px-3 mb-2 text-[11.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                {role.replace('_', ' ')} Options
+                {t.customerPortal}
               </div>
               {menuItems.map((item) => {
                 const isActive = activeScreen === item.id;
@@ -308,13 +381,13 @@ export function Sidebar({
                     key={item.id}
                     data-testid={`sidebar-item-${item.id}`}
                     onClick={() => setActiveScreen(item.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5'
                         : 'hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 text-slate-500 dark:text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
                     }`}
                   >
-                    <span className={`${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100'}`}>
+                    <span className={`${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400'}`}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
@@ -322,6 +395,66 @@ export function Sidebar({
                 );
               })}
             </>
+          )}
+
+          {/* ── Client Admin & Workspace Roles: Grouped Sections ── */}
+          {role !== 'super_admin' && role !== 'customer' && (
+            <div className="space-y-3">
+              {clientAdminNavSections.map((section) => {
+                const visibleItems = section.items.filter((item) =>
+                  canAccessScreen(role, item.permission)
+                );
+                if (visibleItems.length === 0) return null;
+                const isExpanded = !!expandedSections[section.id];
+                const sectionLabel = (t as any)[section.labelKey] || (t.screens as any)[section.labelKey] || section.id;
+
+                return (
+                  <div key={section.id} className="space-y-0.5 border-b border-slate-100/50 dark:border-slate-900/30 pb-2 last:border-b-0">
+                    {/* Collapsible Header */}
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(section.id)}
+                      aria-expanded={isExpanded}
+                      className="w-full px-3 py-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 select-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+                    >
+                      <span>{sectionLabel}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-200 opacity-60 ${
+                          isExpanded ? 'transform rotate-0' : 'transform -rotate-90 rtl:rotate-90'
+                        }`}
+                      />
+                    </button>
+
+                    {/* Section Items */}
+                    {isExpanded && (
+                      <div className="space-y-0.5 mt-1 animate-in fade-in-40 duration-205">
+                        {visibleItems.map((item) => {
+                          const isActive = activeScreen === item.id;
+                          const itemLabel = (t.screens as any)[item.labelKey] || (t as any)[item.labelKey] || item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              data-testid={`sidebar-item-${item.id}`}
+                              onClick={() => setActiveScreen(item.id)}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                                isActive
+                                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5 font-bold'
+                                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 text-slate-500 dark:text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
+                              }`}
+                            >
+                              <span className={`${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-455'}`}>
+                                <item.icon className="w-4 h-4" />
+                              </span>
+                              <span className="truncate">{itemLabel}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </nav>
       </div>
@@ -342,7 +475,7 @@ export function Sidebar({
                   key={locale}
                   type="button"
                   onClick={() => setLang(locale)}
-                  className={`flex-1 rounded-xl border px-3 py-2 text-xs font-bold transition-all cursor-pointer ${
+                  className={`flex-1 rounded-xl border px-3 py-2 text-xs font-bold transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                     isActive
                       ? 'border-blue-500 bg-blue-600 text-white shadow-md shadow-blue-500/20'
                       : 'border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800'

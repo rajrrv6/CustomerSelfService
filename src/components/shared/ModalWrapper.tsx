@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 interface ModalWrapperProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
   maxWidthClass?: string; // e.g. 'max-w-md' or 'max-w-lg'
   hideCloseButton?: boolean;
@@ -31,6 +31,13 @@ export function ModalWrapper({
 
     // Focus restoration: capture the active element before modal opens
     const previousActiveElement = document.activeElement as HTMLElement | null;
+
+    // Background scroll lock
+    const activeOverlayCount = (window as any).__activeOverlayCount || 0;
+    (window as any).__activeOverlayCount = activeOverlayCount + 1;
+    if ((window as any).__activeOverlayCount === 1) {
+      document.body.style.overflow = 'hidden';
+    }
 
     // ESC close behavior
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -86,6 +93,13 @@ export function ModalWrapper({
         window.removeEventListener('keydown', handleKeyDown);
         if (cleanupTab) cleanupTab();
         clearTimeout(timer);
+        
+        // Decrement scroll lock counter
+        (window as any).__activeOverlayCount = Math.max(0, ((window as any).__activeOverlayCount || 1) - 1);
+        if ((window as any).__activeOverlayCount === 0) {
+          document.body.style.overflow = '';
+        }
+
         // Restore focus
         if (previousActiveElement) {
           setTimeout(() => {
@@ -97,6 +111,13 @@ export function ModalWrapper({
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      
+      // Decrement scroll lock counter
+      (window as any).__activeOverlayCount = Math.max(0, ((window as any).__activeOverlayCount || 1) - 1);
+      if ((window as any).__activeOverlayCount === 0) {
+        document.body.style.overflow = '';
+      }
+
       // Restore focus
       if (previousActiveElement) {
         setTimeout(() => {
@@ -110,7 +131,7 @@ export function ModalWrapper({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
       role="presentation"
       onClick={(e) => {
         if (e.target === e.currentTarget && !preventCloseOnOverlayClick) onClose();
@@ -125,9 +146,15 @@ export function ModalWrapper({
       >
         {/* Modal Header */}
         <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/80 dark:bg-slate-900/50">
-          <h3 id="modal-title" className="font-bold text-slate-800 dark:text-white text-sm sm:text-base">
-            {title}
-          </h3>
+          {typeof title === 'string' ? (
+            <h3 id="modal-title" className="font-bold text-slate-800 dark:text-white text-sm sm:text-base">
+              {title}
+            </h3>
+          ) : (
+            <div id="modal-title" className="flex-1 min-w-0">
+              {title}
+            </div>
+          )}
           {!hideCloseButton && (
             <button
               type="button"

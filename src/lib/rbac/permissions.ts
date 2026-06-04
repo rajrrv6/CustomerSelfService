@@ -34,7 +34,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'guardrails',
     'channels',
     'agents',
-    'inbox',
     'sla',
     'surveys',
     'deployments',
@@ -43,12 +42,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'training',
     'billing',
     'rbac',
-    'supervisor_monitor',
-    'workforce',
-    'qa_queue',
-    'coaching',
-    'agent_dashboard',
-    'tickets'
+    'campaigns',
+    'voice_ivr',
+    'automation_rules',
+    'reports',
+    'audit_logs',
+    'notifications',
+    'settings'
   ],
   operations_manager: ['inbox', 'agents', 'workforce', 'supervisor_monitor', 'sla', 'surveys', 'integrations', 'analytics_center'],
   qa_manager: ['qa_queue', 'coaching', 'inbox', 'surveys', 'training'],
@@ -116,6 +116,10 @@ export function canAccessScreen(role: UserRole, screenId: string): boolean {
   if (role === 'customer') {
     return ROLE_PERMISSIONS.customer.includes(screenId);
   }
+  const allowed = ROLE_PERMISSIONS[role];
+  if (allowed && !allowed.includes(screenId)) {
+    return false;
+  }
   return canView(screenId, role);
 }
 
@@ -170,7 +174,14 @@ export function getScreenTitle(screenId: string, t: TranslationKeys): string {
     customer_feedback_hub: t.screens.customer_feedback_hub || 'Feedback Hub',
     training: t.screens.training || 'Training Intelligence Loop',
     billing: 'Billing',
-    rbac: 'RBAC Settings'
+    rbac: 'RBAC Settings',
+    campaigns: (t.screens as any).campaigns || 'Campaigns',
+    voice_ivr: (t.screens as any).voice_ivr || 'Voice / IVR',
+    automation_rules: (t.screens as any).automation_rules || 'Automation Rules',
+    reports: (t.screens as any).reports || 'Reports',
+    audit_logs: (t.screens as any).audit_logs || 'Audit Logs',
+    notifications: (t.screens as any).notifications || 'Notifications',
+    settings: (t.screens as any).settings || 'Settings',
   };
 
   return mapping[screenId] ?? t.screens.workspace;

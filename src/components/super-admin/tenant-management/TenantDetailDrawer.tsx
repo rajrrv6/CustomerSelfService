@@ -9,6 +9,7 @@ import { mockTenantAuditLogs, TenantAuditLog } from './mockTenantData';
 import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
 import { X, Shield, Lock, Eye, EyeOff, Globe, ListFilter, Play, Ban, Copy, Download, Trash2, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
+import { DrawerWrapper } from '@/components/shared/DrawerWrapper';
 
 interface TenantDetailDrawerProps {
   tenant: Tenant;
@@ -52,8 +53,6 @@ export function TenantDetailDrawer({ tenant, onClose, onUpdate, onDelete, onClon
 
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'settings' | 'audit'>('overview');
   const [showApiKey, setShowApiKey] = useState(false);
-  const drawerRef = useRef<HTMLDivElement>(null);
-
   // Settings states
   const [ipWhitelistStr, setIpWhitelistStr] = useState(tenant.ipWhitelist.join(', '));
   const [customDomain, setCustomDomain] = useState(tenant.customDomain || '');
@@ -72,83 +71,6 @@ export function TenantDetailDrawer({ tenant, onClose, onUpdate, onDelete, onClon
   // Audit state
   const [auditLogs, setAuditLogs] = useState<TenantAuditLog[]>(mockTenantAuditLogs[tenant.id] || []);
   const [auditSearch, setAuditSearch] = useState('');
-
-  // Handle escape key, click outside, and focus trapping
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleEscape);
-
-    const currentDrawer = drawerRef.current;
-    if (!currentDrawer) {
-      return () => {
-        window.removeEventListener('keydown', handleEscape);
-      };
-    }
-
-    const previousActiveElement = document.activeElement as HTMLElement | null;
-
-    const getFocusableNodes = () => {
-      const focusableElementsString = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-      const nodes = currentDrawer.querySelectorAll(focusableElementsString);
-      return Array.from(nodes).filter((node) => {
-        const rect = node.getBoundingClientRect();
-        return rect.width > 0 && rect.height > 0;
-      });
-    };
-
-    const focusableNodes = getFocusableNodes();
-    if (focusableNodes.length > 0) {
-      const first = focusableNodes[0] as HTMLElement;
-      first.focus();
-    }
-
-    const handleTabKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      const nodes = getFocusableNodes();
-      if (nodes.length === 0) {
-        e.preventDefault();
-        return;
-      }
-      const first = nodes[0] as HTMLElement;
-      const last = nodes[nodes.length - 1] as HTMLElement;
-      const activeElement = document.activeElement;
-
-      if (e.shiftKey) {
-        if (activeElement === first || !currentDrawer.contains(activeElement)) {
-          last.focus();
-          e.preventDefault();
-        }
-      } else {
-        if (activeElement === last || !currentDrawer.contains(activeElement)) {
-          first.focus();
-          e.preventDefault();
-        }
-      }
-    };
-
-    currentDrawer.addEventListener('keydown', handleTabKey);
-
-    return () => {
-      window.removeEventListener('keydown', handleEscape);
-      currentDrawer.removeEventListener('keydown', handleTabKey);
-      if (previousActiveElement) {
-        setTimeout(() => {
-          previousActiveElement.focus();
-        }, 50);
-      }
-    };
-  }, [onClose]);
-
-  // Handle click outside to close
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
-      onClose();
-    }
-  };
 
   const handleSaveConfig = (e: React.FormEvent) => {
     e.preventDefault();
@@ -326,39 +248,32 @@ export function TenantDetailDrawer({ tenant, onClose, onUpdate, onDelete, onClon
     log.user.toLowerCase().includes(auditSearch.toLowerCase())
   );
 
+  const customHeader = (
+    <div className="flex items-center gap-3">
+      <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+        <Shield className="w-4 h-4" />
+      </div>
+      <div>
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+          {tmT.detail.title}
+        </h3>
+        <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
+          ID: {tenant.id}
+        </p>
+      </div>
+    </div>
+  );
+
   return (
-    <div 
-      onClick={handleOverlayClick}
-      className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-50 flex items-center justify-end"
-    >
-      <div 
-        ref={drawerRef}
-        className={`h-full w-full max-w-lg bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-slate-200 dark:border-slate-800 ${
-          isRtl ? 'left-0 border-r animate-slide-left' : 'right-0 border-l animate-slide-right'
-        }`}
+    <>
+      <DrawerWrapper
+        isOpen={true}
+        onClose={onClose}
+        title={customHeader}
+        isRtl={isRtl}
+        maxWidthClass="max-w-lg"
+        noPadding={true}
       >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
-              <Shield className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-                {tmT.detail.title}
-              </h3>
-              <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">
-                ID: {tenant.id}
-              </p>
-            </div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850 cursor-pointer"
-          >
-            <X className="w-4.5 h-4.5" />
-          </button>
-        </div>
 
         {/* Tab Buttons */}
         <div className="flex border-b border-slate-100 dark:border-slate-800 px-6">
@@ -702,7 +617,7 @@ export function TenantDetailDrawer({ tenant, onClose, onUpdate, onDelete, onClon
           </div>
         </div>
 
-      </div>
+      </DrawerWrapper>
 
       {/* Suspend / Resume Confirmation Modal */}
       <ModalWrapper
@@ -873,6 +788,6 @@ export function TenantDetailDrawer({ tenant, onClose, onUpdate, onDelete, onClon
           </div>
         </form>
       </ModalWrapper>
-    </div>
+    </>
   );
 }

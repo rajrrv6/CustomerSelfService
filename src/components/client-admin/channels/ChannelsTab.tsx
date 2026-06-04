@@ -17,6 +17,7 @@ import {
 
 import { DICT, CHANNELS, INITIAL_TEMPLATES } from './clientChannelsHelper';
 import { VoiceIvrDesigner } from './VoiceIvrDesigner';
+import { OperationalActivityFeed } from '@/components/client-admin/shared/OperationalActivityFeed';
 
 export function ChannelsTab() {
   const { lang, addAuditLog, agents } = useApp();
@@ -56,6 +57,12 @@ export function ChannelsTab() {
     { id: '1', date: '2026-05-24 10:45', user: 'admin@mp-core.ai', action: 'Changed theme color to #2563eb' },
     { id: '2', date: '2026-05-18 16:20', user: 'system_auto', action: 'Updated Arabic greeting text' },
   ]);
+
+  const handleNavigate = (screenId: string) => {
+    window.dispatchEvent(
+      new CustomEvent('navigate-to-screen', { detail: { screenId } })
+    );
+  };
 
   const templateColumns = React.useMemo<ColumnDef<typeof INITIAL_TEMPLATES[0]>[]>(() => [
     {
@@ -223,6 +230,34 @@ export function ChannelsTab() {
           </div>
         }
       />
+
+      {/* Contextual Quick Links */}
+      <div className="flex flex-wrap gap-2.5 p-3.5 bg-slate-100 dark:bg-slate-950/80 rounded-2xl border border-slate-200/50 dark:border-slate-850">
+        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider self-center mr-1">
+          {lang === 'ar' ? 'روابط سريعة:' : 'Operational Quick Links:'}
+        </span>
+        <button
+          onClick={() => handleNavigate('analytics_center')}
+          className="px-3 py-1.5 text-[10px] font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-205 dark:border-slate-800 rounded-xl text-blue-600 dark:text-blue-400 transition-all flex items-center gap-1.5 cursor-pointer animate-none"
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          <span>{lang === 'ar' ? 'عرض أداء القناة' : 'View Channel Performance'}</span>
+        </button>
+        <button
+          onClick={() => handleNavigate('sla')}
+          className="px-3 py-1.5 text-[10px] font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-205 dark:border-slate-800 rounded-xl text-emerald-600 dark:text-emerald-400 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>{lang === 'ar' ? 'فحص اتفاقية الخدمة (SLA)' : 'Inspect SLA'}</span>
+        </button>
+        <button
+          onClick={() => handleNavigate('bots')}
+          className="px-3 py-1.5 text-[10px] font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-205 dark:border-slate-800 rounded-xl text-purple-600 dark:text-purple-400 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <Bot className="w-3.5 h-3.5" />
+          <span>{lang === 'ar' ? 'إعدادات البوت' : 'Open Bot Configuration'}</span>
+        </button>
+      </div>
 
       {/* ── KPI Summary Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -912,6 +947,77 @@ export function ChannelsTab() {
           ))}
         </div>
       </DrawerWrapper>
+
+      {/* ══════════════════════════════════════════════════════════════
+          SECTION E — CHANNEL TELEMETRY & WEBHOOKS FEED
+      ══════════════════════════════════════════════════════════════ */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-450 font-mono px-3 py-1 bg-blue-50 dark:bg-blue-950/30 rounded-full border border-blue-200 dark:border-blue-900">
+            E — {lang === 'ar' ? 'نشاط قناة البث الحي وسجلات الويب هوك' : 'Live Channel Activity & Webhook Feeds'}
+          </span>
+          <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                {lang === 'ar' ? 'سجل الويب هوك المباشر والتكامل' : 'Integration Gateway & Webhook Telemetry'}
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {lang === 'ar' 
+                  ? 'عرض حي لإجراءات تسليم الويب هوك وتحديثات حالة واجهة البرمجة (API).' 
+                  : 'Live monitoring of webhook delivery, status updates, and third-party callback payloads.'}
+              </p>
+            </div>
+            
+            <div className="border border-slate-200 dark:border-slate-850 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-950/30">
+              <OperationalActivityFeed filterScope="channels" compact limit={6} />
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
+            <div>
+              <h4 className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <Radio className="w-4 h-4 text-emerald-500" />
+                {lang === 'ar' ? 'حالة نقاط النهاية' : 'Endpoint Health Indicators'}
+              </h4>
+              <p className="text-[10px] text-slate-400 leading-normal mt-1">
+                {lang === 'ar' 
+                  ? 'أداء نقاط اتصال الويب هوك للأنظمة الخارجية المسجلة.' 
+                  : 'Global gateway endpoint performance indicators for synced providers.'}
+              </p>
+            </div>
+            
+            <div className="space-y-3 pt-2">
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="font-mono text-slate-600 dark:text-slate-405 font-bold">Meta Cloud API Gateway</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold font-mono text-[9px]">99.98% UP</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="font-mono text-slate-600 dark:text-slate-405 font-bold">SAP ERP CRM Endpoint</span>
+                <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold font-mono text-[9px]">DEGRADED</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="font-mono text-slate-600 dark:text-slate-405 font-bold">Salesforce Sync Hook</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold font-mono text-[9px]">99.85% UP</span>
+              </div>
+            </div>
+            
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-850 flex justify-end">
+              <button
+                onClick={() => handleNavigate('integrations')}
+                className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer"
+              >
+                <span>{lang === 'ar' ? 'إدارة التكاملات' : 'Manage Integrations'}</span>
+                <Sliders className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   );

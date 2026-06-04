@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 interface DrawerWrapperProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
   isRtl?: boolean;
   maxWidthClass?: string;
@@ -30,6 +30,13 @@ export function DrawerWrapper({
 
     // Capture focused element for restoration
     const previousActiveElement = document.activeElement as HTMLElement | null;
+
+    // Background scroll lock
+    const activeOverlayCount = (window as any).__activeOverlayCount || 0;
+    (window as any).__activeOverlayCount = activeOverlayCount + 1;
+    if ((window as any).__activeOverlayCount === 1) {
+      document.body.style.overflow = 'hidden';
+    }
 
     // Escape to close
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -83,6 +90,13 @@ export function DrawerWrapper({
         window.removeEventListener('keydown', handleKeyDown);
         if (cleanupTab) cleanupTab();
         clearTimeout(timer);
+
+        // Decrement scroll lock counter
+        (window as any).__activeOverlayCount = Math.max(0, ((window as any).__activeOverlayCount || 1) - 1);
+        if ((window as any).__activeOverlayCount === 0) {
+          document.body.style.overflow = '';
+        }
+
         if (previousActiveElement) {
           setTimeout(() => {
             previousActiveElement.focus();
@@ -93,6 +107,13 @@ export function DrawerWrapper({
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+
+      // Decrement scroll lock counter
+      (window as any).__activeOverlayCount = Math.max(0, ((window as any).__activeOverlayCount || 1) - 1);
+      if ((window as any).__activeOverlayCount === 0) {
+        document.body.style.overflow = '';
+      }
+
       if (previousActiveElement) {
         setTimeout(() => {
           previousActiveElement.focus();
@@ -125,9 +146,15 @@ export function DrawerWrapper({
       >
         {/* Drawer Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 bg-slate-50/80 dark:bg-slate-900/50">
-          <h2 id="drawer-title" className="text-sm sm:text-base font-bold text-slate-800 dark:text-white truncate">
-            {title}
-          </h2>
+          {typeof title === 'string' ? (
+            <h2 id="drawer-title" className="text-sm sm:text-base font-bold text-slate-800 dark:text-white truncate">
+              {title}
+            </h2>
+          ) : (
+            <div id="drawer-title" className="flex-1 min-w-0">
+              {title}
+            </div>
+          )}
           <button
             type="button"
             onClick={onClose}

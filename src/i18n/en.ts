@@ -74,6 +74,13 @@ export const en = {
   saNavSupport: 'Support',
   saNavTenantMgmt: 'Tenant Management',
 
+  // Client Admin Sidebar Section Labels
+  caNavOperations: 'Operations & Workforce',
+  caNavAIKnowledge: 'AI & Knowledge',
+  caNavChannels: 'Channels & Automation',
+  caNavGovernance: 'Governance & Analytics',
+  caNavSystem: 'System & Access',
+
   // Super Admin Header Localizations
   saMasterDataTitle: 'Master Data Management',
   saMasterDataDesc: 'Configure global LLM models, ASR/TTS engines, omnichannel communication channels, and NLU profiles.',
@@ -213,7 +220,14 @@ export const en = {
     customer_chat_history: 'Resolved Chat History',
     customer_feedback_hub: 'Feedback Hub',
     workspace: 'Workspace',
-    training: 'Training Loop'
+    training: 'Training Loop',
+    campaigns: 'Campaigns',
+    voice_ivr: 'Voice / IVR',
+    automation_rules: 'Automation Rules',
+    reports: 'Reports',
+    audit_logs: 'Audit Logs',
+    notifications: 'Notifications',
+    settings: 'Settings',
   },
 
   superAdmin: {
@@ -738,6 +752,34 @@ export const en = {
       apiHealthTitle: 'API Operational Health Telemetry',
       ecosystemAuditLog: 'Ecosystem Integration Audit Log',
       detected: 'Detected:'
+    },
+    persistence: {
+      pagination: {
+        showing: 'Showing {start} - {end} of {total}',
+        itemsPerPage: 'Items per page',
+        next: 'Next',
+        previous: 'Previous'
+      },
+      voice: {
+        replayLastCall: 'Replay Last Call Path',
+        inboundQueueCall: 'Inbound queue call',
+        callPathDebugger: 'Call Path Debugger',
+        simulateCall: 'Simulate Call',
+        endCall: 'End Call'
+      },
+      reports: {
+        generateCsv: 'Generate Report CSV',
+        savedFile: 'Saved file',
+        exportTrigger: 'Export & Download',
+        exportSuccess: 'Report Exported Successfully',
+        exportWarning: 'Preparing report data...'
+      },
+      settings: {
+        unsavedChangesExist: 'Unsaved changes exist',
+        discardWarning: 'Are you sure you want to discard unsaved changes and reset?',
+        resetConfirm: 'Discard & Reset',
+        unsavedTitle: 'Discard Unsaved Changes'
+      }
     }
   },
 
@@ -1271,6 +1313,18 @@ export const en = {
       funnelSessions: 'sessions',
       feedTitle: 'Real-Time Operational Feed',
       feedSubtitle: 'Live streaming logs from RAG searches, webhooks, and telephony gateways.',
+      anomalyTitle: 'System & Operational Anomaly Alerts',
+      anomalySub: 'Heuristics-based detection of capacity drops, cost surges, and service degradations.',
+      viewBot: 'View Bot',
+      openChannel: 'Open Channel',
+      inspectSla: 'Inspect SLA',
+      openGuardrails: 'Open Guardrails',
+      failingIntentsTitle: 'Top Failing NLU Intents',
+      failingIntentsSub: 'Intents with low confidence or high fallback rates.',
+      tokenSpendTitle: 'AI Token Spend & Cost Observatory',
+      tokenSpendSub: 'Token volume usage and cost distributions per LLM provider.',
+      tuneOptimizer: 'Tune in Intent Optimizer',
+      configureGuardrails: 'Configure Cost Guardrails',
     },
     wallboard: {
       consoleTitle: 'Live Telephony Wallboard Console',

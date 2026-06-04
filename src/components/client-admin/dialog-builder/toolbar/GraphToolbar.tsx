@@ -18,8 +18,10 @@ export function GraphToolbar() {
 
   const undo = useDialogStore((s) => s.undo);
   const redo = useDialogStore((s) => s.redo);
-  const canUndo = useDialogStore((s) => s.canUndo)();
-  const canRedo = useDialogStore((s) => s.canRedo)();
+  const pastLength = useDialogStore((s) => s.past.length);
+  const futureLength = useDialogStore((s) => s.future.length);
+  const canUndo = pastLength > 0;
+  const canRedo = futureLength > 0;
   
   const isSimulating = useDialogStore((s) => s.isSimulating);
   const startSimulation = useDialogStore((s) => s.startSimulation);
@@ -95,6 +97,41 @@ export function GraphToolbar() {
         >
           <Download className="w-3.5 h-3.5" />
           <span>{isAr ? 'تحميل المسودة' : 'Load Draft'}</span>
+        </button>
+      </div>
+
+      {/* Workflow Continuity Links */}
+      <div className="flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-800 pl-3 mr-auto flex-wrap">
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('navigate-to-screen', { detail: { screenId: 'analytics_center' } }));
+          }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-250 dark:border-slate-800 rounded-lg text-[10px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-bold text-slate-650 dark:text-slate-400 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          <span>{isAr ? 'تحليل النوايا' : 'View Intent Analytics'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('navigate-to-screen', { detail: { screenId: 'guardrails' } }));
+          }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-250 dark:border-slate-800 rounded-lg text-[10px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-bold text-slate-650 dark:text-slate-400 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          <span>{isAr ? 'مسارات التصعيد' : 'Open Escalation Flows'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (!isSimulating) {
+              startSimulation();
+            }
+          }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-250 dark:border-slate-800 rounded-lg text-[10px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-bold text-slate-650 dark:text-slate-400 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          <span>{isAr ? 'معاينة مسار المحادثة' : 'Preview Conversation Path'}</span>
         </button>
       </div>
 

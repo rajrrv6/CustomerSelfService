@@ -11,6 +11,7 @@ import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostCha
 import { RefreshCw, Plus, Database, Terminal, Sliders, Cpu, Wrench, CheckCircle } from 'lucide-react';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
+import { DrawerWrapper } from '@/components/shared/DrawerWrapper';
 
 export function KnowledgeConnectorRegistry() {
   const lang = useUIStore((s) => s.lang);
@@ -306,6 +307,83 @@ export function KnowledgeConnectorRegistry() {
         onSave={handleSaveConnector}
         lang={lang}
       />
+
+      {/* Knowledge Connector Detail Drawer */}
+      <DrawerWrapper
+        isOpen={!!selectedConnector}
+        onClose={() => setSelectedConnector(null)}
+        title={selectedConnector ? (isRtl ? `تفاصيل موصل المعرفة: ${selectedConnector.name}` : `Connector Details: ${selectedConnector.name}`) : ''}
+        isRtl={isRtl}
+        maxWidthClass="max-w-md"
+      >
+        {selectedConnector && (
+          <div className="space-y-5 text-xs font-semibold text-slate-800 dark:text-slate-200">
+            {/* Tabs */}
+            <div className="flex border-b border-slate-100 dark:border-slate-800">
+              {(['info', 'logs'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`py-2.5 text-[11px] font-bold border-b-2 mr-4 transition-all cursor-pointer ${
+                    activeTab === tab
+                      ? 'border-blue-605 text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {tab === 'info' ? (isRtl ? 'المعلومات' : 'Information') : (isRtl ? 'السجلات' : 'Sync Logs')}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'info' ? (
+              <div className="space-y-4">
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-xl">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">{isRtl ? 'المالك المسؤول' : 'Responsible Owner'}</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-white mt-1 block">{selectedConnector.owner}</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-855 rounded-xl">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">{isRtl ? 'رابط الوصول' : 'Endpoint URL'}</span>
+                  <span className="text-xs font-mono text-slate-600 dark:text-slate-400 mt-1 block break-all">{selectedConnector.endpointUrl || (isRtl ? 'لا يوجد (تحميل ملف)' : 'None (File Upload)')}</span>
+                </div>
+
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-855 rounded-xl">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">{isRtl ? 'تكرار المزامنة' : 'Sync Frequency'}</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-white mt-1 block capitalize">{selectedConnector.syncFrequency}</span>
+                </div>
+
+                {selectedConnector.description && (
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-855 rounded-xl">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">{isRtl ? 'الوصف' : 'Description'}</span>
+                    <p className="text-xs font-normal text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{selectedConnector.description}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3 font-mono text-[10px]">
+                <div className="p-3.5 bg-slate-955 text-emerald-400 rounded-xl space-y-2 border border-slate-900 overflow-x-auto max-w-full">
+                  <p className="text-slate-500">[2026-06-04 12:00:15] Starting webhook handshake...</p>
+                  <p className="text-slate-500">[2026-06-04 12:00:16] Fetching updated namespaces...</p>
+                  <p className="text-slate-450">[2026-06-04 12:00:18] Crawled 12 updated routes.</p>
+                  <p className="text-slate-450">[2026-06-04 12:00:20] Indexing 48 vector nodes in database...</p>
+                  <p className="text-emerald-400">[2026-06-04 12:00:22] SYNC STATUS: SUCCESS (0 errors)</p>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedConnector(null)}
+                className="px-4 py-2 border border-slate-200 dark:border-slate-850 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 cursor-pointer"
+              >
+                {isRtl ? 'إغلاق' : 'Close'}
+              </button>
+            </div>
+          </div>
+        )}
+      </DrawerWrapper>
     </div>
   );
 }

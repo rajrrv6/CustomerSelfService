@@ -85,6 +85,13 @@ export const SCREEN_TO_MODULE_MAP: Record<string, keyof RolePermissions> = {
   training: 'bot',
   integrations: 'bot',
   channels: 'bot',
+  campaigns: 'bot',
+  voice_ivr: 'bot',
+  automation_rules: 'bot',
+  reports: 'analytics',
+  audit_logs: 'audit',
+  notifications: 'audit',
+  settings: 'audit',
   rbac: 'audit',
 };
 

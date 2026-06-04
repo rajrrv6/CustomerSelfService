@@ -17,11 +17,13 @@ import { FileUploadModal } from './FileUploadModal';
 import { UrlCrawlModal } from './UrlCrawlModal';
 import { DatabaseConnectorModal } from './DatabaseConnectorModal';
 import { ReindexConfirmationModal } from './ReindexConfirmationModal';
+import { OperationalActivityFeed } from '../shared/OperationalActivityFeed';
 
 export function KnowledgeBaseTab() {
   const { lang, knowledgeSources, setKnowledgeSources, ingestionLogs, setIngestionLogs, addAuditLog } = useApp();
   const t = translations[lang];
   const { canEdit, canManage } = usePermission('knowledge_base');
+  const [timelineTab, setTimelineTab] = useState<'rag_activities' | 'session_logs'>('rag_activities');
 
   // Local state for tracking retries
   const [retryingSourceId, setRetryingSourceId] = useState<string | null>(null);
@@ -440,10 +442,75 @@ export function KnowledgeBaseTab() {
             
             <div className="space-y-4">
               {filteredSources.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 space-y-2 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-                  <Brain className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
-                  <p className="text-xs font-semibold">{t.clientAdmin.kb.emptyTitle || 'No Sources Found'}</p>
-                  <p className="text-[10px] text-slate-450 font-normal">{t.clientAdmin.kb.emptyDesc || 'No documents or endpoints match your query.'}</p>
+                <div className="py-10 px-6 text-center border border-dashed border-slate-205 dark:border-slate-800 rounded-3xl bg-slate-50/40 dark:bg-slate-950/20 space-y-5 animate-fade-in text-xs font-semibold">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+                    <Brain className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div className="max-w-md mx-auto space-y-1.5">
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">
+                      {isRtl ? 'ابدأ في إعداد مستودع معرفة RAG' : 'Get Started with RAG Vector Embeddings'}
+                    </h4>
+                    <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                      {isRtl
+                        ? 'قم برفع ملفاتك، أو زحف إلى موقع ويب، أو اربط قواعد البيانات لتزويد روبوتات الخدمة الذاتية بالمعلومات الدقيقة.'
+                        : 'Upload documents, crawl websites, or connect databases to begin powering retrieval workflows.'}
+                    </p>
+                  </div>
+                  
+                  {/* Guided CTA stack */}
+                  <div className="flex flex-wrap items-center justify-center gap-3 select-none">
+                    <button
+                      onClick={() => setShowUpload(true)}
+                      disabled={!canEdit}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all shadow-sm ${
+                        !canEdit
+                          ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border border-transparent'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/15 cursor-pointer'
+                      }`}
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>{isRtl ? 'رفع ملف' : 'Upload File'}</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => setShowCrawl(true)}
+                      disabled={!canEdit}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all ${
+                        !canEdit
+                          ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border border-transparent'
+                          : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 cursor-pointer'
+                      }`}
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      <span>{isRtl ? 'زحف رابط' : 'Crawl URL'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowDb(true)}
+                      disabled={!canEdit}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all ${
+                        !canEdit
+                          ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border border-transparent'
+                          : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 cursor-pointer'
+                      }`}
+                    >
+                      <Database className="w-3.5 h-3.5" />
+                      <span>{isRtl ? 'ربط موصل' : 'Connect Database'}</span>
+                    </button>
+                  </div>
+
+                  <div className="pt-2">
+                    <a
+                      href="#docs-rag"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        alert(isRtl ? 'تعليمات الإعداد: تصفح مستندات الموصلات لإعداد خوارزمية التقطيع المثلى.' : 'Setup guides: Check clientAdmin.kb for optimal chunking and embeddings configurations.');
+                      }}
+                      className="text-blue-500 hover:text-blue-600 text-[10px] font-bold underline"
+                    >
+                      {isRtl ? 'تعرف على المزيد حول إعدادات الفهرسة والـ Chunking' : 'Learn more about indexing & chunking configuration'}
+                    </a>
+                  </div>
                 </div>
               ) : (
                 filteredSources.map((src) => {
@@ -730,46 +797,114 @@ export function KnowledgeBaseTab() {
               </div>
             </div>
           </OperationalCard>
+
+          {/* Related RAG Workflows Card */}
+          <OperationalCard hoverEffect={false} className="p-5 space-y-4 animate-fade-in">
+            <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
+              <Sliders className="w-4 h-4 text-blue-500" />
+              <span>{isRtl ? 'سير العمل المتصل' : 'Related RAG Workflows'}</span>
+            </h3>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold leading-relaxed">
+              {isRtl
+                ? 'الوصول إلى أدوات التشخيص والتحليل لنموذج المعرفة المستند على البيانات المستوردة.'
+                : 'Directly transition to vector diagnostic charts, AI intent scores, or model evaluation logs.'}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('navigate-to-screen', { detail: { screenId: 'analytics_center' } }));
+                }}
+                className="px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-500/5 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-350 text-[10px] font-bold rounded-xl transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                {isRtl ? 'تحليل تقسيم المعرفة' : 'View Chunk Analytics'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('navigate-to-screen', { detail: { screenId: 'analytics_center' } }));
+                }}
+                className="px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-500/5 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-350 text-[10px] font-bold rounded-xl transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                {isRtl ? 'سجلات استرجاع الـ RAG' : 'Open Retrieval Logs'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('navigate-to-screen', { detail: { screenId: 'training' } }));
+                }}
+                className="px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-500/5 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-350 text-[10px] font-bold rounded-xl transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                {isRtl ? 'تدريب تضمينات المعرفة' : 'Train Knowledge Embeddings'}
+              </button>
+            </div>
+          </OperationalCard>
         </div>
 
-        {/* Ingestion audit timeline logs */}
-        <OperationalCard hoverEffect={false} className="p-5 space-y-4 h-fit">
-          <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider">
-            {t.clientAdmin.kb.auditTimeline}
-          </h3>
-          <div className="space-y-3.5">
-            {ingestionLogs.map((log) => (
-              <div key={log.id} className="border-l-2 border-slate-200 dark:border-slate-800 pl-3.5 space-y-1 relative">
-                <div className="absolute -left-1.5 top-1 w-2.5 h-2.5 rounded-full bg-slate-350 dark:bg-slate-700" />
-                <div className="flex justify-between items-center text-[10px] gap-2">
-                  <span className="font-bold text-slate-800 dark:text-white truncate max-w-[130px]" title={log.sourceName}>
-                    {log.sourceName}
-                  </span>
-                  <span className="font-mono text-slate-400 shrink-0">{log.timestamp.substring(11, 16)}</span>
-                </div>
-                <div className="flex items-center gap-2 text-[9px] font-bold">
-                  <span className={`px-1.5 py-0.5 rounded font-bold font-mono text-[8px] tracking-wide uppercase ${
-                    log.status === 'success'
-                      ? 'bg-emerald-55 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400'
-                      : log.status === 'processing'
-                      ? 'bg-blue-50 dark:bg-blue-955/20 text-blue-700 dark:text-blue-450'
-                      : 'bg-rose-55 dark:bg-rose-955/20 text-rose-700 dark:text-rose-455'
-                  }`}>
-                    {log.status.toUpperCase()}
-                  </span>
-                  {log.chunksCount > 0 && (
-                    <span className="text-slate-450 font-mono">+{log.chunksCount} chunks</span>
+        {/* Tabbed Ingestion / RAG Activities Card */}
+        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850/65 rounded-3xl p-5 shadow-sm space-y-4 h-fit w-full lg:w-auto">
+          <div className="flex bg-slate-100 dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200/40 dark:border-slate-800/80 font-mono text-[9px] font-bold w-fit">
+            <button
+              type="button"
+              onClick={() => setTimelineTab('rag_activities')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                timelineTab === 'rag_activities'
+                  ? 'bg-white dark:bg-slate-950 text-blue-650 dark:text-blue-400 shadow-sm border border-slate-200/50 dark:border-slate-800'
+                  : 'text-slate-500 dark:text-slate-450 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {isRtl ? 'أحداث المتجهات النشطة' : 'RAG Activity Feed'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimelineTab('session_logs')}
+              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                timelineTab === 'session_logs'
+                  ? 'bg-white dark:bg-slate-950 text-blue-655 dark:text-blue-400 shadow-sm border border-slate-200/50 dark:border-slate-800'
+                  : 'text-slate-500 dark:text-slate-450 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {isRtl ? 'سجل العمليات المحلي' : 'Session Ingestion Logs'}
+            </button>
+          </div>
+
+          {timelineTab === 'rag_activities' ? (
+            <OperationalActivityFeed filterScope="knowledge" limit={5} compact={true} />
+          ) : (
+            <div className="space-y-3.5">
+              {ingestionLogs.map((log) => (
+                <div key={log.id} className="border-l-2 border-slate-200 dark:border-slate-800 pl-3.5 space-y-1 relative">
+                  <div className="absolute -left-1.5 top-1 w-2.5 h-2.5 rounded-full bg-slate-350 dark:bg-slate-700" />
+                  <div className="flex justify-between items-center text-[10px] gap-2">
+                    <span className="font-bold text-slate-800 dark:text-white truncate max-w-[130px]" title={log.sourceName}>
+                      {log.sourceName}
+                    </span>
+                    <span className="font-mono text-slate-400 shrink-0">{log.timestamp.substring(11, 16)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[9px] font-bold">
+                    <span className={`px-1.5 py-0.5 rounded font-bold font-mono text-[8px] tracking-wide uppercase ${
+                      log.status === 'success'
+                        ? 'bg-emerald-55 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400'
+                        : log.status === 'processing'
+                        ? 'bg-blue-50 dark:bg-blue-955/20 text-blue-700 dark:text-blue-450'
+                        : 'bg-rose-55 dark:bg-rose-955/20 text-rose-700 dark:text-rose-455'
+                    }`}>
+                      {log.status.toUpperCase()}
+                    </span>
+                    {log.chunksCount > 0 && (
+                      <span className="text-slate-450 font-mono">+{log.chunksCount} chunks</span>
+                    )}
+                  </div>
+                  {log.errorDetail && (
+                    <p className="text-[9px] text-rose-500 font-mono mt-1.5 leading-normal italic bg-rose-50/50 dark:bg-rose-950/20 p-1.5 border border-rose-200/30 rounded-lg">
+                      {log.errorDetail}
+                    </p>
                   )}
                 </div>
-                {log.errorDetail && (
-                  <p className="text-[9px] text-rose-500 font-mono mt-1.5 leading-normal italic bg-rose-50/50 dark:bg-rose-950/20 p-1.5 border border-rose-200/30 rounded-lg">
-                    {log.errorDetail}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </OperationalCard>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modals */}

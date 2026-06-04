@@ -27,6 +27,7 @@ import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
 import { EnterpriseTable } from '@/components/shared/table/EnterpriseTable';
 import { ColumnDef } from '@tanstack/react-table';
+import { OperationalActivityFeed } from '@/components/client-admin/shared/OperationalActivityFeed';
 
 interface TopicCategory {
   id: string;
@@ -532,6 +533,38 @@ export function GuardrailsTab() {
         title={t.clientAdmin.guardrails.title}
         description={t.clientAdmin.guardrails.description}
       />
+
+      {/* Contextual Quick Links */}
+      <div className="flex flex-wrap gap-2.5 p-3.5 bg-slate-100 dark:bg-slate-950/80 rounded-2xl border border-slate-200/50 dark:border-slate-850">
+        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider self-center mr-1">
+          {lang === 'ar' ? 'روابط سريعة:' : 'Operational Quick Links:'}
+        </span>
+        <button
+          onClick={() => {
+            window.dispatchEvent(
+              new CustomEvent('navigate-to-screen', { detail: { screenId: 'analytics_center' } })
+            );
+          }}
+          className="px-3 py-1.5 text-[10px] font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-205 dark:border-slate-800 rounded-xl text-blue-600 dark:text-blue-400 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>{lang === 'ar' ? 'عرض تحليلات الأمان' : 'View Safety Analytics'}</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('triggers')}
+          className="px-3 py-1.5 text-[10px] font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-205 dark:border-slate-800 rounded-xl text-purple-600 dark:text-purple-400 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          <span>{lang === 'ar' ? 'قواعد التصعيد' : 'Open Escalation Rules'}</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('audit')}
+          className="px-3 py-1.5 text-[10px] font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 border border-slate-205 dark:border-slate-800 rounded-xl text-emerald-600 dark:text-emerald-400 transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>{lang === 'ar' ? 'سجل التدقيق' : 'Audit Access Logs'}</span>
+        </button>
+      </div>
 
       {/* Tabs Selector Navigation */}
       <div className="flex flex-wrap gap-1 bg-slate-900/60 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-800 max-w-3xl">
@@ -1187,22 +1220,45 @@ export function GuardrailsTab() {
 
       {/* --- TAB CONTENT: AUDIT LOGS --- */}
       {activeTab === 'audit' && (
-        <div className="space-y-4 animate-fade-in">
-          {/* Filter Audit Logs */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
-            <h4 className="font-bold text-[11px] text-slate-450 dark:text-slate-500 uppercase tracking-wider font-mono shrink-0">
-              {isRtl ? 'سجل التدقيق الأمني للسياسات وحماية البيانات' : 'Security Policy Compliance & Audit Trail'}
-            </h4>
-          </div>
+        <div className="space-y-6 animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left/Main Column: Enterprise table of policy audits */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
+                <h4 className="font-bold text-[11px] text-slate-450 dark:text-slate-500 uppercase tracking-wider font-mono shrink-0">
+                  {isRtl ? 'سجل التدقيق الأمني للسياسات وحماية البيانات' : 'Security Policy Compliance & Audit Trail'}
+                </h4>
+              </div>
 
-          <EnterpriseTable
-            data={auditLogs}
-            columns={auditColumns}
-            lang={lang}
-            filterOptions={auditFilterOptions}
-            emptyMessage={isRtl ? 'لم يتم العثور على أحداث حظر أو خرق مطابقة.' : 'No security compliance logs match search criteria.'}
-            searchPlaceholder={isRtl ? 'البحث في سجل التدقيق...' : 'Filter safety events...'}
-          />
+              <EnterpriseTable
+                data={auditLogs}
+                columns={auditColumns}
+                lang={lang}
+                filterOptions={auditFilterOptions}
+                emptyMessage={isRtl ? 'لم يتم العثور على أحداث حظر أو خرق مطابقة.' : 'No security compliance logs match search criteria.'}
+                searchPlaceholder={isRtl ? 'البحث في سجل التدقيق...' : 'Filter safety events...'}
+              />
+            </div>
+
+            {/* Right Column: Live Safety Activity Feed */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 flex flex-col justify-between" style={{ height: 'fit-content' }}>
+              <div>
+                <h4 className="font-bold text-slate-850 dark:text-white flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-rose-500" />
+                  <span>{isRtl ? 'موجز أنشطة الحماية الفوري' : 'Live Safety Telemetry Feed'}</span>
+                </h4>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {isRtl ? 'سجل التنبيهات المباشرة من محرك حواجز الحماية والبيانات الحساسة.' : 'Real-time alert feeds from Generative Guardrail filters and PII Redactors.'}
+                </p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto max-h-[350px] border border-slate-200 dark:border-slate-850 p-3.5 rounded-2xl bg-slate-50/50 dark:bg-slate-950/30">
+                <OperationalActivityFeed filterScope="guardrails" compact limit={6} />
+              </div>
+            </div>
+
+          </div>
         </div>
       )}
     </div>

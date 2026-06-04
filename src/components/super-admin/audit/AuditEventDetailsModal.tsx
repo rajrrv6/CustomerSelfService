@@ -124,7 +124,7 @@ export function AuditEventDetailsModal({ isOpen, onClose, event }: AuditEventDet
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
             {isRtl ? 'محتوى سجل التدقيق الأمني (JSON Payload)' : 'Structured JSON Event Payload'}
           </label>
-          <pre className="bg-slate-950 text-emerald-450 p-4 rounded-xl border border-slate-900 overflow-x-auto text-[9.5px] font-mono leading-relaxed max-h-48 overflow-y-auto">
+          <pre className="bg-slate-950 text-emerald-450 p-4 rounded-xl border border-slate-900 overflow-x-auto text-[9.5px] font-mono leading-relaxed max-h-48 overflow-y-auto max-w-full scrollbar-thin">
             {JSON.stringify({
               event_id: event.id,
               actor: event.actor,
