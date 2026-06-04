@@ -8,16 +8,17 @@ import { useNotificationsStore } from '@/stores/notificationsStore';
 import { useAuth } from '@/hooks/useAuth';
 import { translations } from '@/i18n/translations';
 import { Sidebar } from '@/components/dashboard/Sidebar';
-import { Header, getTopAppForRole } from '@/components/dashboard/Header';
+import { Header } from '@/components/dashboard/Header';
 import { SuperAdminView } from '@/components/dashboard/SuperAdminView';
 import { ClientAdminView } from '@/components/dashboard/ClientAdminView';
 import { AgentWorkspaceView } from '@/components/dashboard/AgentWorkspaceView';
 import { CustomerPortalView } from '@/components/dashboard/CustomerPortalView';
 import { QAManagerView } from '@/components/dashboard/QAManagerView';
 import { SupervisorView } from '@/components/dashboard/SupervisorView';
+import { SupportAgentView } from '@/components/dashboard/SupportAgentView';
 import { PublicBotWidget } from '@/components/dashboard/PublicBotWidget';
 import AnalyticsCenterLayout from '@/components/analytics/AnalyticsCenterLayout';
-import { ShieldAlert, Activity, MessageSquare, X } from 'lucide-react';
+import { ShieldAlert, Activity, MessageSquare, X, User, Cpu, Shield, Settings, HeartHandshake, Bot, LayoutGrid } from 'lucide-react';
 import { ToastProvider } from '@/components/shared/notifications/ToastProvider';
 import { NotificationDrawer } from '@/components/shared/notifications/NotificationDrawer';
 import { NotificationCenter } from '@/components/shared/notifications/NotificationCenter';
@@ -195,10 +196,21 @@ function WorkspaceShellInner({
           onOpenAuditLogs={() => setShowAuditLogs(true)}
           onOpenMenu={() => setIsSidebarOpen(true)}
           onOpenNotifications={() => setIsDrawerOpen(true)}
+          onOpenLauncher={() => setActiveScreen('launcher')}
         />
 
         <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-8 bg-slate-50 dark:bg-[#030712] transition-colors min-w-0">
-          {!authorized ? (
+          {activeScreen === 'launcher' ? (
+            <WorkspaceLauncher
+              lang={lang}
+              currentRole={role}
+              onSelectRole={(selectedRole, defaultScreen) => {
+                useAuthStore.getState().setRole(selectedRole);
+                setActiveScreen(defaultScreen);
+              }}
+              onLaunchBotWidget={() => setShowPublicBotOverlay(true)}
+            />
+          ) : !authorized ? (
             <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center space-y-4 max-w-md mx-auto px-2">
               <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
                 <ShieldAlert className="w-8 h-8" />
@@ -226,10 +238,12 @@ function WorkspaceShellInner({
           ) : (
             <>
               {role === 'super_admin' && <SuperAdminView activeSubScreen={renderedScreen} />}
-              {(role === 'client_admin' || role === 'operations_manager' || role === 'qa_manager' || role === 'supervisor' || role === 'viewer') && (
+              {(role === 'client_admin' || role === 'operations_manager' || role === 'viewer') && (
                 <ClientAdminView activeSubScreen={renderedScreen} />
               )}
-              {role === 'support_agent' && <AgentWorkspaceView activeSubScreen={renderedScreen} />}
+              {role === 'qa_manager' && <QAManagerView activeSubScreen={renderedScreen} />}
+              {role === 'supervisor' && <SupervisorView activeSubScreen={renderedScreen} />}
+              {role === 'support_agent' && <SupportAgentView activeSubScreen={renderedScreen} />}
               {role === 'customer' && (
                 <CustomerPortalView activeSubScreen={renderedScreen} setActiveSubScreen={setActiveScreen} />
               )}
@@ -353,5 +367,211 @@ function WorkspaceShellInner({
       />
       </div>
     </ToastProvider>
+  );
+}
+
+interface WorkspaceLauncherProps {
+  lang: 'en' | 'ar';
+  currentRole: UserRole;
+  onSelectRole: (role: UserRole, defaultScreen: string) => void;
+  onLaunchBotWidget: () => void;
+}
+
+function WorkspaceLauncher({ lang, currentRole, onSelectRole, onLaunchBotWidget }: WorkspaceLauncherProps) {
+  const isRtl = lang === 'ar';
+
+  const cards = [
+    {
+      role: 'support_agent' as UserRole,
+      defaultScreen: 'agent_dashboard',
+      nameEn: 'Liam (Support Agent)',
+      nameAr: 'ليام (وكيل الدعم)',
+      descEn: 'Access the unified agent inbox workspace with AI Smart Reply, customer 360, macros, and ticket queues.',
+      descAr: 'الوصول إلى مساحة عمل الوكيل الموحدة مع ميزة الرد الذكي المساعد، وعرض ملف العميل 360 درجة.',
+      icon: <User className="w-6 h-6 text-sky-500" />,
+      bgClass: 'from-sky-500/10 to-cyan-500/10 hover:border-sky-500/50 text-sky-500',
+      telemetry: [
+        { labelEn: 'Active Chats', labelAr: 'محادثات نشطة', value: '4' },
+        { labelEn: 'CSAT Rate', labelAr: 'تقييم العملاء', value: '98%' },
+        { labelEn: 'SLA Adherence', labelAr: 'الالتزام بالـ SLA', value: '99.2%' }
+      ]
+    },
+    {
+      role: 'qa_manager' as UserRole,
+      defaultScreen: 'qa_queue',
+      nameEn: 'Marc (QA Manager)',
+      nameAr: 'مارك (مدير الجودة)',
+      descEn: 'Audit conversation transcripts, grade call scorecards, resolve agent disputes, and draft coaching plans.',
+      descAr: 'تدقيق محادثات العملاء وتعبئة نموذج تقييم المكالمات، ومعالجة اعتراضات الوكلاء وتصميم برامج التدريب.',
+      icon: <Cpu className="w-6 h-6 text-purple-500" />,
+      bgClass: 'from-purple-500/10 to-pink-500/10 hover:border-purple-500/50 text-purple-500',
+      telemetry: [
+        { labelEn: 'Pending Audits', labelAr: 'عمليات معلقة', value: '12' },
+        { labelEn: 'Avg QA Score', labelAr: 'متوسط الدرجات', value: '87.5%' },
+        { labelEn: 'Active Coaching', labelAr: 'خطط تدريب نشطة', value: '3' }
+      ]
+    },
+    {
+      role: 'supervisor' as UserRole,
+      defaultScreen: 'supervisor_monitor',
+      nameEn: 'Sarah (Supervisor)',
+      nameAr: 'سارة (مشرف الفريق)',
+      descEn: 'Real-time agent roster monitoring, manual status overrides, whisper coaching, and live queue analytics.',
+      descAr: 'مراقبة الموظفين المتصلين وتغيير حالاتهم يدوياً، واستخدام التوجيه الهامس، وتحليل طوابير الخدمة.',
+      icon: <Shield className="w-6 h-6 text-amber-500" />,
+      bgClass: 'from-amber-500/10 to-yellow-500/10 hover:border-amber-500/50 text-amber-500',
+      telemetry: [
+        { labelEn: 'Active Agents', labelAr: 'وكلاء متصلين', value: '14' },
+        { labelEn: 'Queue Wait', labelAr: 'انتظار الطابور', value: '45s' },
+        { labelEn: 'Barge-In Ready', labelAr: 'التدخل المباشر', value: 'Live' }
+      ]
+    },
+    {
+      role: 'super_admin' as UserRole,
+      defaultScreen: 'sa_dashboard',
+      nameEn: 'Richard (Super Admin)',
+      nameAr: 'ريتشارد (المشرف العام)',
+      descEn: 'Register LLMs and Speech engines, monitor SIP trunks, check vector DB compactions, and track infrastructure costs.',
+      descAr: 'تسجيل نماذج الذكاء الاصطناعي ومحركات الصوت، ومراقبة قنوات SIP، ومراجعة حالة قواعد البيانات المتجهة.',
+      icon: <ShieldAlert className="w-6 h-6 text-red-500" />,
+      bgClass: 'from-red-500/10 to-orange-500/10 hover:border-red-500/50 text-red-500',
+      telemetry: [
+        { labelEn: 'AI Gateways', labelAr: 'بوابات الذكاء', value: '3 Active' },
+        { labelEn: 'ASR Latency', labelAr: 'استجابة الصوت', value: '120ms' },
+        { labelEn: 'SIP Trunk', labelAr: 'قناة VoIP', value: 'Connected' }
+      ]
+    },
+    {
+      role: 'client_admin' as UserRole,
+      defaultScreen: 'bots',
+      nameEn: 'Saud (Client Admin)',
+      nameAr: 'سعود (مسؤول العميل)',
+      descEn: 'Orchestrate dialog builders, safety toxicity thresholds, omnichannel templates, and custom forbidden filters.',
+      descAr: 'إدارة بناء مسارات البوت ونوايا Farah AI، ووضع حراس الأمان لتصفية النصوص وتكوين القنوات الموحدة.',
+      icon: <Settings className="w-6 h-6 text-blue-500" />,
+      bgClass: 'from-blue-500/10 to-indigo-500/10 hover:border-blue-500/50 text-blue-550',
+      telemetry: [
+        { labelEn: 'Active Bots', labelAr: 'روبوتات نشطة', value: '2' },
+        { labelEn: 'NLU Confidence', labelAr: 'دقة الـ NLU', value: '94.2%' },
+        { labelEn: 'Toxicity Slider', labelAr: 'حساسية النصوص', value: 'Medium' }
+      ]
+    },
+    {
+      role: 'customer' as UserRole,
+      defaultScreen: 'customer_home',
+      nameEn: 'David (Customer Portal)',
+      nameAr: 'ديفيد (بوابة المستخدمين)',
+      descEn: 'Access the guest self-service helpdesk: RAG search, ticket submissions, and refund OTP workflows.',
+      descAr: 'خدمة الدعم الذاتي للمستفيدين: البحث المباشر في قاعدة المعرفة، وإرسال التذاكر، واسترداد الأموال مع التحقق.',
+      icon: <HeartHandshake className="w-6 h-6 text-violet-500" />,
+      bgClass: 'from-violet-500/10 to-fuchsia-500/10 hover:border-violet-500/50 text-violet-500',
+      telemetry: [
+        { labelEn: 'Knowledge Base', labelAr: 'قاعدة المعرفة', value: '128 Items' },
+        { labelEn: 'Open Tickets', labelAr: 'تذاكر نشطة', value: '1' },
+        { labelEn: 'Live Chat Status', labelAr: 'دردشة حية', value: 'Online' }
+      ]
+    },
+    {
+      role: 'public_bot' as UserRole,
+      defaultScreen: 'public',
+      nameEn: 'Public / Bot Widget',
+      nameAr: 'مشغل البوت العام',
+      descEn: 'Preview the public visitor chat widget with simulated intent matching, RAG search, and live logs.',
+      descAr: 'معاينة مشغل محادثات الزوار الخارجي ومحاكاة مطابقة النوايا مع RAG.',
+      icon: <Bot className="w-6 h-6 text-emerald-500" />,
+      bgClass: 'from-emerald-500/10 to-teal-500/10 hover:border-emerald-500/50 text-emerald-500',
+      telemetry: [
+        { labelEn: 'Visitor Matches', labelAr: 'تطابقات الزوار', value: '96%' },
+        { labelEn: 'Avg Response', labelAr: 'سرعة الرد', value: '<1s' },
+        { labelEn: 'Sandbox SDK', labelAr: 'حزمة التجربة', value: 'V1.4' }
+      ],
+      isSpecialAction: true
+    }
+  ];
+
+  return (
+    <div className="space-y-8 animate-in fade-in-50 duration-300">
+      <div className="text-center md:text-left">
+        <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+          {isRtl ? 'مشغل بيئة العمل الموحد' : 'Unified Workspace Launcher'}
+        </h2>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xl">
+          {isRtl
+            ? 'حدد مساحة عمل وظيفية أدناه للوصول السريع إلى الشاشات المخصصة وحراس الوصول واللوحات المعتمدة.'
+            : 'Select an operational workspace below to access customized dashboards, role-based toolings, and metrics.'}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {cards.map((card) => {
+          const isCurrent = currentRole === card.role;
+          return (
+            <div
+              key={card.role}
+              onClick={() => {
+                if (card.isSpecialAction) {
+                  onLaunchBotWidget();
+                } else {
+                  onSelectRole(card.role, card.defaultScreen);
+                }
+              }}
+              className={`group relative flex flex-col justify-between p-6 border border-slate-200 dark:border-slate-800/80 rounded-2xl bg-gradient-to-br ${card.bgClass} cursor-pointer transition-all duration-300 transform hover:-translate-y-1.5 hover:shadow-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:outline-none`}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if (card.isSpecialAction) {
+                    onLaunchBotWidget();
+                  } else {
+                    onSelectRole(card.role, card.defaultScreen);
+                  }
+                }
+              }}
+            >
+              <div>
+                <div className="flex justify-between items-center">
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-900 shadow-sm shrink-0">
+                    {card.icon}
+                  </div>
+                  {isCurrent && (
+                    <span className="px-2 py-0.5 text-[8px] font-bold font-mono tracking-wider bg-blue-600 text-white rounded-full uppercase">
+                      {isRtl ? 'نشط حالياً' : 'Active Role'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 space-y-1">
+                  <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {isRtl ? card.nameAr : card.nameEn}
+                  </h3>
+                  <p className="text-xs font-medium text-slate-400 dark:text-slate-500 leading-relaxed pt-1">
+                    {isRtl ? card.descAr : card.descEn}
+                  </p>
+                </div>
+              </div>
+
+              {/* Hover Telemetry Card overlay */}
+              <div className="mt-5 pt-4 border-t border-slate-200/50 dark:border-slate-800/50 opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="text-[9px] uppercase font-bold text-slate-400 font-mono tracking-wider block mb-2">
+                  {isRtl ? 'إحصائيات فورية (محاكاة)' : 'Telemetry Metrics (Simulated)'}
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {card.telemetry.map((tItem, idx) => (
+                    <div key={idx} className="bg-white/60 dark:bg-slate-950/40 p-1.5 rounded-lg border border-slate-100/50 dark:border-slate-900/20 text-center">
+                      <span className="text-[8px] text-slate-400 dark:text-slate-500 font-medium block truncate">
+                        {isRtl ? tItem.labelAr : tItem.labelEn}
+                      </span>
+                      <strong className="text-[10px] font-black text-slate-700 dark:text-slate-200 font-mono block mt-0.5">
+                        {tItem.value}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

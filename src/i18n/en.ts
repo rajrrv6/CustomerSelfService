@@ -228,6 +228,17 @@ export const en = {
     audit_logs: 'Audit Logs',
     notifications: 'Notifications',
     settings: 'Settings',
+    scorecard_builder: 'Scorecard Builder',
+  },
+  qaManager: {
+    scorecardBuilder: 'Scorecard Builder',
+    complianceWeight: 'Compliance Weight',
+    fatalError: 'Fatal Error (Auto-Fail)',
+    calibration: 'Calibration',
+    draftTemplate: 'Draft Template',
+    publishScorecard: 'Publish Scorecard',
+    evaluationCriteria: 'Evaluation Criteria',
+    passThreshold: 'Pass Threshold',
   },
 
   superAdmin: {

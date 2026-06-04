@@ -31,28 +31,6 @@ export function DialogFlowLayout() {
   useEffect(() => {
     const results = validateGraph(nodes, edges);
     setDiagnostics(results);
-
-    // Write updated validation statuses back to nodes list in store
-    useDialogStore.setState((state) => ({
-      nodes: state.nodes.map((node) => {
-        const nodeErrors = results.filter((d) => d.nodeId === node.id);
-        const status =
-          nodeErrors.some((e) => e.severity === 'critical')
-            ? 'error'
-            : nodeErrors.some((e) => e.severity === 'warning')
-            ? 'warning'
-            : 'success';
-
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            status,
-            validationErrors: nodeErrors.map((e) => e.messageEn)
-          }
-        };
-      })
-    }));
   }, [nodes, edges, setDiagnostics]);
 
   return (

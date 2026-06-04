@@ -231,7 +231,7 @@ export function ClientNotificationsWorkspace() {
           unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 border border-slate-800 text-slate-250 hover:bg-slate-850 rounded-xl text-xs font-bold transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+              className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 text-slate-705 dark:text-slate-250 hover:bg-slate-100 dark:hover:bg-slate-850 rounded-xl text-xs font-bold transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{isAr ? 'تحديد الكل كمقروء' : 'Mark All Read'}</span>
@@ -245,11 +245,11 @@ export function ClientNotificationsWorkspace() {
         <div className="lg:col-span-2 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xs">
             {/* Category switcher */}
-            <div className="flex gap-1 bg-slate-900/60 dark:bg-slate-950 p-1 rounded-xl border border-slate-800/80 max-w-sm flex-1">
+            <div className="flex gap-1 bg-slate-105 dark:bg-slate-955 p-1 rounded-xl border border-slate-200 dark:border-slate-800/80 max-w-sm flex-1">
               <button
                 onClick={() => setActiveTab('all')}
                 className={`flex-1 py-1.5 rounded-lg text-[10px] font-extrabold uppercase transition-all ${
-                  activeTab === 'all' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-250'
+                  activeTab === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-805 dark:hover:text-slate-250'
                 }`}
               >
                 {isAr ? 'الكل' : 'All'}
@@ -257,7 +257,7 @@ export function ClientNotificationsWorkspace() {
               <button
                 onClick={() => setActiveTab('unread')}
                 className={`flex-1 py-1.5 rounded-lg text-[10px] font-extrabold uppercase transition-all flex items-center justify-center gap-1 ${
-                  activeTab === 'unread' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-250'
+                  activeTab === 'unread' ? 'bg-blue-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-805 dark:hover:text-slate-250'
                 }`}
               >
                 <span>{isAr ? 'غير المقروء' : 'Unread'}</span>
@@ -268,7 +268,7 @@ export function ClientNotificationsWorkspace() {
               <button
                 onClick={() => setActiveTab('sla')}
                 className={`flex-1 py-1.5 rounded-lg text-[10px] font-extrabold uppercase transition-all ${
-                  activeTab === 'sla' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-250'
+                  activeTab === 'sla' ? 'bg-blue-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-805 dark:hover:text-slate-250'
                 }`}
               >
                 {isAr ? 'التزامات SLA' : 'SLA Alerts'}
@@ -276,7 +276,7 @@ export function ClientNotificationsWorkspace() {
               <button
                 onClick={() => setActiveTab('system')}
                 className={`flex-1 py-1.5 rounded-lg text-[10px] font-extrabold uppercase transition-all ${
-                  activeTab === 'system' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-250'
+                  activeTab === 'system' ? 'bg-blue-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-805 dark:hover:text-slate-250'
                 }`}
               >
                 {isAr ? 'النظام' : 'System'}
@@ -377,7 +377,7 @@ export function ClientNotificationsWorkspace() {
             <div className="space-y-3 pt-2 text-xs">
               <button
                 onClick={() => handleSimulateAlert('latency')}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-900 border border-slate-800 text-slate-350 hover:bg-slate-850 rounded-xl font-bold transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-850 rounded-xl font-bold transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <span>{isAr ? 'محاكاة تأخر Stripe Webhook' : 'Trigger Stripe Webhook Alert'}</span>
                 <ArrowRight className={`w-3.5 h-3.5 text-blue-500 ${isAr ? 'scale-x-[-1]' : ''}`} />
@@ -385,7 +385,7 @@ export function ClientNotificationsWorkspace() {
 
               <button
                 onClick={() => handleSimulateAlert('accuracy')}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-900 border border-slate-800 text-slate-350 hover:bg-slate-850 rounded-xl font-bold transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-850 rounded-xl font-bold transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <span>{isAr ? 'محاكاة فشل RAG للذكاء الاصطناعي' : 'Trigger RAG Accuracy Failure'}</span>
                 <ArrowRight className={`w-3.5 h-3.5 text-blue-500 ${isAr ? 'scale-x-[-1]' : ''}`} />

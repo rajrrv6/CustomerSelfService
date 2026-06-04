@@ -33,8 +33,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'knowledge_base',
     'guardrails',
     'channels',
-    'agents',
-    'sla',
     'surveys',
     'deployments',
     'integrations',
@@ -51,9 +49,20 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'settings'
   ],
   operations_manager: ['inbox', 'agents', 'workforce', 'supervisor_monitor', 'sla', 'surveys', 'integrations', 'analytics_center'],
-  qa_manager: ['qa_queue', 'coaching', 'inbox', 'surveys', 'training'],
-  support_agent: ['agent_dashboard', 'inbox', 'tickets'],
-  supervisor: ['inbox', 'supervisor_monitor', 'workforce', 'sla', 'analytics_center'],
+  qa_manager: ['qa_queue', 'scorecard_builder', 'evaluations', 'coaching', 'qa_analytics', 'agent_performance', 'launcher'],
+  support_agent: ['agent_dashboard', 'inbox', 'tickets', 'copilot', 'suggested_replies', 'wrapup_codes', 'launcher'],
+  supervisor: [
+    'supervisor_monitor',
+    'workforce',
+    'sla',
+    'live_queues',
+    'shift_planning',
+    'occupancy',
+    'agent_presence',
+    'queue_distribution',
+    'escalations',
+    'launcher'
+  ],
   customer: [
     'customer_home',
     'customer_kb',
@@ -74,7 +83,7 @@ export const ROLE_DEFAULT_SCREEN: Record<UserRole, string> = {
   operations_manager: 'inbox',
   qa_manager: 'qa_queue',
   support_agent: 'agent_dashboard',
-  supervisor: 'inbox',
+  supervisor: 'supervisor_monitor',
   customer: 'customer_home',
   viewer: 'surveys',
 };
@@ -107,6 +116,9 @@ export const SUPER_ADMIN_SCREENS = [
 ];
 
 export function canAccessScreen(role: UserRole, screenId: string): boolean {
+  if (screenId === 'launcher') {
+    return true;
+  }
   if (role === 'super_admin') {
     return SUPER_ADMIN_SCREENS.includes(screenId) || screenId === 'analytics_center';
   }
@@ -124,6 +136,7 @@ export function canAccessScreen(role: UserRole, screenId: string): boolean {
 }
 
 export function getScreenTitle(screenId: string, t: TranslationKeys): string {
+  const isAr = t.language === 'اللغة';
   const mapping: Record<string, string> = {
     sa_dashboard: t.saDashboard,
     sa_master_data: t.saMasterData,
@@ -182,6 +195,17 @@ export function getScreenTitle(screenId: string, t: TranslationKeys): string {
     audit_logs: (t.screens as any).audit_logs || 'Audit Logs',
     notifications: (t.screens as any).notifications || 'Notifications',
     settings: (t.screens as any).settings || 'Settings',
+    scorecard_builder: isAr ? 'منشئ بطاقات التقييم' : 'Scorecard Builder',
+    copilot: (t.screens as any).copilot || (isAr ? 'مساعد الذكاء الاصطناعي' : 'AI Copilot'),
+    suggested_replies: isAr ? 'الردود المقترحة' : 'Suggested Replies',
+    wrapup_codes: isAr ? 'رموز الإنهاء والتلخيص' : 'Wrap-up Codes',
+    qa_analytics: isAr ? 'تحليلات الجودة' : 'QA Analytics',
+    agent_performance: isAr ? 'أداء الوكلاء' : 'Agent Performance',
+    shift_planning: isAr ? 'تخطيط المناوبات' : 'Shift Planning',
+    occupancy: isAr ? 'معدل الإشغال' : 'Occupancy',
+    agent_presence: isAr ? 'حالة الحضور الموظفين' : 'Agent Presence',
+    queue_distribution: isAr ? 'توزيع الطوابير' : 'Queue Distribution',
+    escalations: isAr ? 'حالات التصعيد' : 'Escalations',
   };
 
   return mapping[screenId] ?? t.screens.workspace;

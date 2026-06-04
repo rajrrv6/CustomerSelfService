@@ -28,6 +28,7 @@ import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
 import { ApprovalStepper } from '@/components/shared/workflows/ApprovalStepper';
 import { WorkflowTimeline } from '@/components/shared/workflows/WorkflowTimeline';
 import { StatusIndicator } from '@/components/shared/workflows/StatusIndicator';
+import { ScorecardBuilderWorkspace } from '@/components/qa/ScorecardBuilderWorkspace';
 
 export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) {
   const { lang, qaReviews, setQaReviews, addAuditLog, conversations } = useApp();
@@ -215,14 +216,90 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
   ];
 
   switch (activeSubScreen) {
-    case 'inbox':
-      return <AgentWorkspaceLayout activeSubScreen={activeSubScreen} />;
+    case 'scorecard_builder':
+      return <ScorecardBuilderWorkspace />;
+    case 'evaluations':
+      const completedReviews = qaReviews.filter(r => r.status === 'completed');
+      return (
+        <div className="space-y-6" dir={isRtl ? 'rtl' : 'ltr'}>
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+              {isRtl ? 'سجلات تقييم أداء الوكلاء' : 'Agent Performance Evaluations'}
+            </h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {isRtl 
+                ? 'عرض تفاصيل التقييمات المكتملة ومتوسطات درجات الجودة المحققة.' 
+                : 'Review completed agent evaluations and average quality scoring aggregates.'}
+            </p>
+          </div>
 
-    case 'surveys':
-      return <SurveysTab />;
+          {/* Aggregates Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { title: 'Compliance Avg', value: '86%', color: 'text-blue-500' },
+              { title: 'Empathy & Tone Avg', value: '91%', color: 'text-emerald-500' },
+              { title: 'Technical Accuracy Avg', value: '84%', color: 'text-purple-500' },
+              { title: 'Resolution Skill Avg', value: '87%', color: 'text-amber-500' }
+            ].map((card, idx) => (
+              <div key={idx} className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+                <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                  {card.title}
+                </span>
+                <strong className={`text-lg font-bold font-mono block mt-1 ${card.color}`}>
+                  {card.value}
+                </strong>
+              </div>
+            ))}
+          </div>
 
-    case 'training':
-      return <TrainingTab />;
+          {/* Evaluations List Table */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+            <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">
+              {isRtl ? 'التقييمات المعتمدة والنهائية' : 'Completed QA Evaluations'}
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
+                    <th className="pb-3">{isRtl ? 'الوكيل' : 'Agent'}</th>
+                    <th className="pb-3">{isRtl ? 'التاريخ' : 'Date'}</th>
+                    <th className="pb-3">{isRtl ? 'درجة الجودة' : 'Quality Score'}</th>
+                    <th className="pb-3">{isRtl ? 'الحالة' : 'Status'}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
+                  {completedReviews.map((row) => (
+                    <tr key={row.id}>
+                      <td className="py-3.5 font-bold text-slate-900 dark:text-white">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-mono font-bold text-slate-600 dark:text-slate-350">
+                            {row.agentName.substring(0,2).toUpperCase()}
+                          </div>
+                          <span>{row.agentName}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 font-mono text-slate-500 dark:text-slate-400">{row.date}</td>
+                      <td className="py-3.5 font-bold font-mono text-emerald-500">{row.score}%</td>
+                      <td className="py-3.5">
+                        <span className="px-2 py-0.5 rounded text-[9px] font-bold font-mono bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400">
+                          {isRtl ? 'مكتمل' : 'COMPLETED'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {completedReviews.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-slate-400 italic">
+                        {isRtl ? 'لا توجد تقييمات مكتملة حالياً' : 'No completed evaluations found.'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
 
     case 'qa_queue':
       return (
@@ -918,6 +995,153 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
               </div>
             </div>
           )}
+        </div>
+      );
+
+    case 'qa_analytics':
+      return (
+        <div className="space-y-6 animate-in fade-in-50 duration-200" dir={isRtl ? 'rtl' : 'ltr'}>
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+              {isRtl ? 'تحليلات الجودة والامتثال' : 'QA Quality & Compliance Analytics'}
+            </h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {isRtl
+                ? 'تحليل انحراف درجات التقييم، وتحديد مواطن الضعف في المحادثات وقنوات الاتصال الموحدة.'
+                : 'Monitor QA calibration limits, evaluate compliance SLA metrics, and check agent dispute metrics.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="md:col-span-2 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-3xl p-5 space-y-4">
+              <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono tracking-wider">
+                Compliance & Tone Score Calibration
+              </h3>
+              <div className="h-48 flex items-end justify-between gap-2 pt-4">
+                {[
+                  { label: 'Week 21', value: 82 },
+                  { label: 'Week 22', value: 85 },
+                  { label: 'Week 23', value: 89 },
+                  { label: 'Week 24', value: 87 },
+                  { label: 'Week 25', value: 92 },
+                  { label: 'Week 26 (Current)', value: 94 }
+                ].map((bar, idx) => (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-lg h-36 relative flex items-end">
+                      <div
+                        style={{ height: `${bar.value}%` }}
+                        className="w-full bg-blue-600 rounded-lg group-hover:bg-blue-500 transition-all cursor-pointer"
+                      />
+                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 font-mono font-bold text-[10px] text-slate-700 dark:text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {bar.value}%
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-400 text-center truncate w-full">{bar.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-3xl p-5 space-y-4">
+              <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono tracking-wider">
+                Audits Breakdown By Channel
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { channel: 'WhatsApp Chat', count: 48, percentage: 91, bg: 'bg-emerald-500' },
+                  { channel: 'Web Chat widget', count: 32, percentage: 86, bg: 'bg-blue-500' },
+                  { channel: 'Voice SIP call', count: 19, percentage: 81, bg: 'bg-indigo-500' },
+                  { channel: 'Customer Email', count: 12, percentage: 89, bg: 'bg-purple-500' }
+                ].map((row, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="font-semibold text-slate-800 dark:text-white">{row.channel}</span>
+                      <span className="font-mono font-bold text-slate-400">{row.count} audits ({row.percentage}%)</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full">
+                      <div style={{ width: `${row.percentage}%` }} className={`h-full rounded-full ${row.bg}`} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'agent_performance':
+      const performanceData = [
+        { name: 'Liam Bennett', audits: 24, avgScore: 89, disputes: 1, coaching: 'Active' },
+        { name: 'Nadia Vance', audits: 18, avgScore: 92, disputes: 0, coaching: 'None' },
+        { name: 'Tariq Mansoor', audits: 15, avgScore: 84, disputes: 2, coaching: 'Active' },
+        { name: 'Amira Ghadbi', audits: 12, avgScore: 95, disputes: 0, coaching: 'None' }
+      ];
+
+      return (
+        <div className="space-y-6 animate-in fade-in-50 duration-200" dir={isRtl ? 'rtl' : 'ltr'}>
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+              {isRtl ? 'مؤشرات أداء وكلاء الخدمة' : 'Agent Performance Roster'}
+            </h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {isRtl
+                ? 'مراجعة وتدقيق جودة أداء كل موظف، ومتابعة الاعتراضات النشطة وبرامج التوجيه.'
+                : 'Review quality metrics, track agent disputes, and analyze active calibration states.'}
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+            <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono tracking-wider">
+              Agent Performance Leaderboard
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
+                    <th className="pb-3">{isRtl ? 'الوكيل' : 'Agent Name'}</th>
+                    <th className="pb-3">{isRtl ? 'عدد عمليات التدقيق' : 'Audits Logged'}</th>
+                    <th className="pb-3">{isRtl ? 'متوسط درجة الجودة' : 'Average Score'}</th>
+                    <th className="pb-3">{isRtl ? 'الاعتراضات النشطة' : 'Active Disputes'}</th>
+                    <th className="pb-3">{isRtl ? 'حالة التوجيه' : 'Coaching Status'}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
+                  {performanceData.map((row) => (
+                    <tr key={row.name}>
+                      <td className="py-3.5 font-bold text-slate-900 dark:text-white">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center text-[10px] font-mono font-bold text-slate-600">
+                            {row.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <span>{row.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 font-mono text-slate-500 dark:text-slate-400">{row.audits} logged</td>
+                      <td className="py-3.5 font-bold font-mono">
+                        <span className={row.avgScore >= 90 ? 'text-emerald-500' : 'text-blue-500'}>
+                          {row.avgScore}%
+                        </span>
+                      </td>
+                      <td className="py-3.5 font-mono">
+                        {row.disputes > 0 ? (
+                          <span className="text-rose-500 font-bold">{row.disputes} dispute(s)</span>
+                        ) : (
+                          <span className="text-slate-400 font-normal">0 active</span>
+                        )}
+                      </td>
+                      <td className="py-3.5">
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase ${
+                          row.coaching === 'Active' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800'
+                        }`}>
+                          {row.coaching}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       );
 

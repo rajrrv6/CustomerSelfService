@@ -305,13 +305,13 @@ export function QueuesRosterTab() {
       </div>
 
       {/* Navigation Sub-Tabs bar */}
-      <div className="flex flex-wrap gap-1 bg-slate-900/60 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-800 max-w-4xl">
+      <div className="flex flex-wrap gap-1 bg-slate-100 dark:bg-slate-955 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-4xl">
         <button
           onClick={() => setActiveTab('queues')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'queues'
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-850/50'
           }`}
         >
           <Sliders className="w-4 h-4" />
@@ -323,7 +323,7 @@ export function QueuesRosterTab() {
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'routing'
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-855/50'
           }`}
         >
           <GitBranch className="w-4 h-4" />
@@ -335,7 +335,7 @@ export function QueuesRosterTab() {
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'roster'
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-855/50'
           }`}
         >
           <UserCheck className="w-4 h-4" />
@@ -347,7 +347,7 @@ export function QueuesRosterTab() {
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'presence'
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-855/50'
           }`}
         >
           <Monitor className="w-4 h-4" />
@@ -359,7 +359,7 @@ export function QueuesRosterTab() {
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'hours'
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-855/50'
           }`}
         >
           <Calendar className="w-4 h-4" />

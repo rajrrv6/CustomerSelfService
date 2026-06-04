@@ -143,7 +143,7 @@ export function LivePresenceBoard({
                       alt={agent.name}
                       className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800"
                     />
-                    <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 border-2 border-slate-900 rounded-full ${getStatusDotColor(auxData.code)}`} />
+                    <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 border-2 border-white dark:border-slate-900 rounded-full ${getStatusDotColor(auxData.code)}`} />
                   </div>
 
                   <div className="min-w-0">
@@ -157,7 +157,7 @@ export function LivePresenceBoard({
                   value={auxData.code}
                   disabled={!canEdit}
                   onChange={(e) => handleAuxChange(agent.id, e.target.value as AuxCode)}
-                  className={`bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-[9px] font-bold text-slate-300 focus:outline-none hover:border-slate-700 max-w-[130px] font-sans ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                  className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-[9px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none hover:border-slate-300 dark:hover:border-slate-700 max-w-[130px] font-sans ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                   title={!canEdit ? "Requires Edit Permission" : undefined}
                 >
                   <option value="Available">{getAuxLabel('Available')}</option>
@@ -220,8 +220,8 @@ export function LivePresenceBoard({
                       isMonitored && activeSupervisorMode === 'silent'
                         ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
                         : !canManage
-                        ? 'border-slate-800 opacity-60 cursor-not-allowed text-slate-455'
-                        : 'border-slate-800 hover:bg-slate-800 text-slate-455 hover:text-slate-200'
+                        ? 'border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-455'
+                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-455 hover:text-slate-850 dark:hover:text-slate-200'
                     }`}
                     title={!canManage ? "Requires Manage Permission" : "Silent Listen-In"}
                   >
@@ -241,8 +241,8 @@ export function LivePresenceBoard({
                       isMonitored && activeSupervisorMode === 'whisper'
                         ? 'bg-amber-600 border-amber-500 text-white shadow-sm'
                         : !canManage
-                        ? 'border-slate-800 opacity-60 cursor-not-allowed text-slate-455'
-                        : 'border-slate-800 hover:bg-slate-800 text-slate-455 hover:text-slate-200'
+                        ? 'border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-455'
+                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-455 hover:text-slate-850 dark:hover:text-slate-200'
                     }`}
                     title={!canManage ? "Requires Manage Permission" : "Whisper Coaching"}
                   >
@@ -262,8 +262,8 @@ export function LivePresenceBoard({
                       isMonitored && activeSupervisorMode === 'barge'
                         ? 'bg-red-600 border-red-500 text-white shadow-sm'
                         : !canManage
-                        ? 'border-slate-800 opacity-60 cursor-not-allowed text-slate-455'
-                        : 'border-slate-800 hover:bg-slate-800 text-slate-455 hover:text-slate-200'
+                        ? 'border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-455'
+                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-455 hover:text-slate-850 dark:hover:text-slate-200'
                     }`}
                     title={!canManage ? "Requires Manage Permission" : "Barge-in Confirmed"}
                   >

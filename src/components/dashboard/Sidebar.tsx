@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { translations } from '@/i18n/translations';
@@ -27,13 +28,15 @@ import {
   BarChart2,
   GitBranch,
   Bell,
-  ChevronDown
+  ChevronDown,
+  Sliders
 } from 'lucide-react';
 import { UserRole } from '@/types';
 import { canAccessScreen } from '@/lib/rbac/permissions';
 import { usePermissionStore, mapUserRoleToMatrixRole } from '@/stores/permissionStore';
 import { superAdminNavSections } from '@/config/superAdminNavigation';
 import { clientAdminNavSections } from '@/config/clientAdminNavigation';
+import { CENTRALIZED_PERSONAS } from '@/config/personas';
 
 interface SidebarItem {
   id: string;
@@ -58,6 +61,7 @@ export function Sidebar({
   const lang = useUIStore((s) => s.lang);
   const setLang = useUIStore((s) => s.setLang);
   const t = translations[lang];
+  const router = useRouter();
 
   const [showSubRoleMenu, setShowSubRoleMenu] = useState(false);
 
@@ -129,19 +133,6 @@ export function Sidebar({
       }
     }
   };
-
-  const clientAdminRoles = [
-    { value: 'client_admin', label: lang === 'ar' ? 'مسؤول النظام' : 'Full Administrator' },
-    { value: 'supervisor', label: lang === 'ar' ? 'مشرف الفريق' : 'Supervisor' },
-    { value: 'qa_manager', label: lang === 'ar' ? 'مدير الجودة' : 'QA Manager' },
-    { value: 'operations_manager', label: lang === 'ar' ? 'مدير العمليات' : 'Operations Manager' },
-    { value: 'viewer', label: lang === 'ar' ? 'مراقب عام' : 'Viewer' }
-  ];
-
-  const endUserRoles = [
-    { value: 'customer', label: lang === 'ar' ? 'بوابة العملاء' : 'Customer Portal' },
-    { value: 'support_agent', label: lang === 'ar' ? 'وكيل الدعم' : 'Support Agent' }
-  ];
 
   // Master Sidebar Items Registry
   const getMasterSidebarItems = React.useCallback((): Record<string, SidebarItem> => {
@@ -239,6 +230,91 @@ export function Sidebar({
       .filter(Boolean);
   }, [role, getMasterSidebarItems, rolePermissions, apiPermissions, t]);
 
+  const supportAgentNavSections = React.useMemo(() => [
+    {
+      id: 'conversations',
+      labelKey: 'caNavQueueMonitoring',
+      items: [
+        { id: 'inbox', labelKey: 'unifiedInbox', icon: Mail, permission: 'inbox', route: '/tenant/dashboard' },
+        { id: 'tickets', labelKey: 'tickets', icon: FileText, permission: 'tickets', route: '/tenant/dashboard' }
+      ]
+    },
+    {
+      id: 'productivity',
+      labelKey: 'caNavGovernance',
+      items: [
+        { id: 'agent_dashboard', labelKey: 'agent_dashboard', icon: BarChart2, permission: 'agent_dashboard', route: '/tenant/dashboard' }
+      ]
+    },
+    {
+      id: 'ai_assist',
+      labelKey: 'caNavAIKnowledge',
+      items: [
+        { id: 'copilot', labelKey: 'copilot', icon: Brain, permission: 'copilot', route: '/tenant/dashboard' },
+        { id: 'suggested_replies', labelKey: 'suggested_replies', icon: Sparkles, permission: 'suggested_replies', route: '/tenant/dashboard' },
+        { id: 'wrapup_codes', labelKey: 'wrapup_codes', icon: ShieldCheck, permission: 'wrapup_codes', route: '/tenant/dashboard' }
+      ]
+    }
+  ], []);
+
+  const qaManagerNavSections = React.useMemo(() => [
+    {
+      id: 'quality_assurance',
+      labelKey: 'qa_queue',
+      items: [
+        { id: 'qa_queue', labelKey: 'qa_queue', icon: Award, permission: 'qa_queue', route: '/tenant/dashboard' },
+        { id: 'scorecard_builder', labelKey: 'scorecard_builder', icon: Sliders, permission: 'scorecard_builder', route: '/tenant/dashboard' },
+        { id: 'evaluations', labelKey: 'evaluations', icon: FileText, permission: 'evaluations', route: '/tenant/dashboard' },
+        { id: 'coaching', labelKey: 'coaching', icon: Users, permission: 'coaching', route: '/tenant/dashboard' }
+      ]
+    },
+    {
+      id: 'analytics',
+      labelKey: 'qa_analytics',
+      items: [
+        { id: 'qa_analytics', labelKey: 'qa_analytics', icon: BarChart2, permission: 'qa_analytics', route: '/tenant/dashboard' },
+        { id: 'agent_performance', labelKey: 'agent_performance', icon: TrendingUp, permission: 'agent_performance', route: '/tenant/dashboard' }
+      ]
+    }
+  ], []);
+
+  const supervisorNavSections = React.useMemo(() => [
+    {
+      id: 'ops_monitoring',
+      labelKey: 'supervisor_monitor',
+      items: [
+        { id: 'supervisor_monitor', labelKey: 'supervisor_monitor', icon: Shield, permission: 'supervisor_monitor', route: '/tenant/dashboard' },
+        { id: 'live_queues', labelKey: 'live_queues', icon: Layers, permission: 'live_queues', route: '/tenant/dashboard' },
+        { id: 'sla', labelKey: 'sla', icon: Lock, permission: 'sla', route: '/tenant/dashboard' }
+      ]
+    },
+    {
+      id: 'workforce_mgmt',
+      labelKey: 'workforce',
+      items: [
+        { id: 'workforce', labelKey: 'workforce', icon: Calendar, permission: 'workforce', route: '/tenant/dashboard' },
+        { id: 'shift_planning', labelKey: 'shift_planning', icon: Calendar, permission: 'shift_planning', route: '/tenant/dashboard' },
+        { id: 'occupancy', labelKey: 'occupancy', icon: BarChart2, permission: 'occupancy', route: '/tenant/dashboard' }
+      ]
+    },
+    {
+      id: 'team_ops',
+      labelKey: 'agents',
+      items: [
+        { id: 'agent_presence', labelKey: 'agent_presence', icon: Users, permission: 'agent_presence', route: '/tenant/dashboard' },
+        { id: 'queue_distribution', labelKey: 'queue_distribution', icon: GitBranch, permission: 'queue_distribution', route: '/tenant/dashboard' },
+        { id: 'escalations', labelKey: 'escalations', icon: ShieldCheck, permission: 'escalations', route: '/tenant/dashboard' }
+      ]
+    }
+  ], []);
+
+  const navSections = React.useMemo(() => {
+    if (role === 'support_agent') return supportAgentNavSections;
+    if (role === 'qa_manager') return qaManagerNavSections;
+    if (role === 'supervisor') return supervisorNavSections;
+    return clientAdminNavSections;
+  }, [role, supportAgentNavSections, qaManagerNavSections, supervisorNavSections]);
+
   return (
     <aside
       className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} z-50 w-72 max-w-[85vw] bg-white dark:bg-[#03050a] text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 h-screen lg:static lg:w-64 transition-transform duration-300 overflow-y-auto ${
@@ -273,59 +349,47 @@ export function Sidebar({
           onKeyDown={handleNavKeyDown}
           className="flex-1 overflow-y-auto px-4 py-4 sm:py-6"
         >
-          {/* Sub-Role Selector — non-SA roles only */}
-          {(['client_admin', 'supervisor', 'qa_manager', 'operations_manager', 'viewer'].includes(role) || ['customer', 'support_agent'].includes(role)) && (
-            <div className="px-3 mb-4 relative">
-              <span className="text-[10.5px] uppercase font-bold text-slate-500 block mb-1">
-                {lang === 'ar' ? 'الدور الوظيفي الداخلي:' : 'Internal Sub-Role:'}
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowSubRoleMenu(!showSubRoleMenu)}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-900/60 hover:bg-slate-200 dark:hover:bg-slate-805 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              >
-                <span>
-                  {['client_admin', 'supervisor', 'qa_manager', 'operations_manager', 'viewer'].includes(role)
-                    ? clientAdminRoles.find((r) => r.value === role)?.label || role
-                    : endUserRoles.find((r) => r.value === role)?.label || role}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-              </button>
+          {/* Workspace Launcher Button */}
+          <div className="px-3 mb-4">
+            <button
+              type="button"
+              onClick={() => setActiveScreen('launcher')}
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                activeScreen === 'launcher'
+                  ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
+              }`}
+            >
+              <Layers className="w-4 h-4 text-blue-500" />
+              <span>{lang === 'ar' ? 'مشغل بيئة العمل' : 'Workspace Launcher'}</span>
+            </button>
+          </div>
 
-              {showSubRoleMenu && (
-                <>
-                  <div className="fixed inset-0 z-45" onClick={() => setShowSubRoleMenu(false)} />
-                  <div className="absolute left-3 right-3 mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl py-1 z-50 animate-in fade-in-50 slide-in-from-top-2">
-                    {(['client_admin', 'supervisor', 'qa_manager', 'operations_manager', 'viewer'].includes(role) ? clientAdminRoles : endUserRoles).map((subItem) => (
-                      <button
-                        key={subItem.value}
-                        type="button"
-                        onClick={() => {
-                          useAuthStore.getState().setRole(subItem.value as UserRole);
-                          if (subItem.value === 'client_admin') setActiveScreen('bots');
-                          else if (subItem.value === 'supervisor') setActiveScreen('supervisor_monitor');
-                          else if (subItem.value === 'qa_manager') setActiveScreen('qa_queue');
-                          else if (subItem.value === 'operations_manager') setActiveScreen('inbox');
-                          else if (subItem.value === 'support_agent') setActiveScreen('agent_dashboard');
-                          else if (subItem.value === 'viewer') setActiveScreen('surveys');
-                          else if (subItem.value === 'customer') setActiveScreen('customer_home');
-                          setShowSubRoleMenu(false);
-                        }}
-                        className={`w-full text-left px-3.5 py-2 text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                          role === subItem.value
-                            ? 'bg-blue-50 dark:bg-slate-800 text-blue-700 dark:text-white font-bold'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
-                        }`}
-                      >
-                        <span>{subItem.label}</span>
-                        {role === subItem.value && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+          {/* Active Persona Info & Status Panel */}
+          <div className="px-5 py-3 mb-4 mx-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-1.5 shadow-xs select-none">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">Active Workspace</span>
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-          )}
+            <div>
+              <strong className="text-xs text-slate-800 dark:text-white block font-extrabold uppercase truncate">
+                {(() => {
+                  const activeItem = CENTRALIZED_PERSONAS.find((p) => p.value === role);
+                  if (activeItem) {
+                    return lang === 'ar' ? activeItem.labelAr : activeItem.labelEn;
+                  }
+                  return role.replace('_', ' ');
+                })()}
+              </strong>
+              <span className="text-[10px] text-slate-450 dark:text-slate-500 truncate block mt-0.5 font-medium">CustomerSelfService Tenant</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800/60 mt-1">
+              <span className="px-1.5 py-0.5 rounded text-[8px] font-bold font-mono tracking-wider bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400 uppercase">
+                Production Sandbox
+              </span>
+              <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">ONLINE</span>
+            </div>
+          </div>
 
           {/* ── Super Admin: Grouped Sections ── */}
           {role === 'super_admin' && (
@@ -400,13 +464,23 @@ export function Sidebar({
           {/* ── Client Admin & Workspace Roles: Grouped Sections ── */}
           {role !== 'super_admin' && role !== 'customer' && (
             <div className="space-y-3">
-              {clientAdminNavSections.map((section) => {
+              {navSections.map((section) => {
                 const visibleItems = section.items.filter((item) =>
                   canAccessScreen(role, item.permission)
                 );
                 if (visibleItems.length === 0) return null;
-                const isExpanded = !!expandedSections[section.id];
-                const sectionLabel = (t as any)[section.labelKey] || (t.screens as any)[section.labelKey] || section.id;
+                const isExpanded = expandedSections[section.id] !== false; // default to true if not explicitly collapsed
+                
+                const sectionLabel =
+                  section.id === 'conversations' ? (lang === 'ar' ? 'المحادثات' : 'Conversations') :
+                  section.id === 'productivity' ? (lang === 'ar' ? 'الإنتاجية' : 'Productivity') :
+                  section.id === 'ai_assist' ? (lang === 'ar' ? 'مساعد الذكاء الاصطناعي' : 'AI Assist') :
+                  section.id === 'quality_assurance' ? (lang === 'ar' ? 'إدارة الجودة' : 'Quality Assurance') :
+                  section.id === 'analytics' ? (lang === 'ar' ? 'التحليلات والمراقبة' : 'Analytics') :
+                  section.id === 'ops_monitoring' ? (lang === 'ar' ? 'رقابة العمليات' : 'Operations Monitoring') :
+                  section.id === 'workforce_mgmt' ? (lang === 'ar' ? 'تخطيط القوى العاملة' : 'Workforce Management') :
+                  section.id === 'team_ops' ? (lang === 'ar' ? 'إدارة الفريق' : 'Team Operations') :
+                  (t as any)[section.labelKey] || (t.screens as any)[section.labelKey] || section.id;
 
                 return (
                   <div key={section.id} className="space-y-0.5 border-b border-slate-100/50 dark:border-slate-900/30 pb-2 last:border-b-0">
@@ -427,10 +501,24 @@ export function Sidebar({
 
                     {/* Section Items */}
                     {isExpanded && (
-                      <div className="space-y-0.5 mt-1 animate-in fade-in-40 duration-205">
+                      <div className="space-y-0.5 mt-1 animate-in fade-in-40 duration-250">
                         {visibleItems.map((item) => {
                           const isActive = activeScreen === item.id;
-                          const itemLabel = (t.screens as any)[item.labelKey] || (t as any)[item.labelKey] || item.id;
+                          
+                          const itemLabel =
+                            item.id === 'copilot' ? (lang === 'ar' ? 'مساعد الذكاء' : 'AI Copilot') :
+                            item.id === 'suggested_replies' ? (lang === 'ar' ? 'الردود المقترحة' : 'Suggested Replies') :
+                            item.id === 'wrapup_codes' ? (lang === 'ar' ? 'رموز الإنهاء' : 'Wrap-up Codes') :
+                            item.id === 'scorecard_builder' ? (lang === 'ar' ? 'منشئ بطاقات التقييم' : 'Scorecard Builder') :
+                            item.id === 'qa_analytics' ? (lang === 'ar' ? 'تحليلات الجودة' : 'QA Analytics') :
+                            item.id === 'agent_performance' ? (lang === 'ar' ? 'أداء الوكلاء' : 'Agent Performance') :
+                            item.id === 'shift_planning' ? (lang === 'ar' ? 'تخطيط المناوبات' : 'Shift Planning') :
+                            item.id === 'occupancy' ? (lang === 'ar' ? 'معدل الإشغال' : 'Occupancy') :
+                            item.id === 'agent_presence' ? (lang === 'ar' ? 'حضور الوكلاء' : 'Agent Presence') :
+                            item.id === 'queue_distribution' ? (lang === 'ar' ? 'توزيع الطابور' : 'Queue Distribution') :
+                            item.id === 'escalations' ? (lang === 'ar' ? 'التصعيد المباشر' : 'Escalations') :
+                            (t.screens as any)[item.labelKey] || (t as any)[item.labelKey] || item.id;
+
                           return (
                             <button
                               key={item.id}

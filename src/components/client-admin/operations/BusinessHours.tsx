@@ -76,13 +76,13 @@ export function BusinessHours({
         {/* Business Hours scheduler */}
         <div className="lg:col-span-7 space-y-6">
           <OperationalCard className="p-5 space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
               <h3 className="font-bold text-sm text-slate-850 dark:text-white flex items-center gap-2">
                 <Clock className="w-5 h-5 text-blue-500" />
                 <span>{isRtl ? 'ساعات العمل والتشغيل لقنوات الدعم' : 'Operational Channels Support Business Hours'}</span>
               </h3>
               
-              <div className="flex items-center gap-1 bg-slate-950 px-2 py-1.5 rounded-xl border border-slate-850 text-[10px] font-bold text-slate-350">
+              <div className="flex items-center gap-1 bg-slate-105 dark:bg-slate-950 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-850 text-[10px] font-bold text-slate-600 dark:text-slate-355">
                 <Globe className="w-3.5 h-3.5 text-blue-500" />
                 <select
                   value={timezone}
@@ -92,7 +92,7 @@ export function BusinessHours({
                     setTimezone(e.target.value);
                     addAuditLog(`Changed global timezone index to: ${e.target.value}`, 'success');
                   }}
-                  className={`bg-transparent border-none text-slate-305 focus:outline-none ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                  className={`bg-transparent border-none text-slate-700 dark:text-slate-305 focus:outline-none ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                   title={!canEdit ? "Requires Edit Permission" : undefined}
                 >
                   <option value="Asia/Riyadh (AST)">{isRtl ? 'آسيا/الرياض (AST)' : 'Asia/Riyadh (AST)'}</option>
@@ -102,7 +102,7 @@ export function BusinessHours({
               </div>
             </div>
 
-            <div className="divide-y divide-slate-800/80">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
               {channelHours.map((ch) => (
                 <div key={ch.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -117,7 +117,7 @@ export function BusinessHours({
                         }}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4.5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-3.5 rtl:peer-checked:after:-translate-x-3.5 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-slate-400 after:border-slate-350 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white" />
+                      <div className="w-8 h-4.5 bg-slate-200 dark:bg-slate-800 rounded-full peer peer-checked:after:translate-x-3.5 rtl:peer-checked:after:-translate-x-3.5 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-slate-400 after:border-slate-350 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white" />
                     </label>
 
                     <span className={`font-bold text-xs ${ch.enabled ? 'text-slate-850 dark:text-slate-205' : 'text-slate-500 dark:text-slate-600'}`}>
@@ -136,7 +136,7 @@ export function BusinessHours({
                       className={`px-2 py-1.5 rounded-lg border text-[9px] font-bold tracking-wide transition-all ${
                         ch.allDay && ch.enabled
                           ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
-                          : 'border-slate-800 text-slate-405 hover:text-slate-200 disabled:opacity-40'
+                          : 'border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-405 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-40'
                       } ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                       title={!canEdit ? "Requires Edit Permission" : undefined}
                     >
@@ -152,7 +152,7 @@ export function BusinessHours({
                           if (!canEdit) return;
                           onChannelTimeChange(ch.id, 'start', e.target.value);
                         }}
-                        className={`bg-slate-955 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-250 font-bold focus:outline-none disabled:opacity-40 font-mono text-xs ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        className={`bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-250 font-bold focus:outline-none disabled:opacity-40 font-mono text-xs ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                         title={!canEdit ? "Requires Edit Permission" : undefined}
                       />
                       <span className="text-slate-600 font-bold font-mono">/</span>
@@ -164,7 +164,7 @@ export function BusinessHours({
                           if (!canEdit) return;
                           onChannelTimeChange(ch.id, 'end', e.target.value);
                         }}
-                        className={`bg-slate-955 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-250 font-bold focus:outline-none disabled:opacity-40 font-mono text-xs ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        className={`bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-250 font-bold focus:outline-none disabled:opacity-40 font-mono text-xs ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                         title={!canEdit ? "Requires Edit Permission" : undefined}
                       />
                     </div>
@@ -199,7 +199,7 @@ export function BusinessHours({
                 }
                 onAddHoliday(e);
               }}
-              className="space-y-3 p-3 bg-slate-955/60 border border-slate-850 rounded-2xl text-[10px]"
+              className="space-y-3 p-3 bg-slate-50/50 dark:bg-slate-955/60 border border-slate-200 dark:border-slate-850 rounded-2xl text-[10px]"
             >
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
@@ -214,7 +214,7 @@ export function BusinessHours({
                       setNewHolidayNameEn(e.target.value);
                     }}
                     placeholder="National Holiday"
-                    className={`w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-slate-205 placeholder-slate-650 text-xs font-semibold ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    className={`w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-slate-800 dark:text-slate-205 placeholder-slate-400 dark:placeholder-slate-650 text-xs font-semibold ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                     title={!canEdit ? "Requires Edit Permission" : undefined}
                   />
                 </div>
@@ -230,7 +230,7 @@ export function BusinessHours({
                       setNewHolidayNameAr(e.target.value);
                     }}
                     placeholder="عطلة رسمية"
-                    className={`w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-slate-205 placeholder-slate-650 text-end text-xs font-semibold ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    className={`w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 text-slate-800 dark:text-slate-205 placeholder-slate-400 dark:placeholder-slate-650 text-end text-xs font-semibold ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                     title={!canEdit ? "Requires Edit Permission" : undefined}
                   />
                 </div>
@@ -248,7 +248,7 @@ export function BusinessHours({
                       if (!canEdit) return;
                       setNewHolidayDate(e.target.value);
                     }}
-                    className={`w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-slate-250 focus:outline-none text-xs font-semibold font-mono ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    className={`w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-slate-700 dark:text-slate-250 focus:outline-none text-xs font-semibold font-mono ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                     title={!canEdit ? "Requires Edit Permission" : undefined}
                   />
                 </div>
@@ -266,7 +266,7 @@ export function BusinessHours({
             </form>
 
             {/* Scheduled Holiday items List */}
-            <div className="divide-y divide-slate-800/60 max-h-48 overflow-y-auto pr-1">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-48 overflow-y-auto pr-1">
               {holidays.map((h) => (
                 <div key={h.id} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
@@ -281,7 +281,7 @@ export function BusinessHours({
                         }}
                         className="sr-only peer"
                       />
-                      <div className="w-7 h-4 bg-slate-800 rounded-full peer peer-checked:after:translate-x-3 rtl:peer-checked:after:-translate-x-3 after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-slate-400 after:border-slate-350 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white" />
+                      <div className="w-7 h-4 bg-slate-205 dark:bg-slate-800 rounded-full peer peer-checked:after:translate-x-3 rtl:peer-checked:after:-translate-x-3 after:content-[''] after:absolute after:top-[1px] after:start-[1px] after:bg-slate-400 after:border-slate-350 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white" />
                     </label>
 
                     <div>

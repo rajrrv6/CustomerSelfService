@@ -38,47 +38,6 @@ export interface ClientAdminNavSection {
 
 export const clientAdminNavSections: ClientAdminNavSection[] = [
   {
-    id: 'operations_workforce',
-    labelKey: 'caNavOperations',
-    items: [
-      {
-        id: 'agents',
-        labelKey: 'caNavOperationsCenter', // Will fallback to screens.agents if custom key isn't preferred
-        icon: Activity,
-        permission: 'agents',
-        route: '/tenant/dashboard',
-      },
-      {
-        id: 'workforce',
-        labelKey: 'workforce',
-        icon: Calendar,
-        permission: 'workforce',
-        route: '/tenant/dashboard',
-      },
-      {
-        id: 'supervisor_monitor',
-        labelKey: 'supervisor_monitor',
-        icon: Shield,
-        permission: 'supervisor_monitor',
-        route: '/tenant/dashboard',
-      },
-      {
-        id: 'sla',
-        labelKey: 'sla',
-        icon: Lock,
-        permission: 'sla',
-        route: '/tenant/dashboard',
-      },
-      {
-        id: 'inbox',
-        labelKey: 'caNavQueueMonitoring',
-        icon: Mail,
-        permission: 'inbox',
-        route: '/tenant/dashboard',
-      },
-    ],
-  },
-  {
     id: 'ai_knowledge',
     labelKey: 'caNavAIKnowledge',
     items: [
@@ -90,17 +49,17 @@ export const clientAdminNavSections: ClientAdminNavSection[] = [
         route: '/tenant/dashboard',
       },
       {
-        id: 'dialog_flow',
-        labelKey: 'dialog_flow',
-        icon: GitBranch,
-        permission: 'dialog_flow',
-        route: '/tenant/dashboard',
-      },
-      {
         id: 'intents',
         labelKey: 'intents',
         icon: Layers,
         permission: 'intents',
+        route: '/tenant/dashboard',
+      },
+      {
+        id: 'dialog_flow',
+        labelKey: 'dialog_flow',
+        icon: GitBranch,
+        permission: 'dialog_flow',
         route: '/tenant/dashboard',
       },
       {
@@ -138,13 +97,6 @@ export const clientAdminNavSections: ClientAdminNavSection[] = [
         route: '/tenant/dashboard',
       },
       {
-        id: 'integrations',
-        labelKey: 'integrations',
-        icon: Database,
-        permission: 'integrations',
-        route: '/tenant/dashboard',
-      },
-      {
         id: 'campaigns',
         labelKey: 'campaigns',
         icon: TrendingUp,
@@ -163,6 +115,20 @@ export const clientAdminNavSections: ClientAdminNavSection[] = [
         labelKey: 'automation_rules',
         icon: Layers,
         permission: 'automation_rules',
+        route: '/tenant/dashboard',
+      },
+      {
+        id: 'integrations',
+        labelKey: 'integrations',
+        icon: Database,
+        permission: 'integrations',
+        route: '/tenant/dashboard',
+      },
+      {
+        id: 'deployments',
+        labelKey: 'deployments',
+        icon: Play,
+        permission: 'deployments',
         route: '/tenant/dashboard',
       },
     ],
@@ -200,10 +166,10 @@ export const clientAdminNavSections: ClientAdminNavSection[] = [
         route: '/tenant/dashboard',
       },
       {
-        id: 'deployments',
-        labelKey: 'deployments',
-        icon: Play,
-        permission: 'deployments',
+        id: 'rbac',
+        labelKey: 'rbac',
+        icon: ShieldCheck,
+        permission: 'rbac',
         route: '/tenant/dashboard',
       },
       {
@@ -219,13 +185,6 @@ export const clientAdminNavSections: ClientAdminNavSection[] = [
     id: 'system_access',
     labelKey: 'caNavSystem',
     items: [
-      {
-        id: 'rbac',
-        labelKey: 'rbac',
-        icon: ShieldCheck,
-        permission: 'rbac',
-        route: '/tenant/dashboard',
-      },
       {
         id: 'notifications',
         labelKey: 'notifications',

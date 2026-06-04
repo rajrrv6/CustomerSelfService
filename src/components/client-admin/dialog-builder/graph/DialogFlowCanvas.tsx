@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -49,8 +49,10 @@ function FlowInner() {
   const { project } = useReactFlow();
 
   // Zustand State selectors
-  const nodes = useDialogStore((s) => s.nodes) || [];
-  const edges = useDialogStore((s) => s.edges) || [];
+  const storeNodes = useDialogStore((s) => s.nodes);
+  const storeEdges = useDialogStore((s) => s.edges);
+  const nodes = useMemo(() => storeNodes ?? [], [storeNodes]);
+  const edges = useMemo(() => storeEdges ?? [], [storeEdges]);
   const onNodesChange = useDialogStore((s) => s.onNodesChange);
   const onEdgesChange = useDialogStore((s) => s.onEdgesChange);
   const onConnect = useDialogStore((s) => s.onConnect);
@@ -142,28 +144,30 @@ function FlowInner() {
   }, [selectedNodeId, selectedEdgeId, deleteNode, deleteEdge]);
 
   // Render edge highlights when active simulation is running
-  const styledEdges = edges.map((edge) => {
-    // If the edge connects from active simulation node, highlight it
-    const isTraversed = activeSimNodeId === edge.source;
-    if (isTraversed) {
+  const styledEdges = useMemo(() => {
+    return edges.map((edge) => {
+      // If the edge connects from active simulation node, highlight it
+      const isTraversed = activeSimNodeId === edge.source;
+      if (isTraversed) {
+        return {
+          ...edge,
+          animated: true,
+          style: { stroke: '#3b82f6', strokeWidth: 3 },
+        };
+      }
+      const isSelected = selectedEdgeId === edge.id;
+      if (isSelected) {
+        return {
+          ...edge,
+          style: { stroke: '#1e293b', strokeWidth: 3 },
+        };
+      }
       return {
         ...edge,
-        animated: true,
-        style: { stroke: '#3b82f6', strokeWidth: 3 },
+        style: { stroke: '#cbd5e1', strokeWidth: 1.5 },
       };
-    }
-    const isSelected = selectedEdgeId === edge.id;
-    if (isSelected) {
-      return {
-        ...edge,
-        style: { stroke: '#1e293b', strokeWidth: 3 },
-      };
-    }
-    return {
-      ...edge,
-      style: { stroke: '#cbd5e1', strokeWidth: 1.5 },
-    };
-  });
+    });
+  }, [edges, activeSimNodeId, selectedEdgeId]);
 
   return (
     <div className="flex-1 h-full w-full relative" ref={reactFlowWrapper}>

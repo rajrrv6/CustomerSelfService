@@ -24,8 +24,8 @@ export type PermissionsMap = Record<string, RolePermissions>; // keys: admin, su
 
 export const DEFAULT_PERMISSIONS: PermissionsMap = {
   admin: {
-    inbox: 'admin', sla: 'admin', billing: 'admin', analytics: 'admin',
-    workforce: 'admin', qa: 'admin', rag: 'admin', copilot: 'admin',
+    inbox: 'none', sla: 'admin', billing: 'admin', analytics: 'admin',
+    workforce: 'none', qa: 'none', rag: 'admin', copilot: 'admin',
     bot: 'admin', surveys: 'admin', audit: 'admin'
   },
   supervisor: {
@@ -74,8 +74,16 @@ export const SCREEN_TO_MODULE_MAP: Record<string, keyof RolePermissions> = {
   workforce: 'workforce',
   agents: 'workforce',
   supervisor_monitor: 'workforce',
+  live_queues: 'workforce',
+  shift_planning: 'workforce',
+  occupancy: 'workforce',
+  agent_presence: 'workforce',
+  queue_distribution: 'workforce',
+  escalations: 'workforce',
   qa_queue: 'qa',
   coaching: 'qa',
+  evaluations: 'qa',
+  scorecard_builder: 'qa',
   knowledge_base: 'rag',
   bots: 'bot',
   intents: 'bot',

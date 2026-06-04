@@ -381,7 +381,7 @@ export function AutomationRulesWorkspace() {
                   <select
                     value={selectedSimRuleId}
                     onChange={(e) => setSelectedSimRuleId(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-350 focus:outline-none"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-700 dark:text-slate-350 focus:outline-none"
                   >
                     <option value="">-- Choose Rule --</option>
                     {rules.map(r => (
@@ -400,9 +400,9 @@ export function AutomationRulesWorkspace() {
                 </button>
 
                 {simSteps.length > 0 && (
-                  <div className="bg-slate-950 border border-slate-850 p-2.5 rounded-xl max-h-36 overflow-y-auto space-y-1 font-mono text-[9px] text-slate-350 leading-relaxed">
+                  <div className="bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-850 p-2.5 rounded-xl max-h-36 overflow-y-auto space-y-1 font-mono text-[9px] text-slate-700 dark:text-slate-350 leading-relaxed">
                     {simSteps.map((step, idx) => (
-                      <div key={idx} className={idx === simSteps.length - 1 && simRunning ? 'text-amber-400 animate-pulse font-bold' : ''}>
+                      <div key={idx} className={idx === simSteps.length - 1 && simRunning ? 'text-amber-600 dark:text-amber-400 animate-pulse font-bold' : ''}>
                         {step}
                       </div>
                     ))}
@@ -432,7 +432,7 @@ export function AutomationRulesWorkspace() {
                   placeholder={isAr ? 'مثال: إرسال بريد إلكتروني ترحيبي' : 'e.g. Outage SMS Alert'}
                   value={newRuleName}
                   onChange={(e) => setNewRuleName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
@@ -442,7 +442,7 @@ export function AutomationRulesWorkspace() {
                   <select
                     value={newRuleCategory}
                     onChange={(e) => setNewRuleCategory(e.target.value as any)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-2 text-[10px] text-slate-300 focus:outline-none"
+                    className="w-full bg-white dark:bg-slate-905 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 text-[10px] text-slate-700 dark:text-slate-300 focus:outline-none"
                   >
                     <option value="system">System</option>
                     <option value="security">Security</option>
@@ -456,7 +456,7 @@ export function AutomationRulesWorkspace() {
                   <select
                     value={newRuleSeverity}
                     onChange={(e) => setNewRuleSeverity(e.target.value as any)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-2 text-[10px] text-slate-350 focus:outline-none"
+                    className="w-full bg-white dark:bg-slate-905 border border-slate-205 dark:border-slate-805 rounded-xl px-2 py-2 text-[10px] text-slate-700 dark:text-slate-350 focus:outline-none"
                   >
                     <option value="info">Info</option>
                     <option value="warning">Warning</option>
@@ -470,7 +470,7 @@ export function AutomationRulesWorkspace() {
                 <select
                   value={newRuleTrigger}
                   onChange={(e) => setNewRuleTrigger(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-white dark:bg-slate-905 border border-slate-205 dark:border-slate-805 rounded-xl px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="Customer Sent Message">Customer Sent Message</option>
                   <option value="Toxicity Score Detected">Toxicity Score Detected</option>
@@ -484,7 +484,7 @@ export function AutomationRulesWorkspace() {
                 <select
                   value={newRuleAction}
                   onChange={(e) => setNewRuleAction(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-white dark:bg-slate-905 border border-slate-205 dark:border-slate-805 rounded-xl px-2.5 py-2 text-xs text-slate-700 dark:text-slate-305 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="Escalate to Live Agent">Escalate to Live Agent</option>
                   <option value="Redact Payload PII">Redact Payload PII</option>

@@ -19,9 +19,11 @@ import {
   Shield,
   Sparkles,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  LayoutGrid
 } from 'lucide-react';
 import { UserRole } from '@/types';
+import { CENTRALIZED_PERSONAS } from '@/config/personas';
 
 export type TopApp = 'super_admin' | 'client_admin' | 'end_user' | 'public_bot';
 
@@ -36,13 +38,15 @@ export function Header({
   onLogout,
   onOpenAuditLogs,
   onOpenMenu,
-  onOpenNotifications
+  onOpenNotifications,
+  onOpenLauncher
 }: {
   activeScreenTitle: string;
   onLogout: () => void;
   onOpenAuditLogs: () => void;
   onOpenMenu: () => void;
   onOpenNotifications: () => void;
+  onOpenLauncher?: () => void;
 }) {
   const router = useRouter();
   const role = useAuthStore((s) => s.role);
@@ -57,16 +61,7 @@ export function Header({
 
   const [showRoleMenu, setShowRoleMenu] = useState(false);
 
-  const topAppList: { value: TopApp; label: string }[] = [
-    { value: 'super_admin', label: lang === 'ar' ? 'مشرف عام النظام' : 'Super Admin' },
-    { value: 'client_admin', label: lang === 'ar' ? 'مدير العميل' : 'Client Admin' },
-    { value: 'end_user', label: lang === 'ar' ? 'بوابة المستخدمين' : 'End User' },
-    { value: 'public_bot', label: lang === 'ar' ? 'البوت العام' : 'Public / Bot' }
-  ];
-
-  const currentTopApp = getTopAppForRole(role);
-
-
+  const currentPersona = CENTRALIZED_PERSONAS.find((p) => p.value === role) || CENTRALIZED_PERSONAS[0];
 
   return (
     <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-40 transition-colors min-w-0 shrink-0">
@@ -103,7 +98,9 @@ export function Header({
             className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none max-w-[40vw] sm:max-w-none"
           >
             <Shield className="w-3.5 h-3.5 text-blue-500" />
-            <span className="truncate max-w-[18vw] sm:max-w-none">{topAppList.find((r) => r.value === currentTopApp)?.label}</span>
+            <span className="truncate max-w-[18vw] sm:max-w-none">
+              {lang === 'ar' ? currentPersona.labelAr : currentPersona.labelEn}
+            </span>
             <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
           </button>
 
@@ -114,34 +111,32 @@ export function Header({
                 <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {lang === 'ar' ? 'التبديل بين التطبيقات' : 'Application Switcher'}
                 </div>
-                {topAppList.map((item) => (
-                  <button
-                    key={item.value}
-                    onClick={() => {
-                      setShowRoleMenu(false);
-                      if (item.value === 'public_bot') {
-                        router.push('/portal/public');
-                      } else if (item.value === 'super_admin') {
-                        setRole('super_admin');
-                        router.push('/admin/infrastructure');
-                      } else if (item.value === 'end_user') {
-                        setRole('customer');
-                        router.push('/portal/home');
-                      } else if (item.value === 'client_admin') {
-                        setRole('client_admin');
-                        router.push('/tenant/dashboard');
-                      }
-                    }}
-                    className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors flex items-center justify-between ${
-                      currentTopApp === item.value
-                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    {currentTopApp === item.value && <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />}
-                  </button>
-                ))}
+                {CENTRALIZED_PERSONAS.map((item) => {
+                  const label = lang === 'ar' ? item.labelAr : item.labelEn;
+                  const isCurrent = item.value === role;
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        if (item.value === 'public_bot') {
+                          router.push('/portal/public');
+                        } else {
+                          setRole(item.value);
+                          router.push(item.route);
+                        }
+                      }}
+                      className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors flex items-center justify-between ${
+                        isCurrent
+                          ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                          : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span>{label}</span>
+                      {isCurrent && <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />}
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
@@ -174,6 +169,17 @@ export function Header({
             )}
           </button>
         </div>
+
+        {/* Workspace Launcher Button */}
+        {onOpenLauncher && (
+          <button
+            onClick={onOpenLauncher}
+            title={lang === 'ar' ? 'مشغل بيئة العمل' : 'Workspace Launcher'}
+            className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800 shrink-0 focus:outline-none"
+          >
+            <LayoutGrid className="w-4.5 h-4.5 text-blue-500" />
+          </button>
+        )}
 
         {/* Language Switcher */}
         <button

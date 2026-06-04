@@ -228,6 +228,17 @@ export const ar = {
     audit_logs: 'سجلات عمليات التدقيق',
     notifications: 'التنبيهات والإشعارات',
     settings: 'الإعدادات العامة',
+    scorecard_builder: 'منشئ بطاقات التقييم',
+  },
+  qaManager: {
+    scorecardBuilder: 'منشئ بطاقات التقييم',
+    complianceWeight: 'وزن الامتثال',
+    fatalError: 'خطأ فادح (فشل تلقائي)',
+    calibration: 'المعايرة',
+    draftTemplate: 'قالب مسودة',
+    publishScorecard: 'نشر بطاقة التقييم',
+    evaluationCriteria: 'معايير التقييم',
+    passThreshold: 'حد النجاح',
   },
 
   superAdmin: {
