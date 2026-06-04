@@ -14,6 +14,8 @@ interface KnowledgeConnectorTableProps {
   onDelete: (id: string) => void;
   onSync: (connector: KnowledgeConnector) => void;
   onToggle: (connector: KnowledgeConnector) => void;
+  onRowClick: (connector: KnowledgeConnector) => void;
+  syncProgress?: Record<string, string>;
 }
 
 export function KnowledgeConnectorTable({
@@ -22,7 +24,9 @@ export function KnowledgeConnectorTable({
   onEdit,
   onDelete,
   onSync,
-  onToggle
+  onToggle,
+  onRowClick,
+  syncProgress = {}
 }: KnowledgeConnectorTableProps) {
   const isRtl = lang === 'ar';
 
@@ -70,7 +74,20 @@ export function KnowledgeConnectorTable({
     {
       accessorKey: 'status',
       header: isRtl ? 'الحالة' : 'Status',
-      cell: ({ row }) => <KnowledgeConnectorStatusBadge status={row.original.status} />
+      cell: ({ row }) => {
+        const item = row.original;
+        const progressText = syncProgress[item.id];
+        return (
+          <div className="flex flex-col gap-0.5 items-start">
+            <KnowledgeConnectorStatusBadge status={item.status} />
+            {item.status === 'synchronizing' && progressText && (
+              <span className="text-[8.5px] font-mono font-bold text-blue-500 animate-pulse whitespace-nowrap">
+                {progressText}
+              </span>
+            )}
+          </div>
+        );
+      }
     },
     {
       accessorKey: 'lastSync',

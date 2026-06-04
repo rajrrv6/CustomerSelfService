@@ -20,6 +20,18 @@ export function useTabQueryState(defaultTab: string, validTabs: string[], propAc
     }
   }, []);
 
+  const validTabsStr = validTabs.join(',');
+  useEffect(() => {
+    if (!isMounted || !searchParams) return;
+    const tabParam = searchParams.get('tab');
+    if (tabParam && !validTabs.includes(tabParam)) {
+      const params = new URLSearchParams(searchParams.toString());
+      const fallbackTab = propActiveTab && validTabs.includes(propActiveTab) ? propActiveTab : defaultTab;
+      params.set('tab', fallbackTab);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [isMounted, searchParams, validTabsStr, defaultTab, propActiveTab, pathname, router]);
+
   const activeTabParam = isMounted && searchParams ? searchParams.get('tab') : null;
 
   // Prioritize URL query param if present and valid; next try propActiveTab; fallback to defaultTab

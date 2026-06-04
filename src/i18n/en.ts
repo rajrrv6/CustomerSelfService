@@ -51,7 +51,7 @@ export const en = {
   sipTrunkConfig: 'SIP Trunk Voice Config',
   nluGovernance: 'Global NLU Governance',
 
-  // Super Admin Navigation
+  // Super Admin Navigation — item labels
   saDashboard: 'Dashboard',
   saMasterData: 'Master Data',
   saAnalytics: 'Analytics',
@@ -59,6 +59,20 @@ export const en = {
   saTelephony: 'Telephony',
   saBilling: 'Billing',
   saAudit: 'Audit & Compliance',
+  saNotifications: 'Notifications',
+  saSettings: 'Settings',
+  saHelp: 'Help Center',
+  saTenantManagement: 'Tenant Management',
+  saSystemOps: 'System Operations',
+
+  // Super Admin Sidebar Section Labels
+  saNavMain: 'Main',
+  saNavPlatformMgmt: 'Platform Management',
+  saNavOperations: 'Operations',
+  saNavGovernance: 'Governance',
+  saNavSystem: 'System',
+  saNavSupport: 'Support',
+  saNavTenantMgmt: 'Tenant Management',
 
   // Super Admin Header Localizations
   saMasterDataTitle: 'Master Data Management',
@@ -333,6 +347,206 @@ export const en = {
       metricLatency: 'Platform Latency (p95)',
       metricLatencyDesc: 'ASR+LLM orchestration pipeline',
       tableHeaders: ['Client Identifier', 'Monthly Tokens', 'Active Bots', 'SLA Compliance', 'Endpoint Load']
+    },
+
+    notifications: {
+      title: 'Notifications Center',
+      description: 'Operational announcements, sync notices, governance reminders, deployment updates, and billing alerts for the platform.',
+      recentAlertsLabel: 'Recent Alerts',
+      syncNoticesLabel: 'Sync Notices',
+      governanceRemindersLabel: 'Governance Reminders',
+      deploymentUpdatesLabel: 'Deployment Updates',
+      allClearTitle: 'All Systems Operational',
+      allClearDesc: 'No outstanding platform notices at this time.',
+      items: {
+        billingCycleTitle: 'Billing Cycle Closed',
+        billingCycleDesc: 'June 2026 billing cycle closed successfully. 14 tenant invoices generated and dispatched.',
+        billingCycleTime: '2 hours ago',
+        syncCompletedTitle: 'Master Data Sync Completed',
+        syncCompletedDesc: 'LLM registry sync from model provider APIs completed. 5 model records updated.',
+        syncCompletedTime: '5 hours ago',
+        complianceReminderTitle: 'Compliance Policy Review Due',
+        complianceReminderDesc: 'Quarterly audit policy review is due within 7 days. Review Compliance Policies in Audit & Compliance.',
+        complianceReminderTime: '1 day ago',
+        deploymentNoticeTitle: 'Infrastructure Deployment Notice',
+        deploymentNoticeDesc: 'Pinecone vector cluster rebalance scheduled for Saturday 07:00 AST. Expected downtime: 5 minutes.',
+        deploymentNoticeTime: '2 days ago',
+        sipHealthTitle: 'SIP Trunk Health Check Passed',
+        sipHealthDesc: 'All 2 active SIP trunks passed scheduled health verification. MOS quality index nominal.',
+        sipHealthTime: '3 days ago',
+        llmCostTitle: 'LLM Cost Threshold Advisory',
+        llmCostDesc: 'Platform aggregate token spend reached 85% of monthly advisory threshold. Review cost benchmarks.',
+        llmCostTime: '4 days ago'
+      }
+    },
+
+    settings: {
+      title: 'Platform Settings',
+      description: 'Configure localization, branding, platform preferences, feature toggles, and security controls.',
+      localizationTitle: 'Localization & Language',
+      localizationDesc: 'Default platform language, date formats, RTL support, and regional settings.',
+      brandingTitle: 'Branding & Themes',
+      brandingDesc: 'Platform logo, primary color palette, dark mode defaults, and widget appearance.',
+      preferencesTitle: 'Platform Preferences',
+      preferencesDesc: 'Session timeout policies, pagination defaults, and dashboard widget layout.',
+      featureTogglesTitle: 'Feature Toggles',
+      featureTogglesDesc: 'Enable or disable experimental modules, beta features, and platform capability flags.',
+      securityTitle: 'Security Preferences',
+      securityDesc: 'MFA enforcement policies, IP allowlist configuration, and session audit controls.',
+      apiLimitsTitle: 'API Rate Limits',
+      apiLimitsDesc: 'Configure per-tenant API rate limits, burst allowances, and throttle enforcement rules.',
+      configureCta: 'Configure'
+    },
+
+    help: {
+      title: 'Help & Support Center',
+      description: 'Quick links, documentation references, release notes, escalation contacts, and operational guides.',
+      quickLinksTitle: 'Quick Links',
+      guidesTitle: 'Operational Guides',
+      escalationTitle: 'Escalation & Support',
+      escalationDesc: 'For critical platform incidents, contact the platform engineering team via the channels below.',
+      escalationEmail: 'platform-ops@converiq.ai',
+      escalationTicket: 'Open Priority Ticket',
+      links: {
+        docsTitle: 'Platform Documentation',
+        docsDesc: 'Full API reference, architecture guides, and integration documentation.',
+        releaseNotesTitle: 'Release Notes',
+        releaseNotesDesc: 'Changelog for all platform versions, feature additions, and deprecation notices.',
+        apiRefTitle: 'API Reference',
+        apiRefDesc: 'REST API schema, authentication patterns, and webhook event definitions.',
+        escalationPathTitle: 'Escalation Path',
+        escalationPathDesc: 'Severity matrix, SLA commitments, and engineering contact routing.'
+      },
+      guides: {
+        onboardingTitle: 'Tenant Onboarding Guide',
+        onboardingDesc: 'Step-by-step walkthrough for provisioning a new client tenant on the platform.',
+        rbacTitle: 'RBAC Configuration Guide',
+        rbacDesc: 'How to set up role-based access control, permission matrices, and access policies.',
+        billingTitle: 'Billing & Subscriptions FAQ',
+        billingDesc: 'Common questions about billing cycles, invoice generation, and subscription tiers.',
+        sipTitle: 'SIP Trunk Setup Guide',
+        sipDesc: 'How to provision SIP trunks, configure DID pools, and test call quality.'
+      }
+    },
+    tenantManagement: {
+      title: 'Tenant Management',
+      description: 'Manage platform tenant accounts, subscription tiers, resource limits, and lifecycle states.',
+      tabs: {
+        tenantList: 'Tenant Registry',
+        metering: 'Consumption Metering',
+        featureFlags: 'Feature Toggles'
+      },
+      list: {
+        searchPlaceholder: 'Search tenants by name, domain, or ID...',
+        newTenantButton: 'Provision New Tenant',
+        tableHeaders: ['Tenant Name', 'Domain', 'Current Plan', 'Billing Status', 'Resource Load', 'Created At', 'Actions'],
+        emptyTitle: 'No Tenants Found',
+        emptyDesc: 'No tenants match your current filter and search query.'
+      },
+      detail: {
+        title: 'Tenant Profile & Configuration',
+        overview: 'Overview',
+        settings: 'Tenant Settings',
+        auditLogs: 'Audit Timeline',
+        name: 'Tenant Name',
+        domain: 'Domain',
+        status: 'Status',
+        plan: 'Subscription Plan',
+        createdAt: 'Date Created',
+        security: 'IP Whitelist & Domain Config',
+        whitelistPlaceholder: 'e.g. 192.168.1.1, 10.0.0.0/24',
+        saveSettings: 'Save Configuration',
+        close: 'Close',
+        actions: {
+          activate: 'Activate Tenant',
+          suspend: 'Suspend Tenant',
+          delete: 'Delete Tenant',
+          clone: 'Clone Tenant',
+          export: 'Export Tenant (JSON)'
+        }
+      },
+      metering: {
+        title: 'Resource Consumption & Utilization',
+        desc: 'Real-time telemetry of CPU, memory, API traffic, and conversational token usage.',
+        apiCalls: 'API Gateway Requests',
+        tokenUsage: 'LLM Inference Tokens',
+        cpuUsage: 'Database CPU Load',
+        dbSize: 'Vector DB Row Count',
+        periodWeek: 'Last 7 Days',
+        periodMonth: 'Last 30 Days',
+        consumptionCap: 'Consumption Budget',
+        warningThreshold: 'Quota Warning (80% reached)'
+      },
+      featureFlags: {
+        title: 'Feature Gate Control',
+        desc: 'Enable or disable enterprise beta capabilities, system overrides, and security policies per tenant.',
+        selectTenant: 'Select Tenant',
+        flagName: 'Feature Gate',
+        flagDesc: 'Description',
+        flagStatus: 'Status',
+        flagEnabled: 'Enabled',
+        flagDisabled: 'Disabled',
+        toggleFlag: 'Toggle Feature Gate',
+        successToggle: 'Feature gate updated successfully.'
+      },
+      wizard: {
+        title: 'Provision New Tenant',
+        step1: 'Organization Profile',
+        step2: 'Resource Quotas',
+        step3: 'Default Routing',
+        step4: 'Review & Launch',
+        fieldOrgName: 'Organization Name',
+        fieldOrgDomain: 'Primary Domain',
+        fieldQuotaSeats: 'Default Seats Limit',
+        fieldQuotaModels: 'Allocated Model Group',
+        fieldAdminEmail: 'Primary Administrator Email',
+        buttonNext: 'Next Step',
+        buttonBack: 'Previous',
+        buttonLaunch: 'Deploy Tenant',
+        deploySuccess: 'Tenant provisioned successfully.'
+      }
+    },
+    systemOps: {
+      title: 'System Operations',
+      description: 'Observe platform uptime metrics, monitor background jobs, manage active migrations, and trace diagnostics.',
+      tabs: {
+        health: 'Health Status',
+        jobs: 'Jobs Queue',
+        errors: 'Error Monitoring',
+        migrations: 'Migrations'
+      },
+      health: {
+        serviceStatus: 'Core Services Status',
+        cpuUtilization: 'API Gateway CPU Load',
+        memoryUtilization: 'Memory Allocation',
+        latencyIndex: 'Network Latency Index',
+        uptime: 'Overall Platform Uptime',
+        healthy: 'OPERATIONAL',
+        degraded: 'DEGRADED',
+        offline: 'OUTAGE',
+        unknown: 'UNKNOWN'
+      },
+      jobs: {
+        searchPlaceholder: 'Search jobs by ID or name...',
+        tableHeaders: ['Job ID / Name', 'Source Queue', 'Triggered By', 'Duration', 'Retries', 'Status', 'Actions'],
+        emptyTitle: 'No Queue Jobs Found',
+        emptyDesc: 'There are no active or pending background jobs in the queue.',
+        abortSuccess: 'Job execution aborted successfully.',
+        retrySuccess: 'Successfully triggered job retry.',
+        requeueSuccess: 'Job re-queued to backlog.'
+      },
+      errors: {
+        searchPlaceholder: 'Search exceptions or trace logs...',
+        tableHeaders: ['Exception Type', 'Affected Service', 'Message', 'Severity', 'Timestamp', 'Status'],
+        emptyTitle: 'No Exceptions Found',
+        emptyDesc: 'Clean system run. No recent runtime anomalies reported.',
+        resolveSuccess: 'Exception resolved and marked in security timeline.'
+      },
+      migrations: {
+        tableHeaders: ['Migration Version', 'Description', 'Executed At', 'Duration', 'Rollback Target', 'Status'],
+        emptyTitle: 'No Migrations Run',
+        emptyDesc: 'No platform schema migrations recorded in this cluster environment.'
+      }
     }
   },
 

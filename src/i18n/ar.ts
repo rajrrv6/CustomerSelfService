@@ -51,7 +51,7 @@ export const ar = {
   sipTrunkConfig: 'إعدادات خطوط الاتصال SIP Trunk',
   nluGovernance: 'حوكمة NLU العالمية',
 
-  // Super Admin Navigation
+  // Super Admin Navigation — item labels
   saDashboard: 'لوحة القيادة',
   saMasterData: 'البيانات الرئيسية',
   saAnalytics: 'التحليلات والمراقبة',
@@ -59,6 +59,20 @@ export const ar = {
   saTelephony: 'الاتصالات الهاتفية',
   saBilling: 'الفوترة والاشتراكات',
   saAudit: 'التدقيق والامتثال',
+  saNotifications: 'الإشعارات',
+  saSettings: 'الإعدادات',
+  saHelp: 'مركز المساعدة',
+  saTenantManagement: 'إدارة المستأجرين',
+  saSystemOps: 'العمليات التشغيلية',
+
+  // Super Admin Sidebar Section Labels
+  saNavMain: 'الرئيسية',
+  saNavPlatformMgmt: 'إدارة المنصة',
+  saNavOperations: 'العمليات',
+  saNavGovernance: 'الحوكمة',
+  saNavSystem: 'النظام',
+  saNavSupport: 'الدعم والمساعدة',
+  saNavTenantMgmt: 'إدارة المستأجرين',
 
   // Super Admin Header Localizations
   saMasterDataTitle: 'إدارة البيانات الرئيسية',
@@ -333,6 +347,206 @@ export const ar = {
       metricLatency: 'زمن استجابة المنصة (p95)',
       metricLatencyDesc: 'بنية معالجة وربط ASR+LLM',
       tableHeaders: ['معرف العميل', 'الرموز الشهرية', 'الروبوتات النشطة', 'الالتزام باتفاقية الخدمة', 'حمل نقطة النهاية']
+    },
+
+    notifications: {
+      title: 'مركز الإشعارات',
+      description: 'الإعلانات التشغيلية وإشعارات المزامنة وتذكيرات الحوكمة وتحديثات النشر وتنبيهات الفوترة للمنصة.',
+      recentAlertsLabel: 'التنبيهات الأخيرة',
+      syncNoticesLabel: 'إشعارات المزامنة',
+      governanceRemindersLabel: 'تذكيرات الحوكمة',
+      deploymentUpdatesLabel: 'تحديثات النشر',
+      allClearTitle: 'جميع الأنظمة تعمل بشكل طبيعي',
+      allClearDesc: 'لا توجد إشعارات منصة معلقة في الوقت الحالي.',
+      items: {
+        billingCycleTitle: 'دورة الفوترة مكتملة',
+        billingCycleDesc: 'اكتملت دورة فوترة يونيو 2026 بنجاح. تم إنشاء وإرسال 14 فاتورة للمستأجرين.',
+        billingCycleTime: 'منذ ساعتين',
+        syncCompletedTitle: 'اكتملت مزامنة البيانات الرئيسية',
+        syncCompletedDesc: 'اكتملت مزامنة سجل نماذج الذكاء الاصطناعي من واجهات برمجة موفري النماذج. تم تحديث 5 سجلات نماذج.',
+        syncCompletedTime: 'منذ 5 ساعات',
+        complianceReminderTitle: 'موعد مراجعة سياسة الامتثال',
+        complianceReminderDesc: 'مراجعة سياسة التدقيق الفصلية مستحقة خلال 7 أيام. راجع سياسات الامتثال في قسم التدقيق والامتثال.',
+        complianceReminderTime: 'منذ يوم واحد',
+        deploymentNoticeTitle: 'إشعار نشر البنية التحتية',
+        deploymentNoticeDesc: 'تمت جدولة إعادة توازن مجموعة المتجهات Pinecone يوم السبت الساعة 07:00 بتوقيت الرياض. مدة التوقف المتوقعة: 5 دقائق.',
+        deploymentNoticeTime: 'منذ يومين',
+        sipHealthTitle: 'اجتاز فحص صحة خطوط SIP',
+        sipHealthDesc: 'اجتاز خطا SIP النشطان الاثنان الفحص الصحي المجدول. مؤشر جودة الصوت MOS طبيعي.',
+        sipHealthTime: 'منذ 3 أيام',
+        llmCostTitle: 'تنبيه عتبة تكلفة نماذج الذكاء الاصطناعي',
+        llmCostDesc: 'وصل إجمالي إنفاق الرموز على المنصة إلى 85% من عتبة التوصية الشهرية. راجع مقارنات التكاليف.',
+        llmCostTime: 'منذ 4 أيام'
+      }
+    },
+
+    settings: {
+      title: 'إعدادات المنصة',
+      description: 'تهيئة اللغة والعلامة التجارية وتفضيلات المنصة ومفاتيح الميزات وضوابط الأمان.',
+      localizationTitle: 'الترجمة واللغة',
+      localizationDesc: 'اللغة الافتراضية للمنصة وتنسيقات التاريخ ودعم RTL والإعدادات الإقليمية.',
+      brandingTitle: 'العلامة التجارية والمظاهر',
+      brandingDesc: 'شعار المنصة ولوحة الألوان الأساسية وإعدادات الوضع الداكن ومظهر الويدجت.',
+      preferencesTitle: 'تفضيلات المنصة',
+      preferencesDesc: 'سياسات انتهاء مهلة الجلسة والإعدادات الافتراضية للترقيم وتخطيط لوحة القيادة.',
+      featureTogglesTitle: 'مفاتيح الميزات',
+      featureTogglesDesc: 'تمكين أو تعطيل الوحدات التجريبية والميزات التجريبية وعلامات إمكانية المنصة.',
+      securityTitle: 'تفضيلات الأمان',
+      securityDesc: 'سياسات إنفاذ المصادقة متعددة العوامل وتكوين قائمة السماح بالـ IP وضوابط تدقيق الجلسة.',
+      apiLimitsTitle: 'حدود واجهة برمجة التطبيقات',
+      apiLimitsDesc: 'تكوين حدود معدل API لكل مستأجر ومتطلبات الانفجار وقواعد تطبيق تحديد المعدل.',
+      configureCta: 'تهيئة'
+    },
+
+    help: {
+      title: 'مركز المساعدة والدعم',
+      description: 'روابط سريعة ومراجع التوثيق وملاحظات الإصدار وجهات اتصال التصعيد والأدلة التشغيلية.',
+      quickLinksTitle: 'روابط سريعة',
+      guidesTitle: 'الأدلة التشغيلية',
+      escalationTitle: 'التصعيد والدعم',
+      escalationDesc: 'للحوادث الحرجة على المنصة، تواصل مع فريق هندسة المنصة عبر القنوات أدناه.',
+      escalationEmail: 'platform-ops@converiq.ai',
+      escalationTicket: 'فتح تذكرة أولوية',
+      links: {
+        docsTitle: 'توثيق المنصة',
+        docsDesc: 'مرجع API الكامل وأدلة البنية وتوثيق التكامل.',
+        releaseNotesTitle: 'ملاحظات الإصدار',
+        releaseNotesDesc: 'سجل التغييرات لجميع إصدارات المنصة وإضافات الميزات وإشعارات الإيقاف.',
+        apiRefTitle: 'مرجع API',
+        apiRefDesc: 'مخطط REST API وأنماط المصادقة وتعريفات أحداث الـ Webhook.',
+        escalationPathTitle: 'مسار التصعيد',
+        escalationPathDesc: 'مصفوفة الخطورة والتزامات مستوى الخدمة وتوجيه جهة اتصال الهندسة.'
+      },
+      guides: {
+        onboardingTitle: 'دليل إعداد المستأجر',
+        onboardingDesc: 'عرض تفصيلي خطوة بخطوة لتوفير مستأجر عميل جديد على المنصة.',
+        rbacTitle: 'دليل تكوين RBAC',
+        rbacDesc: 'كيفية إعداد التحكم في الوصول المستند إلى الأدوار ومصفوفات الأذونات وسياسات الوصول.',
+        billingTitle: 'الأسئلة الشائعة حول الفوترة والاشتراكات',
+        billingDesc: 'أسئلة شائعة حول دورات الفوترة وإنشاء الفواتير وفئات الاشتراك.',
+        sipTitle: 'دليل إعداد خطوط SIP',
+        sipDesc: 'كيفية توفير خطوط SIP Trunk وتكوين مجموعات DID واختبار جودة المكالمات.'
+      }
+    },
+    tenantManagement: {
+      title: 'إدارة المستأجرين',
+      description: 'إدارة حسابات المستأجرين على المنصة، فئات الاشتراكات، حدود الموارد، وحالات دورة حياة المستأجر.',
+      tabs: {
+        tenantList: 'سجل المستأجرين',
+        metering: 'قياس الاستهلاك',
+        featureFlags: 'تبديل الميزات'
+      },
+      list: {
+        searchPlaceholder: 'ابحث عن المستأجرين بالاسم، النطاق، أو المعرف...',
+        newTenantButton: 'توفير مستأجر جديد',
+        tableHeaders: ['اسم المستأجر', 'النطاق الأساسي', 'الخطة الحالية', 'حالة الفوترة', 'حمولة الموارد', 'تاريخ الإنشاء', 'الإجراءات'],
+        emptyTitle: 'لم يتم العثور على مستأجرين',
+        emptyDesc: 'لا يوجد مستأجرون يطابقون استعلام البحث والتصفية الحالي.'
+      },
+      detail: {
+        title: 'ملف تعريف المستأجر وتهيئته',
+        overview: 'نظرة عامة',
+        settings: 'إعدادات المستأجر',
+        auditLogs: 'سجل التدقيق',
+        name: 'اسم المستأجر',
+        domain: 'النطاق',
+        status: 'الحالة',
+        plan: 'خطة الاشتراك',
+        createdAt: 'تاريخ الإنشاء',
+        security: 'القائمة البيضاء لـ IP وتهيئة النطاق',
+        whitelistPlaceholder: 'مثال: 192.168.1.1، 10.0.0.0/24',
+        saveSettings: 'حفظ الإعدادات',
+        close: 'إغلاق',
+        actions: {
+          activate: 'تفعيل المستأجر',
+          suspend: 'تعليق المستأجر',
+          delete: 'حذف المستأجر',
+          clone: 'استنساخ المستأجر',
+          export: 'تصدير المستأجر (JSON)'
+        }
+      },
+      metering: {
+        title: 'استهلاك الموارد والاستخدام',
+        desc: 'مراقبة استهلاك المعالج، والذاكرة، وحركة مرور بوابة API، واستخدام الرموز المميزة للذكاء الاصطناعي في الوقت الفعلي.',
+        apiCalls: 'طلبات بوابة API',
+        tokenUsage: 'رموز استدلال LLM',
+        cpuUsage: 'حمولة معالج قاعدة البيانات',
+        dbSize: 'عدد سجلات قاعدة بيانات المتجهات',
+        periodWeek: 'آخر 7 أيام',
+        periodMonth: 'آخر 30 يوماً',
+        consumptionCap: 'ميزانية الاستهلاك',
+        warningThreshold: 'تنبيه تجاوز الحصة (تم الوصول إلى 80%)'
+      },
+      featureFlags: {
+        title: 'التحكم في بوابات الميزات',
+        desc: 'تمكين أو تعطيل الميزات التجريبية للمؤسسات وتجاوزات النظام وسياسات الأمان لكل مستأجر.',
+        selectTenant: 'اختر المستأجر',
+        flagName: 'بوابة الميزة',
+        flagDesc: 'الوصف',
+        flagStatus: 'الحالة',
+        flagEnabled: 'مفعلة',
+        flagDisabled: 'معطلة',
+        toggleFlag: 'تبديل بوابة الميزة',
+        successToggle: 'تم تحديث بوابة الميزة بنجاح.'
+      },
+      wizard: {
+        title: 'توفير مستأجر جديد',
+        step1: 'ملف تعريف المؤسسة',
+        step2: 'حصص الموارد',
+        step3: 'التوجيه الافتراضي',
+        step4: 'المراجعة والنشر',
+        fieldOrgName: 'اسم المؤسسة',
+        fieldOrgDomain: 'النطاق الأساسي',
+        fieldQuotaSeats: 'الحد الافتراضي للمقاعد',
+        fieldQuotaModels: 'مجموعة النماذج المخصصة',
+        fieldAdminEmail: 'البريد الإلكتروني للمسؤول الأساسي',
+        buttonNext: 'الخطوة التالية',
+        buttonBack: 'السابق',
+        buttonLaunch: 'نشر المستأجر',
+        deploySuccess: 'تم توفير المستأجر بنجاح.'
+      }
+    },
+    systemOps: {
+      title: 'العمليات التشغيلية للنظام',
+      description: 'مراقبة مقاييس وقت تشغيل المنصة، وإدارة وظائف الخلفية، ومتابعة هجرات قواعد البيانات النشطة، وتتبع تشخيصات الأخطاء.',
+      tabs: {
+        health: 'حالة النظام والصحة',
+        jobs: 'طابور الوظائف',
+        errors: 'تتبع الأخطاء',
+        migrations: 'هجرات البيانات والترقيات'
+      },
+      health: {
+        serviceStatus: 'حالة الخدمات الأساسية',
+        cpuUtilization: 'حمولة معالج بوابة API',
+        memoryUtilization: 'تخصيص الذاكرة',
+        latencyIndex: 'مؤشر زمن استجابة الشبكة',
+        uptime: 'نسبة وقت تشغيل المنصة العام',
+        healthy: 'متاح للعمل',
+        degraded: 'أداء منخفض',
+        offline: 'متوقف عن العمل',
+        unknown: 'غير معروف'
+      },
+      jobs: {
+        searchPlaceholder: 'ابحث عن الوظائف بالمعرف أو الاسم...',
+        tableHeaders: ['معرف / اسم الوظيفة', 'طابور المصدر', 'تم التشغيل بواسطة', 'المدة', 'المحاولات', 'الحالة', 'الإجراءات'],
+        emptyTitle: 'لا توجد وظائف في الطابور',
+        emptyDesc: 'لا توجد وظائف خلفية نشطة أو معلقة حالياً في طابور المعالجة.',
+        abortSuccess: 'تم إلغاء تنفيذ الوظيفة بنجاح.',
+        retrySuccess: 'تم بدء إعادة محاولة الوظيفة بنجاح.',
+        requeueSuccess: 'تمت إعادة وضع الوظيفة في طابور الانتظار.'
+      },
+      errors: {
+        searchPlaceholder: 'البحث في الاستثناءات أو سجلات التتبع...',
+        tableHeaders: ['نوع الاستثناء', 'الخدمة المتأثرة', 'رسالة الخطأ', 'الخطورة', 'الوقت', 'الحالة'],
+        emptyTitle: 'لم يتم العثور على أخطاء',
+        emptyDesc: 'تشغيل نظيف للنظام. لم يتم الإبلاغ عن استثناءات تشغيلية مؤخراً.',
+        resolveSuccess: 'تم وضع علامة على الاستثناء بأنه تم حله.'
+      },
+      migrations: {
+        tableHeaders: ['إصدار ترقية البيانات', 'الوصف', 'تاريخ التنفيذ', 'المدة المستغرقة', 'هدف التراجع', 'الحالة'],
+        emptyTitle: 'لا توجد عمليات ترقية منفذة',
+        emptyDesc: 'لم يتم تسجيل عمليات هجرة وتحديث لقواعد البيانات في هذه البيئة.'
+      }
     }
   },
 

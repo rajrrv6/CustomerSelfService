@@ -89,6 +89,39 @@ export function SipTrunkConfigTab() {
     status: 'active'
   });
 
+  // Diagnostics states
+  const [selectedTrunkForDiagnostics, setSelectedTrunkForDiagnostics] = useState<SipTrunk | null>(null);
+  const [diagnosticsLogs, setDiagnosticsLogs] = useState<string[]>([]);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+
+  const runSipDiagnostics = (trunk: SipTrunk) => {
+    setSelectedTrunkForDiagnostics(trunk);
+    setIsDiagnosing(true);
+    setDiagnosticsLogs([isRtl ? `[INFO] بدء تشخيص الاتصال بالبوابة: ${trunk.id}` : `[INFO] Starting SIP Diagnostics for trunk: ${trunk.id}`]);
+
+    const steps = [
+      { msg: isRtl ? `[INFO] تحليل عنوان بوابة IP: ${trunk.ipGateway}` : `[INFO] Resolving IP Gateway address: ${trunk.ipGateway}`, time: 500 },
+      { msg: isRtl ? `[INFO] إرسال رسالة فحص SIP OPTIONS إلى البوابة...` : `[INFO] Sending SIP OPTIONS ping to ${trunk.ipGateway}...`, time: 1000 },
+      { msg: isRtl ? `[INFO] استجابة البوابة: SIP 200 OK. زمن الاستجابة: ${Math.floor(Math.random() * 40) + 10}ms` : `[INFO] SIP OPTIONS response: 200 OK. RTT latency: ${Math.floor(Math.random() * 40) + 10}ms`, time: 1500 },
+      { msg: isRtl ? `[INFO] التحقق من سلامة البادئة والتوجيه +${trunk.routePrefix}...` : `[INFO] Validating route prefix '+${trunk.routePrefix}' configuration rules...`, time: 2000 },
+      { msg: trunk.status === 'degraded'
+          ? (isRtl ? `[WARN] تم رصد تذبذب عالي في الجودة (Jitter: 14ms). متوسط جودة الصوت: 3.5 MOS.` : `[WARN] Jitter detected: 14ms (high). Average MOS: 3.5 (fair).`)
+          : (isRtl ? `[INFO] نسبة فقدان الحزم: 0.0٪، التذبذب: 1.2ms. مسار الشبكة مستقر.` : `[INFO] Packet loss: 0.0%, Jitter: 1.2ms. Network path is stable.`), time: 2500 },
+      { msg: trunk.status === 'inactive'
+          ? (isRtl ? `[ERROR] فشل تسجيل الدخول للبوابة: SIP 403 Forbidden. يرجى مراجعة إعدادات المصادقة وقائمة الـ IP المسموحة.` : `[ERROR] Unable to authenticate: 403 Forbidden. Check credentials or IP whitelist rules.`)
+          : (isRtl ? `[INFO] تم الفحص بنجاح. حالة خط SIP ممتازة ولا توجد مشاكل.` : `[INFO] SIP trunk diagnostics passed. Status is healthy.`), time: 3000 }
+    ];
+
+    steps.forEach(step => {
+      setTimeout(() => {
+        setDiagnosticsLogs(prev => [...prev, step.msg]);
+        if (step.time === 3000) {
+          setIsDiagnosing(false);
+        }
+      }, step.time);
+    });
+  };
+
   const handleCreateClick = () => {
     setEditingTrunk(null);
     setNewTrunk({
@@ -488,7 +521,7 @@ export function SipTrunkConfigTab() {
       <EnterpriseTable
         headers={tableHeaders}
         empty={filteredTrunks.length === 0}
-        emptyTitle={isRtl ? 'لا توجد خطوط اتصالات' : 'No SIP Trunks Provisioned'}
+emptyTitle={isRtl ? 'لا توجد خطوط اتصالات' : 'No SIP Trunks Provisioned'}
         emptyDesc={isRtl ? 'لم يتم العثور على خطوط SIP تطابق الاستعلام.' : 'There are no active telecom trunk configurations matching your search.'}
       >
         {filteredTrunks.map((trunk) => (
@@ -505,6 +538,15 @@ export function SipTrunkConfigTab() {
             </td>
             <td className="px-6 py-4">
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => runSipDiagnostics(trunk)}
+                  disabled={trunk.status === 'connecting'}
+                  className="p-1 hover:bg-slate-105 dark:hover:bg-slate-800 text-purple-650 rounded cursor-pointer transition-colors disabled:opacity-40"
+                  title={isRtl ? 'تشخيص خط الاتصال' : 'SIP Diagnostics'}
+                >
+                  <HeartPulse className="w-3.5 h-3.5" />
+                </button>
                 <button
                   onClick={() => handleToggleTrunk(trunk)}
                   className={`p-1 rounded cursor-pointer transition-colors ${
@@ -665,6 +707,61 @@ export function SipTrunkConfigTab() {
             </button>
           </div>
         </form>
+      </ModalWrapper>
+
+      {/* SIP Diagnostics test modal */}
+      <ModalWrapper
+        isOpen={!!selectedTrunkForDiagnostics}
+        onClose={() => setSelectedTrunkForDiagnostics(null)}
+        title={isRtl ? 'فحص وتشخيص خط SIP' : 'SIP Trunk Diagnostics & Connectivity Probe'}
+      >
+        {selectedTrunkForDiagnostics && (
+          <div className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
+            <div className="flex justify-between items-start pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-white font-mono">{selectedTrunkForDiagnostics.provider}</h4>
+                <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{selectedTrunkForDiagnostics.ipGateway}</p>
+              </div>
+              <TelephonyStatusBadge status={selectedTrunkForDiagnostics.status} />
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                {isRtl ? 'سجل إشارات وعمليات فحص SIP' : 'SIP Signaling & Latency Probe Logs'}
+              </span>
+              <pre className="bg-slate-950 text-emerald-450 p-4 rounded-xl border border-slate-900 overflow-x-auto text-[10px] font-mono leading-relaxed max-h-56 overflow-y-auto">
+                {diagnosticsLogs.map((log, index) => (
+                  <div key={index} className={log.includes('[ERROR]') ? 'text-rose-500' : log.includes('[WARN]') ? 'text-amber-500' : ''}>
+                    {log}
+                  </div>
+                ))}
+                {isDiagnosing && (
+                  <div className="text-blue-500 animate-pulse mt-1">
+                    {isRtl ? '... جاري إجراء الفحص الفني للاتصال وإرسال الحزم ...' : '... Performing signaling ping probe ...'}
+                  </div>
+                )}
+              </pre>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={isDiagnosing}
+                onClick={() => runSipDiagnostics(selectedTrunkForDiagnostics)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[10px] cursor-pointer transition-colors disabled:opacity-50"
+              >
+                {isRtl ? 'إعادة الفحص' : 'Re-run Diagnostics'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedTrunkForDiagnostics(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-750 dark:text-slate-350 rounded-xl font-bold text-[10px] cursor-pointer transition-colors"
+              >
+                {isRtl ? 'إغلاق' : 'Close'}
+              </button>
+            </div>
+          </div>
+        )}
       </ModalWrapper>
     </div>
   );

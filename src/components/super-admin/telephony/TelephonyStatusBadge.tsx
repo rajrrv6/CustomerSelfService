@@ -58,8 +58,8 @@ export function TelephonyStatusBadge({ status }: TelephonyStatusBadgeProps) {
   };
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${current.classes}`}>
-      <span className={`w-1.5 h-1.5 rounded-full bg-current shrink-0 ${isRtl ? 'ml-1' : 'mr-1'} ${status === 'connecting' ? 'animate-pulse scale-125' : ''}`} />
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${current.classes}`}>
+      <span className={`w-1.5 h-1.5 rounded-full bg-current shrink-0 ${isRtl ? 'ml-1.5' : 'mr-1.5'} ${status === 'connecting' ? 'animate-pulse scale-125' : ''}`} />
       <span>{isRtl ? current.ar : current.en}</span>
     </span>
   );

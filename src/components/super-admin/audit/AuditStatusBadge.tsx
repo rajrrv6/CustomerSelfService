@@ -84,7 +84,8 @@ export function AuditStatusBadge({ type, value }: AuditStatusBadgeProps) {
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border font-mono tracking-wide ${styles}`}>
-      {label}
+      <span className={`w-1.5 h-1.5 rounded-full bg-current shrink-0 ${isRtl ? 'ml-1.5' : 'mr-1.5'}`} />
+      <span>{label}</span>
     </span>
   );
 }

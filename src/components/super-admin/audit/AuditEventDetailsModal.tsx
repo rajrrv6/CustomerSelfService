@@ -104,9 +104,46 @@ export function AuditEventDetailsModal({ isOpen, onClose, event }: AuditEventDet
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
             {isRtl ? 'وصف العملية والأحداث المخزنة' : 'Log Entry Description'}
           </label>
-          <div className="w-full bg-slate-50 dark:bg-slate-900 px-3.5 py-2.5 border border-slate-100 dark:border-slate-800/80 rounded-xl leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
+          <div className="w-full bg-slate-50 dark:bg-slate-900 px-3.5 py-2.5 border border-slate-100 dark:border-slate-800/80 rounded-xl leading-relaxed text-slate-700 dark:text-slate-300 font-medium font-sans">
             {event.details}
           </div>
+        </div>
+
+        {/* Client Browser User Agent */}
+        <div className="bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800/80">
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+            {isRtl ? 'علامة المتصفح (User Agent)' : 'Client Browser User Agent'}
+          </span>
+          <span className="text-[10px] font-mono text-slate-600 dark:text-slate-400 block mt-1 leading-normal">
+            Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36
+          </span>
+        </div>
+
+        {/* JSON Event Payload Inspector */}
+        <div className="space-y-1.5">
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+            {isRtl ? 'محتوى سجل التدقيق الأمني (JSON Payload)' : 'Structured JSON Event Payload'}
+          </label>
+          <pre className="bg-slate-950 text-emerald-450 p-4 rounded-xl border border-slate-900 overflow-x-auto text-[9.5px] font-mono leading-relaxed max-h-48 overflow-y-auto">
+            {JSON.stringify({
+              event_id: event.id,
+              actor: event.actor,
+              role: event.actorRole,
+              action: event.actionType,
+              target: event.targetResource,
+              client_ip: event.ipAddress,
+              severity: event.severity,
+              status: event.status,
+              timestamp: event.timestamp,
+              description: event.details,
+              meta: {
+                user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/125.0",
+                compliance_scope: event.complianceImpact ? ["GDPR", "ISO27001"] : ["SOC2"],
+                datacenter: "eu-west-1",
+                request_id: `req-${event.id.split('-')[1] || 'default'}`
+              }
+            }, null, 2)}
+          </pre>
         </div>
 
         {/* Compliance impact */}

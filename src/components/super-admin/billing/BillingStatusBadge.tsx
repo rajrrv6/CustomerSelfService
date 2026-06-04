@@ -52,6 +52,36 @@ export function BillingStatusBadge({ status }: BillingStatusBadgeProps) {
       en: 'Disabled',
       ar: 'معطل',
       classes: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-800'
+    },
+    pending_refund: {
+      en: 'Pending Refund',
+      ar: 'استرداد معلق',
+      classes: 'bg-indigo-50 text-indigo-700 border-indigo-250 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30'
+    },
+    refunded: {
+      en: 'Refunded',
+      ar: 'تم الاسترداد',
+      classes: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-800'
+    },
+    failed_payment: {
+      en: 'Payment Failed',
+      ar: 'فشل الدفع',
+      classes: 'bg-red-50 text-red-700 border-red-250 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30'
+    },
+    recovering: {
+      en: 'Recovering',
+      ar: 'جاري الاسترداد',
+      classes: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:text-sky-400 dark:border-sky-900/30'
+    },
+    coupon_active: {
+      en: 'Active',
+      ar: 'نشط',
+      classes: 'bg-emerald-50 text-emerald-700 border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30'
+    },
+    coupon_expired: {
+      en: 'Expired',
+      ar: 'منتهي',
+      classes: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-800'
     }
   };
 
@@ -61,9 +91,11 @@ export function BillingStatusBadge({ status }: BillingStatusBadgeProps) {
     classes: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-800'
   };
 
+  const isPulse = status === 'overdue' || status === 'failed_payment' || status === 'recovering' || status === 'pending_refund';
+
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${current.classes}`}>
-      <span className={`w-1.5 h-1.5 rounded-full bg-current shrink-0 ${isRtl ? 'ml-1' : 'mr-1'} ${status === 'overdue' ? 'animate-pulse' : ''}`} />
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${current.classes}`}>
+      <span className={`w-1.5 h-1.5 rounded-full bg-current shrink-0 ${isRtl ? 'ml-1.5' : 'mr-1.5'} ${isPulse ? 'animate-pulse' : ''}`} />
       <span>{isRtl ? current.ar : current.en}</span>
     </span>
   );

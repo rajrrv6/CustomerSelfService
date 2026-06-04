@@ -48,6 +48,32 @@ export function AuditOverviewTab() {
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
 
+  // SIEM Ingestion Sync simulation states
+  const [isSiemOpen, setIsSiemOpen] = useState(false);
+  const [siemStep, setSiemStep] = useState<'idle' | 'running' | 'done'>('idle');
+  const [siemProgress, setSiemProgress] = useState(0);
+
+  const runSiemSync = () => {
+    setSiemStep('running');
+    setSiemProgress(0);
+    const interval = setInterval(() => {
+      setSiemProgress(p => {
+        if (p >= 100) {
+          clearInterval(interval);
+          setSiemStep('done');
+          pushToast(
+            'success',
+            isRtl ? 'اكتملت مزامنة SIEM' : 'SIEM Ingestion Success',
+            isRtl ? 'تم بنجاح تصدير السجلات النشطة ومزامنتها مع Splunk HEC.' : 'Successfully forwarded platform audit records to Splunk cloud.'
+          );
+          addAuditLog('Triggered manual SIEM audit ingestion synchronization', 'success');
+          return 100;
+        }
+        return p + 20;
+      });
+    }, 250);
+  };
+
   // Create Policy Modal state
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const [newPolicy, setNewPolicy] = useState<Omit<CompliancePolicy, 'id' | 'lastUpdated' | 'complianceState'>>({
@@ -189,6 +215,20 @@ export function AuditOverviewTab() {
       <SectionHeader
         title={auditT.title}
         description={auditT.description}
+        action={
+          <button
+            type="button"
+            onClick={() => {
+              setIsSiemOpen(true);
+              setSiemStep('idle');
+              setSiemProgress(0);
+            }}
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-[11px] cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-1.5 font-mono"
+          >
+            <Terminal className="w-3.5 h-3.5 text-blue-500" />
+            <span>{isRtl ? 'مزامنة SIEM HUD' : 'SIEM Ingestion HUD'}</span>
+          </button>
+        }
       />
 
       {/* KPI Cards */}
@@ -509,6 +549,104 @@ export function AuditOverviewTab() {
             </button>
           </div>
         </form>
+      </ModalWrapper>
+
+      {/* SIEM Ingestion Sync Modal */}
+      <ModalWrapper
+        isOpen={isSiemOpen}
+        onClose={() => setIsSiemOpen(false)}
+        title={isRtl ? 'واجهة تصدير سجلات التدقيق إلى SIEM' : 'SIEM Ingestion Sync Console'}
+      >
+        <div className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
+          {siemStep === 'idle' && (
+            <>
+              <p className="text-xs text-slate-655 dark:text-slate-400 leading-relaxed font-normal">
+                {isRtl
+                  ? 'قم بتشغيل المزامنة اليدوية لإرسال كافة سجلات أحداث التدقيق والامتثال الحالية إلى مركز تحليل البيانات الأمنية Splunk / Datadog HEC.'
+                  : 'Trigger a manual syslog push routine to export active auditing telemetry log lines to enterprise security information and event management endpoints (Splunk / Datadog HEC):'}
+              </p>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-xl space-y-1 text-[10px] font-mono">
+                <div className="flex justify-between">
+                  <span>Target Endpoint:</span>
+                  <span className="text-blue-500 font-bold">https://hec.splunk-cloud.com:8088</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Index Target:</span>
+                  <span className="text-purple-500 font-bold">mpaas_audit_trail</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SSL Handshake:</span>
+                  <span className="text-emerald-500 font-bold">TLS 1.3 Secure</span>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={runSiemSync}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[10px] cursor-pointer transition-colors flex items-center gap-1"
+                >
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span>{isRtl ? 'بدء المزامنة والتحميل' : 'Start SIEM Push'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSiemOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-755 dark:text-slate-350 rounded-xl font-bold text-[10px] cursor-pointer transition-colors"
+                >
+                  {isRtl ? 'إغلاق' : 'Close'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {siemStep === 'running' && (
+            <div className="py-6 text-center space-y-4">
+              <Terminal className="w-10 h-10 text-blue-500 animate-pulse mx-auto" />
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-white font-mono">
+                  {isRtl ? 'جاري تحويل السجلات الأمنية إلى SIEM...' : 'Forwarding Telemetry Logs to SIEM...'}
+                </h4>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {isRtl ? 'جاري ضغط وتشفير حزم البيانات بصيغة JSON' : 'Encrypting syslog packets and establishing TLS payload sockets...'}
+                </p>
+              </div>
+
+              <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-200 dark:border-slate-900">
+                <div
+                  className="bg-blue-600 h-full rounded-full transition-all duration-200"
+                  style={{ width: `${siemProgress}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-mono font-extrabold text-blue-600 dark:text-blue-400">
+                {siemProgress}%
+              </span>
+            </div>
+          )}
+
+          {siemStep === 'done' && (
+            <div className="py-4 text-center space-y-4 font-mono text-[10px] text-start">
+              <div className="bg-slate-950 text-emerald-450 p-4 rounded-xl border border-slate-900 space-y-1.5 leading-relaxed max-h-48 overflow-y-auto">
+                <div>[INFO] Initiating HEC socket connection...</div>
+                <div>[INFO] Handshake established. SSL validation passed.</div>
+                <div>[INFO] Compacted 14 outstanding audit log lines.</div>
+                <div>[INFO] Pushing syslog payload (14.2 KB) to index: &apos;mpaas_audit_trail&apos;</div>
+                <div className="text-emerald-400 font-bold">[SUCCESS] Ingestion completed. 200 OK response from SIEM gateway.</div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-center font-sans">
+                <button
+                  type="button"
+                  onClick={() => setIsSiemOpen(false)}
+                  className="px-6 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-755 dark:text-slate-350 rounded-xl font-bold text-[10px] cursor-pointer transition-colors"
+                >
+                  {isRtl ? 'إغلاق نافذة HUD' : 'Close HUD'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </ModalWrapper>
     </div>
   );

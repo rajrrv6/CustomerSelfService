@@ -32,7 +32,7 @@ import {
 import { UserRole } from '@/types';
 import { canAccessScreen } from '@/lib/rbac/permissions';
 import { usePermissionStore, mapUserRoleToMatrixRole } from '@/stores/permissionStore';
-import { superAdminNavigation } from '@/config/superAdminNavigation';
+import { superAdminNavSections } from '@/config/superAdminNavigation';
 
 interface SidebarItem {
   id: string;
@@ -125,15 +125,9 @@ export function Sidebar({
   const apiPermissions = usePermissionStore((s) => s.apiPermissions);
 
   const menuItems = React.useMemo(() => {
-    if (role === 'super_admin') {
-      return superAdminNavigation
-        .filter((item) => canAccessScreen(role, item.permission))
-        .map((item) => ({
-          id: item.id,
-          label: (t as any)[item.labelKey] || item.id,
-          icon: <item.icon className="w-4 h-4" />
-        }));
-    }
+    // For super_admin we use the grouped sections data directly;
+    // this flat memo is only used for non-SA roles.
+    if (role === 'super_admin') return [];
 
     // Determine the master list of screen IDs to check based on role category
     let order: string[];
@@ -205,8 +199,8 @@ export function Sidebar({
         </div>
 
         {/* Sidebar Nav */}
-        <nav className="flex-1 overflow-y-auto px-4 py-4 sm:py-6 space-y-1.5">
-          {/* Sub-Role Selector */}
+        <nav className="flex-1 overflow-y-auto px-4 py-4 sm:py-6">
+          {/* Sub-Role Selector — non-SA roles only */}
           {(['client_admin', 'supervisor', 'qa_manager', 'operations_manager', 'viewer'].includes(role) || ['customer', 'support_agent'].includes(role)) && (
             <div className="px-3 mb-4 relative">
               <span className="text-[10.5px] uppercase font-bold text-slate-500 block mb-1">
@@ -260,29 +254,75 @@ export function Sidebar({
             </div>
           )}
 
-          <div className="px-3 mb-2 text-[11.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            {role.replace('_', ' ')} Options
-          </div>
-          {menuItems.map((item) => {
-            const isActive = activeScreen === item.id;
-            return (
-              <button
-                key={item.id}
-                data-testid={`sidebar-item-${item.id}`}
-                onClick={() => setActiveScreen(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5'
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 text-slate-500 dark:text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
-                }`}
-              >
-                <span className={`${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100'}`}>
-                  {item.icon}
-                </span>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
+          {/* ── Super Admin: Grouped Sections ── */}
+          {role === 'super_admin' && (
+            <div className="space-y-0.5">
+              {superAdminNavSections.map((section) => {
+                const visibleItems = section.items.filter((item) =>
+                  canAccessScreen(role, item.permission)
+                );
+                if (visibleItems.length === 0) return null;
+                return (
+                  <div key={section.id}>
+                    {/* Section label */}
+                    <p className="px-3 pt-4 pb-1 text-[9.5px] font-bold uppercase tracking-widest text-slate-400/70 dark:text-slate-600 select-none">
+                      {(t as any)[section.labelKey] || section.id}
+                    </p>
+                    {/* Section items */}
+                    {visibleItems.map((item) => {
+                      const isActive = activeScreen === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          data-testid={`sidebar-item-${item.id}`}
+                          onClick={() => setActiveScreen(item.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer ${
+                            isActive
+                              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5'
+                              : 'hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 text-slate-500 dark:text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
+                          }`}
+                        >
+                          <span className={`${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400'}`}>
+                            <item.icon className="w-4 h-4" />
+                          </span>
+                          <span>{(t as any)[item.labelKey] || item.id}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ── All other roles: flat list ── */}
+          {role !== 'super_admin' && (
+            <>
+              <div className="px-3 mb-2 text-[11.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                {role.replace('_', ' ')} Options
+              </div>
+              {menuItems.map((item) => {
+                const isActive = activeScreen === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    data-testid={`sidebar-item-${item.id}`}
+                    onClick={() => setActiveScreen(item.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5'
+                        : 'hover:bg-slate-100 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-100 text-slate-500 dark:text-slate-400 hover:translate-x-1 rtl:hover:-translate-x-1'
+                    }`}
+                  >
+                    <span className={`${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100'}`}>
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </>
+          )}
         </nav>
       </div>
 

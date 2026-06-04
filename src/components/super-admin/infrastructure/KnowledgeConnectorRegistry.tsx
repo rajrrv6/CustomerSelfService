@@ -8,8 +8,9 @@ import { mockKnowledgeConnectors } from './mockKnowledgeConnectors';
 import { KnowledgeConnectorTable } from './KnowledgeConnectorTable';
 import { KnowledgeConnectorFormModal } from './KnowledgeConnectorFormModal';
 import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
-import { RefreshCw, Plus, Database } from 'lucide-react';
+import { RefreshCw, Plus, Database, Terminal, Sliders, Cpu, Wrench, CheckCircle } from 'lucide-react';
 import { SectionHeader } from '@/components/shared/SectionHeader';
+import { ModalWrapper } from '@/components/shared/ModalWrapper';
 
 export function KnowledgeConnectorRegistry() {
   const lang = useUIStore((s) => s.lang);
@@ -21,8 +22,19 @@ export function KnowledgeConnectorRegistry() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingConnector, setEditingConnector] = useState<KnowledgeConnector | null>(null);
 
+  // Detail drawer state
+  const [selectedConnector, setSelectedConnector] = useState<KnowledgeConnector | null>(null);
+  const [activeTab, setActiveTab] = useState<'info' | 'logs' | 'timeline'>('info');
+
+  // Vector DB Maintenance state
+  const [isMaintOpen, setIsMaintOpen] = useState(false);
+  const [maintType, setMaintType] = useState<'compact' | 'sweep' | 'rebuild'>('compact');
+  const [maintStep, setMaintStep] = useState<'idle' | 'running' | 'done'>('idle');
+  const [maintProgress, setMaintProgress] = useState(0);
+
   // Sync state tracking to prevent multiple triggers on the same connector
   const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
+  const [syncProgress, setSyncProgress] = useState<Record<string, string>>({});
 
   const handleCreateClick = () => {
     setEditingConnector(null);
@@ -36,7 +48,6 @@ export function KnowledgeConnectorRegistry() {
 
   const handleSaveConnector = (data: Omit<KnowledgeConnector, 'id' | 'lastSync'> & { id?: string }) => {
     if (data.id) {
-      // Edit mode
       setConnectors((prev) =>
         prev.map((c) =>
           c.id === data.id
@@ -58,7 +69,6 @@ export function KnowledgeConnectorRegistry() {
         isRtl ? 'تم بنجاح حفظ تعديلات إعدادات الموصل.' : 'Successfully updated knowledge connector configuration.'
       );
     } else {
-      // Create mode
       const newConnector: KnowledgeConnector = {
         id: `conn-${Date.now()}`,
         name: data.name,
@@ -81,6 +91,9 @@ export function KnowledgeConnectorRegistry() {
 
   const handleDeleteConnector = (id: string) => {
     setConnectors((prev) => prev.filter((c) => c.id !== id));
+    if (selectedConnector?.id === id) {
+      setSelectedConnector(null);
+    }
     pushToast(
       'success',
       isRtl ? 'تم حذف الموصل' : 'Connector Deleted',
@@ -115,65 +128,98 @@ export function KnowledgeConnectorRegistry() {
   const handleSyncConnector = (connector: KnowledgeConnector) => {
     if (syncingIds.has(connector.id)) return;
 
-    // Track as syncing
     setSyncingIds((prev) => {
       const next = new Set(prev);
       next.add(connector.id);
       return next;
     });
 
-    // Update connector status in table UI
-    setConnectors((prev) =>
-      prev.map((c) =>
-        c.id === connector.id
-          ? {
-              ...c,
-              status: 'synchronizing',
-              lastSync: isRtl ? 'جاري المزامنة...' : 'Synchronizing...'
-            }
-          : c
-      )
-    );
+    const steps = [
+      { msg: isRtl ? 'بدء الاتصال بالخادم...' : 'Handshaking...', time: 0 },
+      { msg: isRtl ? 'جاري فحص التغييرات...' : 'Checking changes...', time: 800 },
+      { msg: isRtl ? 'تحميل الصفحات (15 من 60)...' : 'Ingesting page 15 of 60...', time: 1600 },
+      { msg: isRtl ? 'تقسيم المستند إلى متجهات...' : 'Generating embeddings (Pinecone)...', time: 2400 },
+      { msg: isRtl ? 'اكتملت المزامنة' : 'Sync completed', time: 3200 }
+    ];
 
-    // Simulate crawl/index delay
-    setTimeout(() => {
-      // Clean up sync states
-      setSyncingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(connector.id);
-        return next;
+    steps.forEach((step) => {
+      setTimeout(() => {
+        if (step.time === 3200) {
+          setSyncingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(connector.id);
+            return next;
+          });
+          setSyncProgress((prev) => {
+            const next = { ...prev };
+            delete next[connector.id];
+            return next;
+          });
+
+          const dateStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
+          const isSuccess = connector.id !== 'conn-4'; 
+
+          setConnectors((prev) =>
+            prev.map((c) =>
+              c.id === connector.id
+                ? {
+                    ...c,
+                    status: isSuccess ? 'active' : 'error',
+                    lastSync: dateStr
+                  }
+                : c
+            )
+          );
+
+          if (isSuccess) {
+            pushToast(
+              'success',
+              isRtl ? 'اكتملت مزامنة البيانات' : 'Sync Completed',
+              isRtl ? `تمت فهرسة أحدث الملفات لموصل "${connector.name}".` : `Successfully crawled and indexed new RAG documents for "${connector.name}".`
+            );
+          } else {
+            pushToast(
+              'error',
+              isRtl ? 'فشلت المزامنة' : 'Sync Failed',
+              isRtl ? `فشل الوصول للملفات في موصل "${connector.name}". انتهت صلاحية المصادقة.` : `Unable to handshake with cloud host for "${connector.name}". Access token has expired.`
+            );
+          }
+        } else {
+          setSyncProgress((prev) => ({
+            ...prev,
+            [connector.id]: step.msg
+          }));
+        }
+      }, step.time);
+    });
+  };
+
+  const handleRowClick = (connector: KnowledgeConnector) => {
+    setSelectedConnector(connector);
+    setActiveTab('info');
+  };
+
+  const handleTriggerMaint = () => {
+    setMaintStep('running');
+    setMaintProgress(0);
+
+    const interval = setInterval(() => {
+      setMaintProgress((p) => {
+        if (p >= 100) {
+          clearInterval(interval);
+          setMaintStep('done');
+          pushToast(
+            'success',
+            isRtl ? 'اكتملت عملية الصيانة' : 'Maintenance Completed',
+            isRtl
+              ? `تم الانتهاء من عملية ${maintType === 'compact' ? 'الضغط' : maintType === 'sweep' ? 'الفحص' : 'إعادة البناء'} بنجاح لمؤشرات متجهات Pinecone.`
+              : `Successfully completed ${maintType === 'compact' ? 'Index Compaction' : maintType === 'sweep' ? 'Integrity Sweep' : 'Namespace Rebuild'} on Pinecone index.`
+          );
+          return 100;
+        }
+        return p + 10;
       });
-
-      // Update to active/error with timestamp
-      const dateStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
-      const isSuccess = connector.id !== 'conn-4'; // Let conn-4 (Google Drive HR) fail to show simulated error handling
-
-      setConnectors((prev) =>
-        prev.map((c) =>
-          c.id === connector.id
-            ? {
-                ...c,
-                status: isSuccess ? 'active' : 'error',
-                lastSync: dateStr
-              }
-            : c
-        )
-      );
-
-      if (isSuccess) {
-        pushToast(
-          'success',
-          isRtl ? 'اكتملت مزامنة البيانات' : 'Sync Completed',
-          isRtl ? `تمت فهرسة أحدث الملفات لموصل "${connector.name}".` : `Successfully crawled and indexed new RAG documents for "${connector.name}".`
-        );
-      } else {
-        pushToast(
-          'error',
-          isRtl ? 'فشلت المزامنة' : 'Sync Failed',
-          isRtl ? `فشل الوصول للملفات في موصل "${connector.name}". انتهت صلاحية المصادقة.` : `Unable to handshake with cloud host for "${connector.name}". Access token has expired.`
-        );
-      }
-    }, 1500);
+    }, 250);
   };
 
   if (connectors.length === 0) {
@@ -199,14 +245,6 @@ export function KnowledgeConnectorRegistry() {
             <span>{isRtl ? 'إضافة موصل معرفة جديد' : 'Add First Knowledge Connector'}</span>
           </button>
         </div>
-
-        <KnowledgeConnectorFormModal
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          connector={null}
-          onSave={handleSaveConnector}
-          lang={lang}
-        />
       </div>
     );
   }
@@ -227,13 +265,27 @@ export function KnowledgeConnectorRegistry() {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleCreateClick}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[11px] shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{isRtl ? 'إضافة موصل' : 'Add Connector'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setIsMaintOpen(true);
+              setMaintStep('idle');
+              setMaintProgress(0);
+            }}
+            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-[11px] cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-sm"
+          >
+            <Wrench className="w-3.5 h-3.5 text-blue-500" />
+            <span>{isRtl ? 'صيانة المتجهات HUD' : 'Vector Maintenance HUD'}</span>
+          </button>
+          <button
+            onClick={handleCreateClick}
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[11px] shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{isRtl ? 'إضافة موصل' : 'Add Connector'}</span>
+          </button>
+        </div>
       </div>
 
       <KnowledgeConnectorTable
@@ -243,6 +295,8 @@ export function KnowledgeConnectorRegistry() {
         onDelete={handleDeleteConnector}
         onSync={handleSyncConnector}
         onToggle={handleToggleConnector}
+        onRowClick={handleRowClick}
+        syncProgress={syncProgress}
       />
 
       <KnowledgeConnectorFormModal

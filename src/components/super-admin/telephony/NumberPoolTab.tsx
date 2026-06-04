@@ -119,6 +119,37 @@ export function NumberPoolTab() {
   const [reservingDid, setReservingDid] = useState<DidNumber | null>(null);
   const [reserveTenantName, setReserveTenantName] = useState('');
 
+  // Routing Test States
+  const [selectedNumberForTest, setSelectedNumberForTest] = useState<DidNumber | null>(null);
+  const [testLogs, setTestLogs] = useState<string[]>([]);
+  const [isTesting, setIsTesting] = useState(false);
+
+  const runRoutingTest = (did: DidNumber) => {
+    setSelectedNumberForTest(did);
+    setIsTesting(true);
+    setTestLogs([isRtl ? `[INFO] بدء فحص توجيه الرقم DID: ${did.phoneNumber}` : `[INFO] Starting routing validation for DID: ${did.phoneNumber}`]);
+
+    const steps = [
+      { msg: isRtl ? `[INFO] فحص ارتباط الرقم بالناقل: ${did.provider}` : `[INFO] Querying DID provider mapping: ${did.provider}`, time: 600 },
+      { msg: did.assignmentState === 'available'
+          ? (isRtl ? `[WARN] الرقم غير معين لأي مستأجر. توجيه المكالمة سينتهي بـ IVR المنصة الافتراضي.` : `[WARN] Number is currently unassigned. Call route defaults to platform root IVR.`)
+          : (isRtl ? `[INFO] تم فحص تطابق المستأجر المعين: ${did.assignedTenant}` : `[INFO] Verified tenant mapping target: ${did.assignedTenant}`), time: 1200 },
+      { msg: isRtl ? `[INFO] إرسال مكالمة اختبارية لمحاكاة التوجيه (SIP INVITE)...` : `[INFO] Simulating incoming call session (SIP INVITE)...`, time: 1800 },
+      { msg: did.status === 'inactive'
+          ? (isRtl ? `[ERROR] فشل التوجيه: الرقم معطل حالياً (Inactive). رمز الخطأ: SIP 480 Temporarily Unavailable.` : `[ERROR] Route simulation failed: Number status is set to inactive. Error code: SIP 480 Temporarily Unavailable.`)
+          : (isRtl ? `[INFO] استجابة خادم التطبيق: SIP 200 OK. تم توصيل الاتصال بـ WebRTC Gateway.` : `[INFO] Gateway response: SIP 200 OK. Route path successfully connected to WebRTC client.`), time: 2400 }
+    ];
+
+    steps.forEach(step => {
+      setTimeout(() => {
+        setTestLogs(prev => [...prev, step.msg]);
+        if (step.time === 2400) {
+          setIsTesting(false);
+        }
+      }, step.time);
+    });
+  };
+
   const handleCreateClick = () => {
     setEditingNumber(null);
     setNewDid({
@@ -632,6 +663,14 @@ export function NumberPoolTab() {
                     )}
 
                     <button
+                      type="button"
+                      onClick={() => runRoutingTest(did)}
+                      className="p-1 hover:bg-slate-105 dark:hover:bg-slate-800 text-teal-600 rounded cursor-pointer transition-colors"
+                      title={isRtl ? 'فحص مسار الاتصال' : 'Test Route Verification'}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                    </button>
+                    <button
                       onClick={() => handleEditClick(did)}
                       className="p-1 hover:bg-slate-105 dark:hover:bg-slate-800 text-blue-650 rounded cursor-pointer transition-colors"
                       title={isRtl ? 'تعديل البيانات' : 'Edit Metadata'}
@@ -841,6 +880,61 @@ export function NumberPoolTab() {
             </button>
           </div>
         </form>
+      </ModalWrapper>
+
+      {/* DID Routing Test Modal */}
+      <ModalWrapper
+        isOpen={!!selectedNumberForTest}
+        onClose={() => setSelectedNumberForTest(null)}
+        title={isRtl ? 'اختبار وفحص توجيه رقم DID' : 'DID Inbound Route Simulation Test'}
+      >
+        {selectedNumberForTest && (
+          <div className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
+            <div className="flex justify-between items-start pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-white font-mono">{selectedNumberForTest.phoneNumber}</h4>
+                <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{selectedNumberForTest.provider}</p>
+              </div>
+              <TelephonyStatusBadge status={selectedNumberForTest.status} />
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                {isRtl ? 'سجل محاكاة التوجيه الفني' : 'Inbound Route Trace & SIP Output Logs'}
+              </span>
+              <pre className="bg-slate-950 text-emerald-450 p-4 rounded-xl border border-slate-900 overflow-x-auto text-[10px] font-mono leading-relaxed max-h-56 overflow-y-auto">
+                {testLogs.map((log, index) => (
+                  <div key={index} className={log.includes('[ERROR]') ? 'text-rose-500' : log.includes('[WARN]') ? 'text-amber-500' : ''}>
+                    {log}
+                  </div>
+                ))}
+                {isTesting && (
+                  <div className="text-blue-500 animate-pulse mt-1">
+                    {isRtl ? '... جاري محاكاة مكالمة واردة وتتبع مسار التوجيه ...' : '... Running routing sweep probe ...'}
+                  </div>
+                )}
+              </pre>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={isTesting}
+                onClick={() => runRoutingTest(selectedNumberForTest)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-[10px] cursor-pointer transition-colors disabled:opacity-50"
+              >
+                {isRtl ? 'إعادة الفحص' : 'Re-run Route Test'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedNumberForTest(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-750 dark:text-slate-350 rounded-xl font-bold text-[10px] cursor-pointer transition-colors"
+              >
+                {isRtl ? 'إغلاق' : 'Close'}
+              </button>
+            </div>
+          </div>
+        )}
       </ModalWrapper>
     </div>
   );

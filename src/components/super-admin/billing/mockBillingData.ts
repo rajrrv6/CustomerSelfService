@@ -1,4 +1,4 @@
-import { SubscriptionPlan, TenantBillingRecord } from '@/types/billing';
+import { SubscriptionPlan, TenantBillingRecord, CouponCampaign, RefundRequest, TaxRule, FailedPaymentRecord } from '@/types/billing';
 
 export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {
@@ -118,4 +118,31 @@ export const mockTenantBillingRecords: TenantBillingRecord[] = [
     usageTier: 'free',
     billingStatus: 'expired'
   }
+];
+
+export const mockCoupons: CouponCampaign[] = [
+  { id: 'cpn-1', code: 'RAMADAN2026', discountType: 'percentage', discountValue: 15, status: 'active', expiryDate: '2026-06-30', usageCount: 42, minSpend: 299 },
+  { id: 'cpn-2', code: 'ENTERPRISE100', discountType: 'fixed', discountValue: 100, status: 'active', expiryDate: '2026-12-31', usageCount: 12, minSpend: 999 },
+  { id: 'cpn-3', code: 'EXPIRED50', discountType: 'percentage', discountValue: 50, status: 'expired', expiryDate: '2026-05-01', usageCount: 128, minSpend: 0 },
+  { id: 'cpn-4', code: 'LAUNCH25', discountType: 'percentage', discountValue: 25, status: 'inactive', expiryDate: '2026-08-15', usageCount: 0, minSpend: 199 }
+];
+
+export const mockRefundRequests: RefundRequest[] = [
+  { id: 'ref-1', tenantId: 'tenant-hyperone', tenantName: 'HyperOne Retail Egypt', amount: 299, reason: 'Duplicate billing instance during migration', billingReference: 'INV-2026-049', timestamp: '2026-06-02 14:32:10', status: 'pending' },
+  { id: 'ref-2', tenantId: 'tenant-noon', tenantName: 'Noon Logistics Portal', amount: 150, reason: 'SLA breach refund claim', billingReference: 'INV-2026-035', timestamp: '2026-06-03 09:15:00', status: 'pending' },
+  { id: 'ref-3', tenantId: 'tenant-legacy', tenantName: 'Legacy Support Partners', amount: 99, reason: 'Unused user seats adjustment', billingReference: 'INV-2026-022', timestamp: '2026-05-28 11:20:00', status: 'approved' },
+  { id: 'ref-4', tenantId: 'tenant-stc', tenantName: 'Saudi Telecom Corp (HQ)', amount: 999, reason: 'Accidental double payment check', billingReference: 'INV-2026-041', timestamp: '2026-05-25 16:40:00', status: 'rejected' }
+];
+
+export const mockTaxRules: TaxRule[] = [
+  { id: 'tax-1', region: 'GCC VAT (Saudi Arabia / UAE)', taxRate: 15, invoiceLabel: 'VAT 15%', status: 'active', exempt: false },
+  { id: 'tax-2', region: 'Egypt VAT', taxRate: 14, invoiceLabel: 'VAT 14%', status: 'active', exempt: false },
+  { id: 'tax-3', region: 'US Sales Tax (Exempt Zone)', taxRate: 0, invoiceLabel: 'US TAX EXEMPT', status: 'active', exempt: true },
+  { id: 'tax-4', region: 'Europe VAT (Fallback)', taxRate: 20, invoiceLabel: 'VAT 20%', status: 'inactive', exempt: false }
+];
+
+export const mockFailedPayments: FailedPaymentRecord[] = [
+  { id: 'fail-1', tenantName: 'HyperOne Retail Egypt', invoiceId: 'INV-2026-049', amount: 299, failedDate: '2026-05-21', retryCount: 2, lastAttemptDate: '2026-05-28', dunningStatus: 'second_notice', recoveryStage: 'active_recovery' },
+  { id: 'fail-2', tenantName: 'Noon Logistics Portal', invoiceId: 'INV-2026-035', amount: 299, failedDate: '2026-05-01', retryCount: 4, lastAttemptDate: '2026-05-15', dunningStatus: 'suspended', recoveryStage: 'suspended_grace' },
+  { id: 'fail-3', tenantName: 'Legacy Support Partners', invoiceId: 'INV-2026-022', amount: 150, failedDate: '2026-04-15', retryCount: 5, lastAttemptDate: '2026-04-30', dunningStatus: 'suspended', recoveryStage: 'write_off' }
 ];
