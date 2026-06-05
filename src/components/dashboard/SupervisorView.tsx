@@ -34,7 +34,8 @@ import { StaffingEscalationWorkflow } from '@/components/client-admin/operations
 import { LivePresenceBoard } from '@/components/client-admin/operations/LivePresenceBoard';
 import { usePermission } from '@/stores/permissionStore';
 import { SlaAnalytics } from '@/components/analytics/SlaAnalytics';
-import { QueueManagement, type QueueItem } from '@/components/client-admin/operations/QueueManagement';
+import type { QueueItem } from '@/components/client-admin/operations/QueueManagement';
+import { LiveQueuesDashboard } from '@/components/dashboard/supervisor/LiveQueuesDashboard';
 
 export function SupervisorView({ activeSubScreen }: { activeSubScreen: string }) {
   const { lang, agents, setAgents, conversations, setConversations, addAuditLog } = useApp();
@@ -612,6 +613,20 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </div>
           </div>
         </div>
+      );
+
+    case 'live_queues':
+      return (
+        <LiveQueuesDashboard
+          lang={lang}
+          queuesList={queuesList}
+          setQueuesList={setQueuesList}
+          agents={agents}
+          conversations={conversations}
+          addAuditLog={addAuditLog}
+          canEdit={canEdit}
+          canManage={canManage}
+        />
       );
 
     case 'workforce':
