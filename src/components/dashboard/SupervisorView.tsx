@@ -133,6 +133,11 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     { id: 'sr-2', agent: 'Tariq Mansoor', currentShift: '17:00 - 01:00 AST', requestedShift: 'Off Duty', date: '2026-06-12', reason: 'Family graduation ceremony', status: 'pending' }
   ]);
 
+  const [shiftSwaps, setShiftSwaps] = useState([
+    { id: 'sw-1', agentRequesting: 'Liam Bennett', agentTarget: 'Nadia Vance', shiftOffered: '09:00 - 17:00 AST', shiftRequested: '17:00 - 01:00 AST', date: '2026-06-15', status: 'pending' },
+    { id: 'sw-2', agentRequesting: 'Tariq Mansoor', agentTarget: 'Amira Ghadbi', shiftOffered: '17:00 - 01:00 AST', shiftRequested: '09:00 - 17:00 AST', date: '2026-06-16', status: 'pending' }
+  ]);
+
   // ─── Occupancy Thresholds State ───
   const [occupancySettings, setOccupancySettings] = useState({
     maxConcurrentChats: 4,
@@ -140,6 +145,13 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     autoEscalateToxicity: 75
   });
   const [isSavingOccupancy, setIsSavingOccupancy] = useState(false);
+
+  const [occupancyAlerts, setOccupancyAlerts] = useState([
+    { id: 'al-1', queue: 'Technical Escalations', trigger: 'Concurrency Limit Breach', current: '5 chats / agent', limit: '4 max', level: 'warning', action: 'Suggested queue traffic redistribution', status: 'active' },
+    { id: 'al-2', queue: 'VIP Executive Line', trigger: 'SLA Warning Pacing', current: '135 seconds wait', limit: '120s max', level: 'critical', action: 'Forced status override triggered', status: 'active' },
+    { id: 'al-3', queue: 'Tier 1 General Support', trigger: 'Toxicity Auto-Escalate', current: '82% Toxicity detected', limit: '75% threshold', level: 'escalated', action: 'Transferred chat to Supervisor Workspace', status: 'active' },
+    { id: 'al-4', queue: 'Emails Backlog', trigger: 'No Trigger', current: '35% capacity', limit: '80% warn', level: 'stable', action: 'None required', status: 'active' }
+  ]);
 
   // ─── Agent Presence Override States ───
   const [selectedAgentForOverride, setSelectedAgentForOverride] = useState<string>('agent-1');
@@ -157,6 +169,12 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
   // ─── Escalations state ───
   const [selectedEscalationId, setSelectedEscalationId] = useState<string | null>('conv-2');
   const [reassignAgentId, setReassignAgentId] = useState<string>('agent-1');
+
+  const [interventionLogs, setInterventionLogs] = useState([
+    { id: 'conv-2', customer: 'Oliver Queen', agent: 'Nadia Vance', reason: 'Toxicity Score: 78% (Angry waiting)', action: 'Sent Live Coaching Whisper instructions', status: 'resolved_in_sla' },
+    { id: 'conv-1', customer: 'Bruce Wayne', agent: 'Liam Bennett', reason: 'VIP SLA Breached (2 mins overdue)', action: 'Reassigned interaction to Nadia Vance', status: 'resolved_in_sla' },
+    { id: 'conv-3', customer: 'Clark Kent', agent: 'Liam Bennett', reason: 'Negative Feedback Rating received', action: 'Initiated supervisory check and follow up', status: 'escalation_boosted' }
+  ]);
 
   // Workforce forecasting mock states
   const forecastData = [
@@ -242,6 +260,17 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     }
   };
 
+  const handleResolveShiftSwap = (swapId: string, status: 'approved' | 'rejected') => {
+    if (!canManage) return;
+    setShiftSwaps(prev =>
+      prev.map(s => s.id === swapId ? { ...s, status } : s)
+    );
+    const swap = shiftSwaps.find(s => s.id === swapId);
+    if (swap) {
+      addAuditLog(`Supervisor ${status} shift swap between ${swap.agentRequesting} and ${swap.agentTarget} on ${swap.date}`, 'success');
+    }
+  };
+
   const handleSaveOccupancySettings = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canEdit) return;
@@ -250,6 +279,17 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
       setIsSavingOccupancy(false);
       addAuditLog(`Supervisor updated operational occupancy thresholds: Max Chats ${occupancySettings.maxConcurrentChats}, SLA Warn ${occupancySettings.slaWarningThreshold}s`, 'success');
     }, 1200);
+  };
+
+  const handleMitigateAlert = (alertId: string) => {
+    if (!canManage) return;
+    setOccupancyAlerts(prev =>
+      prev.map(a => a.id === alertId ? { ...a, status: 'mitigated', action: 'Mitigated by Supervisor' } : a)
+    );
+    const alert = occupancyAlerts.find(a => a.id === alertId);
+    if (alert) {
+      addAuditLog(`Supervisor mitigated occupancy alert for ${alert.queue}: ${alert.trigger}`, 'success');
+    }
   };
 
   const handleForcePresenceOverride = () => {
@@ -274,6 +314,30 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     }));
 
     addAuditLog(`Supervisor forced status override on ${targetAgent.name} to ${targetAuxCode.toUpperCase()}`, 'success');
+  };
+
+  const handleInlinePresenceOverride = (agentId: string, auxCode: string) => {
+    if (!canEdit) return;
+    const targetAgent = agents.find(a => a.id === agentId);
+    if (!targetAgent) return;
+
+    let baseStatus: 'online' | 'busy' | 'away' | 'offline' = 'online';
+    if (auxCode === 'Available') baseStatus = 'online';
+    else if (auxCode === 'Offline') baseStatus = 'offline';
+    else if (auxCode === 'After Call Work') baseStatus = 'busy';
+    else baseStatus = 'away';
+
+    setAgents(prev =>
+      prev.map(a => a.id === agentId ? { ...a, status: baseStatus } : a)
+    );
+    
+    // Reset secondary timer
+    setAuxDurations(prev => ({
+      ...prev,
+      [agentId]: 0
+    }));
+
+    addAuditLog(`Supervisor forced inline status override on ${targetAgent.name} to ${auxCode.toUpperCase()}`, 'success');
   };
 
   const handleTriggerQueueRebalance = () => {
@@ -335,6 +399,14 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
 
     addAuditLog(`Supervisor sent coaching whisper to interaction ${whisperTargetChatId}: "${whisperInput}"`, 'success');
     setWhisperInput('');
+  };
+
+  const handleOverrideSla = (id: string) => {
+    if (!canManage) return;
+    setInterventionLogs(prev =>
+      prev.map(log => log.id === id ? { ...log, status: 'sla_overridden', action: 'SLA Breach Overridden by Supervisor' } : log)
+    );
+    addAuditLog(`Supervisor overrode SLA targets for interaction ${id}`, 'success');
   };
 
   const handleAgentStatusChange = (agentId: string, status: 'online' | 'busy' | 'away' | 'offline') => {
@@ -620,33 +692,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
           <SlaAnalytics />
         </div>
       );
-
-    case 'live_queues':
-      return (
-        <div className="space-y-6">
-          <div className="space-y-1.5">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
-              {isRtl ? 'مراقبة طوابير الخدمة المباشرة' : 'Live Queues Monitoring'}
-            </h2>
-            <p className="text-xs text-slate-455">
-              {isRtl 
-                ? 'متابعة طوابير الدعم الفني وتوزيع وكلاء خدمة العملاء في الوقت الفعلي.' 
-                : 'Track active routing queues and SLA compliance levels in real-time.'}
-            </p>
-          </div>
-          <QueueManagement
-            lang={lang}
-            queuesList={queuesList}
-            setQueuesList={setQueuesList}
-            addAuditLog={addAuditLog}
-            canEdit={canEdit}
-            canManage={canManage}
-          />
-        </div>
-      );
-
-    // ─── RESTORED SPRINT 10 SUB-SCREENS ───
-    case 'shift_planning':
+           case 'shift_planning':
       return (
         <div className="w-full min-w-0 flex-1 space-y-6 animate-in fade-in-50 duration-200" dir={isRtl ? 'rtl' : 'ltr'}>
           <div className="space-y-1.5">
@@ -658,9 +704,69 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* KPI Cards / Roster Stats Card */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
+                <Activity className="w-4 h-4 text-indigo-500" />
+                {isRtl ? 'مؤشرات الالتزام بالجدول' : 'Roster & Adherence Telemetry'}
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
+                    {isRtl ? 'معدل الالتزام الكلي' : 'Adherence Rate'}
+                  </span>
+                  <strong className="text-xl font-bold text-emerald-500 font-mono block mt-1">
+                    96.4%
+                  </strong>
+                  <span className="text-[9px] text-slate-400 block mt-0.5">{isRtl ? 'ضمن النطاق المسموح' : 'Target: >95.0%'}</span>
+                </div>
+                
+                <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
+                    {isRtl ? 'ساعات إضافية' : 'Overtime Alert'}
+                  </span>
+                  <strong className="text-xl font-bold text-amber-500 font-mono block mt-1">
+                    4.0 hrs
+                  </strong>
+                  <span className="text-[9px] text-amber-600 dark:text-amber-400 block mt-0.5">{isRtl ? 'موافقة مطلوبة' : '2 Pending Audits'}</span>
+                </div>
+                
+                <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
+                    {isRtl ? 'تعديلات الجدول' : 'Roster Requests'}
+                  </span>
+                  <strong className="text-xl font-bold text-blue-500 font-mono block mt-1">
+                    {shiftRequests.filter(r => r.status === 'pending').length}
+                  </strong>
+                  <span className="text-[9px] text-slate-400 block mt-0.5">{isRtl ? 'في الانتظار' : 'Requires Sign-off'}</span>
+                </div>
+                
+                <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
+                    {isRtl ? 'تبادلات معلقة' : 'Swap Requests'}
+                  </span>
+                  <strong className="text-xl font-bold text-purple-500 font-mono block mt-1">
+                    {shiftSwaps.filter(s => s.status === 'pending').length}
+                  </strong>
+                  <span className="text-[9px] text-slate-400 block mt-0.5">{isRtl ? 'موافقة ثنائية' : 'Requires Review'}</span>
+                </div>
+              </div>
+
+              {/* Overtime Warnings Banner */}
+              <div className="p-3 bg-amber-50 dark:bg-amber-955/20 border border-amber-200/50 rounded-xl space-y-1">
+                <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase font-mono block">
+                  ⚠️ Overtime Limit Warnings
+                </span>
+                <p className="text-[10.5px] text-slate-600 dark:text-slate-400 leading-normal font-medium">
+                  Liam Bennett is currently on track to exceed scheduled weekly hours (+2.5 hrs projected). Audit pending.
+                </p>
+              </div>
+            </div>
+
             {/* Calendar Roster Card */}
-            <div className="xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
               <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-blue-500" />
                 {localT.weeklySchedule}
@@ -692,100 +798,163 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
               </div>
             </div>
 
-            {/* Shift Request Actions Queue */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
-              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-505" />
-                {localT.shiftRequests}
-              </h3>
+            {/* Shift Request & Swaps Queue */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-5">
+              {/* Normal Shift Requests */}
+              <div className="space-y-4">
+                <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 pb-2 border-b border-slate-100 dark:border-slate-850">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  {localT.shiftRequests}
+                </h3>
 
-              <div className="space-y-3.5">
-                {shiftRequests.map((req) => (
-                  <div key={req.id} className="p-3.5 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-2xl space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <strong className="text-xs text-slate-850 dark:text-white block font-bold">{req.agent}</strong>
-                        <span className="text-[9px] text-slate-400 font-mono block mt-0.5">{req.date}</span>
+                <div className="space-y-3 max-h-52 overflow-y-auto pr-1">
+                  {shiftRequests.map((req) => (
+                    <div key={req.id} className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <strong className="text-xs text-slate-850 dark:text-white block font-bold">{req.agent}</strong>
+                          <span className="text-[9px] text-slate-400 font-mono block mt-0.5">{req.date}</span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase ${
+                          req.status === 'pending'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400'
+                            : req.status === 'approved'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455'
+                        }`}>
+                          {req.status}
+                        </span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase ${
-                        req.status === 'pending'
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400'
-                          : req.status === 'approved'
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
-                          : 'bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455'
-                      }`}>
-                        {req.status}
-                      </span>
-                    </div>
 
-                    <div className="text-[11px] space-y-1 bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-100 dark:border-slate-850">
-                      <div><span className="text-slate-400 font-medium">From:</span> <span className="font-mono text-slate-700 dark:text-slate-300">{req.currentShift}</span></div>
-                      <div><span className="text-slate-400 font-medium">To:</span> <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">{req.requestedShift}</span></div>
-                      <div className="text-[10px] text-slate-455 pt-1 border-t border-slate-100 dark:border-slate-800 italic">"{req.reason}"</div>
-                    </div>
-
-                    {req.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleResolveShiftRequest(req.id, 'approved')}
-                          disabled={!canManage}
-                          className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10.5px] flex items-center justify-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
-                        >
-                          <Check className="w-3 h-3" />
-                          {localT.approve}
-                        </button>
-                        <button
-                          onClick={() => handleResolveShiftRequest(req.id, 'rejected')}
-                          disabled={!canManage}
-                          className="flex-1 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10.5px] flex items-center justify-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
-                        >
-                          <X className="w-3 h-3" />
-                          {localT.reject}
-                        </button>
+                      <div className="text-[10px] space-y-1 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-850">
+                        <div><span className="text-slate-455 font-medium">From:</span> <span className="font-mono text-slate-700 dark:text-slate-300">{req.currentShift}</span></div>
+                        <div><span className="text-slate-455 font-medium">To:</span> <span className="font-mono text-slate-700 dark:text-slate-300 font-bold">{req.requestedShift}</span></div>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      {req.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleResolveShiftRequest(req.id, 'approved')}
+                            disabled={!canManage}
+                            className="flex-1 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+                          >
+                            <Check className="w-3 h-3" />
+                            {localT.approve}
+                          </button>
+                          <button
+                            onClick={() => handleResolveShiftRequest(req.id, 'rejected')}
+                            disabled={!canManage}
+                            className="flex-1 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+                          >
+                            <X className="w-3 h-3" />
+                            {localT.reject}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Shift Swap Requests */}
+              <div className="space-y-4 pt-3 border-t border-slate-100 dark:border-slate-850">
+                <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
+                  <RefreshCw className="w-4 h-4 text-purple-500" />
+                  {isRtl ? 'طلبات تبادل المناوبات' : 'Shift Swap Approvals'}
+                </h3>
+
+                <div className="space-y-3 max-h-52 overflow-y-auto pr-1">
+                  {shiftSwaps.map((swap) => (
+                    <div key={swap.id} className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <strong className="text-xs text-slate-850 dark:text-white block font-bold">
+                            {swap.agentRequesting} ⇄ {swap.agentTarget}
+                          </strong>
+                          <span className="text-[9px] text-slate-400 font-mono block mt-0.5">{swap.date}</span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase ${
+                          swap.status === 'pending'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400'
+                            : swap.status === 'approved'
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-955/20 dark:text-emerald-400'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455'
+                        }`}>
+                          {swap.status}
+                        </span>
+                      </div>
+
+                      <div className="text-[10px] space-y-1 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-850">
+                        <div><span className="text-slate-455 font-medium">{swap.agentRequesting}:</span> <span className="font-mono text-slate-700 dark:text-slate-350">{swap.shiftOffered}</span></div>
+                        <div><span className="text-slate-455 font-medium">{swap.agentTarget}:</span> <span className="font-mono text-slate-700 dark:text-slate-350 font-bold">{swap.shiftRequested}</span></div>
+                      </div>
+
+                      {swap.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleResolveShiftSwap(swap.id, 'approved')}
+                            disabled={!canManage}
+                            className="flex-1 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+                          >
+                            <Check className="w-3 h-3" />
+                            {localT.approve}
+                          </button>
+                          <button
+                            onClick={() => handleResolveShiftSwap(swap.id, 'rejected')}
+                            disabled={!canManage}
+                            className="flex-1 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer transition-colors disabled:opacity-50"
+                          >
+                            <X className="w-3 h-3" />
+                            {localT.reject}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
           {/* 3. Shift Compliance & Roster Adherence Audit */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 w-full">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 w-full">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
               <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
                 <Activity className="w-4 h-4 text-blue-500" />
                 {isRtl ? 'سجل امتثال وتغطية الجداول الزمنية' : 'Shift Compliance & Roster Adherence Audit'}
               </h3>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-100 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 uppercase self-start">
-                {isRtl ? 'معدل الالتزام: 96.4٪' : 'Adherence Rate: 96.4%'}
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-100 dark:bg-emerald-955/20 text-emerald-800 dark:text-emerald-400 uppercase self-start">
+                {isRtl ? 'معدل الالتزام الكلي: 96.4٪' : 'Adherence Rate: 96.4%'}
               </span>
             </div>
             
             <div className="overflow-x-auto min-w-0">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
+                  <tr className="border-b border-slate-105 dark:border-slate-800 text-slate-455 font-bold">
                     <th className="pb-3 pr-2">{isRtl ? 'الوكيل' : 'Agent'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'الوردية المقررة' : 'Scheduled Shift'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'ساعات الحضور' : 'Logged Hours'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'الانحراف' : 'Variance'}</th>
+                    <th className="pb-3 pr-2">{isRtl ? 'نسبة الالتزام' : 'Adherence %'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'حالة الالتزام' : 'Compliance'}</th>
+                    <th className="pb-3 pr-2">{isRtl ? 'العمل الإضافي' : 'Overtime Warning'}</th>
                     <th className="pb-3 text-right">{isRtl ? 'مستوى المخاطر' : 'Risk'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
                   {[
-                    { agent: 'Liam Bennett', shift: '09:00 - 17:00 AST', logged: '8.0 hrs', variance: '0.0 hrs', status: 'compliant', risk: 'low' },
-                    { agent: 'Nadia Vance', shift: '17:00 - 01:00 AST', logged: '7.8 hrs', variance: '-0.2 hrs', status: 'compliant', risk: 'low' },
-                    { agent: 'Tariq Mansoor', shift: '09:00 - 17:00 AST', logged: '6.5 hrs', variance: '-1.5 hrs', status: 'under_hours', risk: 'medium' },
-                    { agent: 'Amira Ghadbi', shift: '09:00 - 17:00 AST', logged: '0.0 hrs', variance: '-8.0 hrs', status: 'no_show', risk: 'critical' }
+                    { agent: 'Liam Bennett', shift: '09:00 - 17:00 AST', logged: '10.5 hrs', variance: '+2.5 hrs', adherence: '98.5%', status: 'compliant', overtime: 'Overtime Warning', risk: 'medium' },
+                    { agent: 'Nadia Vance', shift: '17:00 - 01:00 AST', logged: '7.8 hrs', variance: '-0.2 hrs', adherence: '95.2%', status: 'compliant', overtime: 'None', risk: 'low' },
+                    { agent: 'Tariq Mansoor', shift: '09:00 - 17:00 AST', logged: '6.5 hrs', variance: '-1.5 hrs', adherence: '84.0%', status: 'under_hours', overtime: 'None', risk: 'medium' },
+                    { agent: 'Amira Ghadbi', shift: '09:00 - 17:00 AST', logged: '0.0 hrs', variance: '-8.0 hrs', adherence: '0.0%', status: 'no_show', overtime: 'None', risk: 'critical' }
                   ].map((row, idx) => (
                     <tr key={idx}>
                       <td className="py-3 font-semibold text-slate-900 dark:text-white pr-2">{row.agent}</td>
                       <td className="py-3 font-mono pr-2">{row.shift}</td>
                       <td className="py-3 font-mono pr-2">{row.logged}</td>
-                      <td className={`py-3 font-mono pr-2 ${row.variance.startsWith('-') && row.variance !== '0.0 hrs' ? 'text-rose-500' : 'text-slate-500'}`}>{row.variance}</td>
+                      <td className={`py-3 font-mono pr-2 ${row.variance.startsWith('-') && row.variance !== '0.0 hrs' ? 'text-rose-500' : row.variance.startsWith('+') ? 'text-emerald-500 font-bold' : 'text-slate-500'}`}>{row.variance}</td>
+                      <td className="py-3 font-mono pr-2 font-bold text-slate-700 dark:text-slate-300">{row.adherence}</td>
                       <td className="py-3 pr-2">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
                           row.status === 'compliant'
@@ -796,6 +965,15 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                         }`}>
                           {row.status.replace('_', ' ')}
                         </span>
+                      </td>
+                      <td className="py-3 pr-2">
+                        {row.overtime !== 'None' ? (
+                          <span className="px-2 py-0.5 rounded text-[9px] font-bold font-mono bg-amber-100 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 animate-pulse">
+                            ⚠️ OVERTIME ALERT
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-mono text-[10px]">-</span>
+                        )}
                       </td>
                       <td className="py-3 text-right">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
@@ -829,10 +1007,64 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* Concurrent Load Metrics & Queue Pressure Indicators */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
+                <Activity className="w-4 h-4 text-purple-500" />
+                {isRtl ? 'قياسات الإشغال الفوري وضغط الطوابير' : 'Load Concurrency & Queue Pressure'}
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
+                    {isRtl ? 'نسبة الإشغال الكلي' : 'Active Load Concurrency'}
+                  </span>
+                  <strong className="text-lg font-bold text-blue-600 dark:text-blue-400 font-mono block mt-1">
+                    11 / 20 slots
+                  </strong>
+                  <span className="text-[9px] text-slate-455 block mt-0.5">55% utilization</span>
+                </div>
+
+                <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
+                    {isRtl ? 'مؤشر ضغط الطوابير' : 'Queue Pressure Index'}
+                  </span>
+                  <strong className="text-lg font-bold text-amber-500 font-mono block mt-1">
+                    1.45x Load
+                  </strong>
+                  <span className="text-[9px] text-amber-600 dark:text-amber-400 block mt-0.5">Moderate load pacing</span>
+                </div>
+              </div>
+
+              {/* Queue Pressure Progress list */}
+              <div className="space-y-3 pt-2">
+                <h4 className="text-[10.5px] uppercase font-bold text-slate-500 font-mono tracking-wider">
+                  Queue Pressure Multipliers
+                </h4>
+                
+                {[
+                  { name: 'WhatsApp Queue', load: '1.8x', percent: 80, level: 'High Pressure', color: 'bg-amber-500' },
+                  { name: 'Web Chat Queue', load: '1.1x', percent: 45, level: 'Normal', color: 'bg-blue-500' },
+                  { name: 'Voice SIP Trunk', load: '1.5x', percent: 65, level: 'Moderate', color: 'bg-indigo-500' },
+                  { name: 'Email Dispatcher', load: '0.8x', percent: 25, level: 'Stable', color: 'bg-emerald-500' }
+                ].map((item, idx) => (
+                  <div key={idx} className="space-y-1 text-xs">
+                    <div className="flex justify-between font-semibold">
+                      <span className="text-slate-700 dark:text-slate-300">{item.name}</span>
+                      <span className="font-mono text-slate-500">{item.load} ({item.level})</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div style={{ width: `${item.percent}%` }} className={`h-full rounded-full ${item.color}`} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Config Sliders */}
-            <div className="xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-5">
-              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-850 pb-2">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-5">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-105 dark:border-slate-850 pb-2">
                 <Sliders className="w-4 h-4 text-blue-500" />
                 Operational Calibration Thresholds
               </h3>
@@ -850,7 +1082,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                     disabled={!canEdit}
                     value={occupancySettings.maxConcurrentChats}
                     onChange={(e) => setOccupancySettings({...occupancySettings, maxConcurrentChats: Number(e.target.value)})}
-                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-650 disabled:opacity-50"
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-50"
                   />
                 </div>
 
@@ -883,14 +1115,14 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                     disabled={!canEdit}
                     value={occupancySettings.autoEscalateToxicity}
                     onChange={(e) => setOccupancySettings({...occupancySettings, autoEscalateToxicity: Number(e.target.value)})}
-                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-605 disabled:opacity-50"
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-50"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={!canEdit || isSavingOccupancy}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-xl font-bold text-center cursor-pointer transition-colors shadow-md shadow-blue-500/10 flex items-center justify-center gap-2"
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-xl font-bold text-center cursor-pointer transition-colors shadow-md shadow-blue-500/10 flex items-center justify-center gap-2 text-[11px]"
                 >
                   {isSavingOccupancy ? (
                     <>
@@ -905,7 +1137,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </div>
 
             {/* Channels load card */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
               <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
                 <TrendingUp className="w-4 h-4 text-emerald-500" />
                 Live Channel Occupancy Loads
@@ -914,7 +1146,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
               <div className="space-y-4">
                 {[
                   { name: 'WhatsApp Inbound', usage: 75, bg: 'bg-emerald-500' },
-                  { name: 'Web Widget Live', usage: 60, bg: 'bg-blue-505' },
+                  { name: 'Web Widget Live', usage: 60, bg: 'bg-blue-500' },
                   { name: 'Voice SIP Gateway', usage: 45, bg: 'bg-indigo-500' },
                   { name: 'Emails Backlog', usage: 35, bg: 'bg-purple-500' }
                 ].map((channel, idx) => (
@@ -933,39 +1165,37 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
           </div>
 
           {/* 3. Real-time Occupancy Alerts & SLA Threat Log */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 w-full">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 w-full">
             <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
-              {isRtl ? 'سجل تجاوز حدود الإشغال وحالة التنبيهات' : 'Real-time Occupancy Alerts & Threshold Log'}
+              {isRtl ? 'سجل تجاوز حدود الإشغال وحالة التنبيهات' : 'Real-time Occupancy Alerts & SLA Threat Log'}
             </h3>
             
             <div className="overflow-x-auto min-w-0">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
+                  <tr className="border-b border-slate-105 dark:border-slate-800 text-slate-455 font-bold">
                     <th className="pb-3 pr-2">{isRtl ? 'القناة' : 'Queue Name'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'نوع التجاوز' : 'Alert Trigger'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'القيمة الفعلية' : 'Current Value'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'الحد المسموح' : 'Limit'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'حالة التهديد' : 'Threat Level'}</th>
-                    <th className="pb-3 text-right">{isRtl ? 'الإجراء المتخذ' : 'Action Mitigation'}</th>
+                    <th className="pb-3 pr-2">{isRtl ? 'الإجراء المتخذ' : 'Action Mitigation'}</th>
+                    <th className="pb-3 text-right">{isRtl ? 'الإجراء' : 'Mitigate Action'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
-                  {[
-                    { queue: 'Technical Escalations', trigger: 'Concurrency Limit Breach', current: '5 chats / agent', limit: '4 max', level: 'warning', action: 'Suggested queue traffic redistribution' },
-                    { queue: 'VIP Executive Line', trigger: 'SLA Warning Pacing', current: '135 seconds wait', limit: '120s max', level: 'critical', action: 'Forced status override triggered' },
-                    { queue: 'Tier 1 General Support', trigger: 'Toxicity Auto-Escalate', current: '82% Toxicity detected', limit: '75% threshold', level: 'escalated', action: 'Transferred chat to Supervisor Workspace' },
-                    { queue: 'Emails Backlog', trigger: 'No Trigger', current: '35% capacity', limit: '80% warn', level: 'stable', action: 'None required' }
-                  ].map((row, idx) => (
-                    <tr key={idx}>
+                  {occupancyAlerts.map((row) => (
+                    <tr key={row.id}>
                       <td className="py-3 font-semibold text-slate-900 dark:text-white pr-2">{row.queue}</td>
                       <td className="py-3 pr-2">{row.trigger}</td>
                       <td className="py-3 font-mono pr-2">{row.current}</td>
                       <td className="py-3 font-mono pr-2">{row.limit}</td>
                       <td className="py-3 pr-2">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
-                          row.level === 'stable'
+                          row.status === 'mitigated'
+                            ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                            : row.level === 'stable'
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
                             : row.level === 'warning'
                             ? 'bg-amber-100 text-amber-800 dark:bg-amber-955/20 dark:text-amber-400'
@@ -973,10 +1203,25 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                             ? 'bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455 animate-pulse'
                             : 'bg-purple-100 text-purple-800 dark:bg-purple-955/20 dark:text-purple-400'
                         }`}>
-                          {row.level}
+                          {row.status === 'mitigated' ? 'Mitigated' : row.level}
                         </span>
                       </td>
-                      <td className="py-3 text-right text-slate-500 font-medium">{row.action}</td>
+                      <td className="py-3 pr-2 text-slate-500 font-medium">{row.action}</td>
+                      <td className="py-3 text-right">
+                        {row.status === 'active' && row.level !== 'stable' ? (
+                          <button
+                            onClick={() => handleMitigateAlert(row.id)}
+                            disabled={!canManage}
+                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[9px] rounded-lg cursor-pointer transition-colors disabled:opacity-50 uppercase font-mono"
+                          >
+                            Mitigate
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 italic font-mono">
+                            {row.status === 'mitigated' ? 'Resolved' : 'No Action'}
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -998,25 +1243,27 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
             {/* Main Presence Board Table */}
-            <div className="xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
-              <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
+            <div className="lg:col-span-1 xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-blue-500" />
                 Live Agent AUX Metrics
               </h3>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto min-w-0">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
-                      <th className="pb-3">{isRtl ? 'الوكيل' : 'Agent'}</th>
-                      <th className="pb-3">{isRtl ? 'حالة التواجد' : 'Status'}</th>
-                      <th className="pb-3">{localT.currentAuxState}</th>
-                      <th className="pb-3">{localT.duration}</th>
+                    <tr className="border-b border-slate-105 dark:border-slate-800 text-slate-455 font-bold">
+                      <th className="pb-3 pr-2">{isRtl ? 'الوكيل' : 'Agent'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'حالة التواجد' : 'Status'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'نسبة الالتزام' : 'Adherence'}</th>
+                      <th className="pb-3 pr-2">{localT.currentAuxState}</th>
+                      <th className="pb-3 pr-2">{localT.duration}</th>
+                      <th className="pb-3 text-right">{isRtl ? 'إجراء سريع' : 'Inline Actions'}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
+                  <tbody className="divide-y divide-slate-105 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
                     {agents.map((agent) => {
                       const durationVal = auxDurations[agent.id] || 0;
                       
@@ -1025,9 +1272,27 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                       else if (agent.status === 'offline') displayAux = 'Offline';
                       else if (agent.status === 'busy') displayAux = 'After Call Work';
 
+                      // Mock adherence indicators
+                      let adherenceVal = '98%';
+                      let adherenceColor = 'text-emerald-500 bg-emerald-100/20';
+                      if (agent.name.includes('Tariq')) {
+                        adherenceVal = '84%';
+                        adherenceColor = 'text-amber-600 bg-amber-100/20';
+                      } else if (agent.name.includes('Amira')) {
+                        adherenceVal = '72%';
+                        adherenceColor = 'text-rose-600 bg-rose-100/20';
+                      } else if (agent.name.includes('Nadia')) {
+                        adherenceVal = '95%';
+                        adherenceColor = 'text-emerald-500 bg-emerald-100/20';
+                      }
+
+                      // Overrun warning check (e.g. if durationVal is over 15 mins for break or 5 mins for ACW)
+                      const isOverrun = (displayAux === 'Break' && durationVal > 15) || (displayAux === 'After Call Work' && durationVal > 8);
+                      const overrunSec = displayAux === 'Break' ? durationVal - 15 : durationVal - 8;
+
                       return (
                         <tr key={agent.id} className={agent.id === selectedAgentForOverride ? 'bg-slate-50 dark:bg-slate-850/45' : ''}>
-                          <td className="py-3.5">
+                          <td className="py-3 pr-2">
                             <button
                               type="button"
                               onClick={() => setSelectedAgentForOverride(agent.id)}
@@ -1039,19 +1304,57 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                               <span>{agent.name}</span>
                             </button>
                           </td>
-                          <td className="py-3.5">
+                          <td className="py-3 pr-2">
                             <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase ${
                               agent.status === 'online'
                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
                                 : agent.status === 'busy'
-                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455'
-                                : 'bg-amber-100 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400'
+                                ? 'bg-rose-105 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455'
+                                : 'bg-amber-100 text-amber-800 dark:bg-amber-955/20 dark:text-amber-400'
                             }`}>
                               {agent.status}
                             </span>
                           </td>
-                          <td className="py-3.5 font-semibold text-slate-700 dark:text-slate-300">{displayAux}</td>
-                          <td className="py-3.5 font-mono text-slate-500">{formatDuration(durationVal)}</td>
+                          <td className="py-3 pr-2">
+                            <span className={`px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono ${adherenceColor}`}>
+                              {adherenceVal}
+                            </span>
+                          </td>
+                          <td className="py-3 pr-2 font-semibold text-slate-700 dark:text-slate-300">
+                            {displayAux}
+                          </td>
+                          <td className="py-3 pr-2">
+                            <div className="flex flex-col">
+                              <span className={`font-mono ${isOverrun ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-slate-500'}`}>
+                                {formatDuration(durationVal)}
+                              </span>
+                              {isOverrun && (
+                                <span className="text-[8px] text-rose-500 font-mono font-bold uppercase animate-pulse">
+                                  ⚠️ Overrun +{formatDuration(overrunSec)}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 text-right">
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  handleInlinePresenceOverride(agent.id, e.target.value);
+                                  e.target.value = '';
+                                }
+                              }}
+                              disabled={!canEdit}
+                              className="px-2 py-1 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-850 rounded-lg text-[10px] text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer font-bold focus:border-purple-500"
+                            >
+                              <option value="">Override...</option>
+                              <option value="Available">Available</option>
+                              <option value="Break">Break</option>
+                              <option value="Lunch">Lunch</option>
+                              <option value="Coaching">Coaching</option>
+                              <option value="After Call Work">ACW</option>
+                              <option value="Offline">Offline</option>
+                            </select>
+                          </td>
                         </tr>
                       );
                     })}
@@ -1061,8 +1364,8 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </div>
 
             {/* Override Controls Panel */}
-            <div className="bg-slate-50 dark:bg-slate-900/55 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 text-xs font-semibold">
-              <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2">
+            <div className="bg-slate-50 dark:bg-slate-900/55 p-5 rounded-2xl border border-slate-205 dark:border-slate-800 space-y-4 text-xs font-semibold">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2">
                 <UserCheck className="w-4 h-4 text-purple-500" />
                 {localT.forceOverride}
               </h3>
@@ -1073,7 +1376,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                   <select
                     value={selectedAgentForOverride}
                     onChange={(e) => setSelectedAgentForOverride(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-205 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-300 font-semibold"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-300 font-semibold"
                   >
                     {agents.map((agent) => (
                       <option key={agent.id} value={agent.id}>{agent.name}</option>
@@ -1086,7 +1389,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                   <select
                     value={targetAuxCode}
                     onChange={(e) => setTargetAuxCode(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-205 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:border-blue-505 text-slate-700 dark:text-slate-300 font-semibold"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-300 font-semibold"
                   >
                     <option value="Available">Available (Online)</option>
                     <option value="Break">Break</option>
@@ -1101,7 +1404,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                 <button
                   onClick={handleForcePresenceOverride}
                   disabled={!canEdit}
-                  className="w-full py-2.5 bg-purple-650 hover:bg-purple-700 disabled:bg-purple-350 text-white font-bold rounded-xl text-center cursor-pointer transition-colors shadow-md active:scale-95 flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 bg-purple-650 hover:bg-purple-700 disabled:bg-purple-300 text-white font-bold rounded-xl text-center cursor-pointer transition-colors shadow-md active:scale-95 flex items-center justify-center gap-1.5 text-[11px]"
                 >
                   <Shield className="w-3.5 h-3.5" />
                   {localT.applyOverride}
@@ -1111,7 +1414,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
           </div>
 
           {/* 3. AUX State Outliers & Adherence Violations Log */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 w-full">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 w-full">
             <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
               <Users className="w-4 h-4 text-purple-500" />
               {isRtl ? 'مخالفات وتجاوزات الـ Aux للوكلاء' : 'AUX State Outliers & Adherence Violations Log'}
@@ -1141,7 +1444,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                       <td className="py-3 font-semibold text-slate-700 dark:text-slate-300 pr-2">{row.code}</td>
                       <td className="py-3 font-mono pr-2">{row.elapsed}</td>
                       <td className="py-3 font-mono pr-2">{row.limit}</td>
-                      <td className="py-3 font-mono text-rose-505 pr-2">{row.overrun}</td>
+                      <td className="py-3 font-mono text-rose-500 pr-2">{row.overrun}</td>
                       <td className="py-3 text-right">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
                           row.status === 'compliant'
@@ -1174,10 +1477,10 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {/* Sliders for split */}
-            <div className="xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-5">
-              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-850 pb-2">
+            <div className="lg:col-span-1 xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-5">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-105 dark:border-slate-850 pb-2">
                 <Sliders className="w-4 h-4 text-blue-500" />
                 Active Omnichannel Split Configurations
               </h3>
@@ -1255,7 +1558,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                     </span>
                   </div>
 
-                  <div className="w-full h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full flex overflow-hidden">
+                  <div className="w-full h-3.5 bg-slate-105 dark:bg-slate-800 rounded-full flex overflow-hidden">
                     <div style={{ width: `${trafficWeights.whatsapp}%` }} className="bg-emerald-500 h-full" title="WhatsApp" />
                     <div style={{ width: `${trafficWeights.webchat}%` }} className="bg-blue-500 h-full" title="Web" />
                     <div style={{ width: `${trafficWeights.voice}%` }} className="bg-indigo-500 h-full" title="Voice" />
@@ -1266,7 +1569,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                 <button
                   onClick={handleTriggerQueueRebalance}
                   disabled={!canManage || isRebalancing || (trafficWeights.whatsapp + trafficWeights.webchat + trafficWeights.voice + trafficWeights.email !== 100)}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-xl font-bold text-center cursor-pointer transition-colors shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-xl font-bold text-center cursor-pointer transition-colors shadow-md flex items-center justify-center gap-2 text-[11px]"
                 >
                   {isRebalancing ? (
                     <>
@@ -1281,7 +1584,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </div>
 
             {/* Waiting items preview */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
               <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-emerald-505" />
                 Active Queue Distributions
@@ -1289,14 +1592,14 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
 
               <div className="space-y-3">
                 {queuesList.map((queue) => (
-                  <div key={queue.id} className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-900 rounded-2xl flex justify-between items-center text-xs font-semibold">
+                  <div key={queue.id} className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-900 rounded-xl flex justify-between items-center text-xs font-semibold">
                     <div>
                       <h4 className="font-bold text-xs text-slate-800 dark:text-white">{isRtl ? queue.nameAr : queue.nameEn}</h4>
                       <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">Waiting: {queue.waitingChatsCount} chats</span>
                     </div>
                     <div className="text-right">
                       <span className="font-mono text-[10px] text-slate-500 font-bold block">Priority Weight</span>
-                      <strong className="text-blue-500 font-mono text-sm">{queue.priorityWeight}x</strong>
+                      <strong className="text-blue-505 font-mono text-sm">{queue.priorityWeight}x</strong>
                     </div>
                   </div>
                 ))}
@@ -1305,7 +1608,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
           </div>
 
           {/* 3. Real-time Traffic Routing Logs & Node Heartbeats */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 w-full">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 w-full">
             <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
               <Activity className="w-4 h-4 text-emerald-500" />
               {isRtl ? 'سجل توزيع قنوات الاتصال وصحة الموزع' : 'Real-time Traffic Routing Logs & Node Heartbeats'}
@@ -1314,7 +1617,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             <div className="overflow-x-auto min-w-0">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
+                  <tr className="border-b border-slate-105 dark:border-slate-800 text-slate-455 font-bold">
                     <th className="pb-3 pr-2">{isRtl ? 'القناة' : 'Omnichannel Layer'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'تخصيص الأوزان' : 'Traffic Allocation'}</th>
                     <th className="pb-3 pr-2">{isRtl ? 'حجم الطلبات الفعلي' : 'Inbound Rate'}</th>
@@ -1344,11 +1647,27 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                           {row.load.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="py-3 text-right font-mono text-slate-500">{row.sync}</td>
+                      <td className="py-3 text-right font-mono text-slate-505">{row.sync}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Terminal-style Dispatcher Sync Logs */}
+            <div className="space-y-2 pt-2">
+              <h4 className="text-[10px] uppercase font-bold text-slate-500 font-mono tracking-wider">
+                Dispatcher Daemon Sync Stream
+              </h4>
+              <div className="bg-slate-955 text-slate-400 font-mono text-[10px] rounded-xl p-4 border border-slate-900 space-y-1 h-32 overflow-y-auto w-full">
+                <div className="text-emerald-500 font-bold">[INFO] 2026-06-05 05:07:11 - Dispatcher connection established on node-us-east-1</div>
+                <div className="text-slate-500">[DEBUG] 2026-06-05 05:07:12 - WhatsApp socket pool heartbeat ack (12 agents online)</div>
+                <div className="text-slate-500">{`[DEBUG] 2026-06-05 05:07:15 - Rebalancing weights applied: WA=${trafficWeights.whatsapp}%, Web=${trafficWeights.webchat}%, Voice=${trafficWeights.voice}%, Email=${trafficWeights.email}%`}</div>
+                <div className="text-amber-505 font-bold">{`[WARN] 2026-06-05 05:07:18 - High message volume on WhatsApp queue; latency threshold 1.8s`}</div>
+                <div className="text-emerald-500 font-bold">[INFO] 2026-06-05 05:07:20 - Syncing gateway router configuration... SUCCESS</div>
+                <div className="text-slate-500">[DEBUG] 2026-06-05 05:07:25 - Voice SIP Gateway load state optimal - 4 active nodes</div>
+                <div className="text-slate-500">[DEBUG] 2026-06-05 05:07:30 - Heartbeat check: 4/4 nodes reporting healthy</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1369,37 +1688,79 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-            {/* Escalations Table */}
-            <div className="xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            {/* Toxicity Analytics & Sentiment Summary Card */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-105 dark:border-slate-850 pb-2">
+                <TrendingUp className="w-4 h-4 text-rose-500" />
+                {isRtl ? 'ملخص السمية وتحليل المشاعر' : 'Toxicity & Sentiment Summary'}
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="p-3 bg-slate-55 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
+                    Live Avg Toxicity Index
+                  </span>
+                  <strong className="text-lg font-bold text-emerald-500 font-mono block mt-1">
+                    24% (Low Threat)
+                  </strong>
+                  <span className="text-[9px] text-slate-455 block mt-0.5">Threshold set at 75%</span>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-[10px] uppercase font-bold text-slate-505 font-mono block">
+                    Queue Sentiment Spread
+                  </span>
+                  
+                  {[
+                    { label: 'Positive Feedbacks', pct: 68, color: 'bg-emerald-500' },
+                    { label: 'Neutral Inquiries', pct: 22, color: 'bg-blue-500' },
+                    { label: 'Toxicity Alert / Neg', pct: 10, color: 'bg-rose-500 animate-pulse' }
+                  ].map((item, idx) => (
+                    <div key={idx} className="space-y-1 text-xs font-semibold">
+                      <div className="flex justify-between">
+                        <span className="text-slate-700 dark:text-slate-300">{item.label}</span>
+                        <span className="font-mono text-slate-505">{item.pct}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-105 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div style={{ width: `${item.pct}%` }} className={`h-full rounded-full ${item.color}`} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Active Escalations List */}
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
               <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-rose-500 animate-pulse" />
                 Pending Active Escalations
               </h3>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto min-w-0">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
-                      <th className="pb-3">{isRtl ? 'العميل' : 'Customer'}</th>
-                      <th className="pb-3">{isRtl ? 'تحليل المشاعر' : 'Sentiment'}</th>
-                      <th className="pb-3">{isRtl ? 'القناة' : 'Channel'}</th>
+                    <tr className="border-b border-slate-105 dark:border-slate-800 text-slate-455 font-bold">
+                      <th className="pb-3 pr-2">{isRtl ? 'العميل' : 'Customer'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'تحليل المشاعر' : 'Sentiment'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'القناة' : 'Channel'}</th>
                       <th className="pb-3 text-right">{localT.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
                     {escalatedChats.map((chat) => (
                       <tr key={chat.id} className={selectedChat?.id === chat.id ? 'bg-slate-50 dark:bg-slate-850/45' : ''}>
-                        <td className="py-3.5">
+                        <td className="py-3.5 pr-2">
                           <strong className="text-slate-900 dark:text-white block font-bold">{chat.customerName}</strong>
                           <span className="text-[10px] text-slate-400 font-mono">{chat.id}</span>
                         </td>
-                        <td className="py-3.5">
+                        <td className="py-3.5 pr-2">
                           <span className="px-2 py-0.5 rounded text-[8px] font-bold font-mono bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455 uppercase">
                             {chat.sentiment}
                           </span>
                         </td>
-                        <td className="py-3.5 uppercase font-mono text-[10px] text-slate-505">{chat.channel}</td>
+                        <td className="py-3.5 uppercase font-mono text-[10px] text-slate-505 pr-2">{chat.channel}</td>
                         <td className="py-3.5 text-right">
                           <button
                             onClick={() => setSelectedEscalationId(chat.id)}
@@ -1421,16 +1782,18 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                 </table>
               </div>
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Detailed Escalation Inspector Card */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-105 dark:border-slate-850 pb-2">
                 <Eye className="w-4 h-4 text-blue-505" />
                 Escalation Inspector
               </h3>
 
               {selectedChat ? (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 text-xs font-semibold">
+                <div className="space-y-4 text-xs font-semibold">
                   <div className="pb-2 border-b border-slate-100 dark:border-slate-850 flex justify-between items-center">
                     <div>
                       <strong className="text-sm font-bold text-slate-900 dark:text-white block">{selectedChat.customerName}</strong>
@@ -1442,7 +1805,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                   </div>
 
                   {/* Chat Snippet */}
-                  <div className="p-3 bg-slate-50 dark:bg-slate-955 rounded-2xl border border-slate-100 dark:border-slate-850 space-y-2">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-955 rounded-xl border border-slate-100 dark:border-slate-850 space-y-2">
                     <span className="text-[9px] font-bold text-slate-400 uppercase font-mono block">
                       {localT.chatTranscript}
                     </span>
@@ -1472,7 +1835,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                         <button
                           onClick={() => handleApplyEscalationAction(selectedChat.id, 'reassign')}
                           disabled={!canManage}
-                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-305 text-white rounded-xl font-bold cursor-pointer transition-colors"
+                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-305 text-white rounded-xl font-bold cursor-pointer transition-colors text-[10px]"
                         >
                           {localT.assign}
                         </button>
@@ -1483,7 +1846,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                       <button
                         onClick={() => handleApplyEscalationAction(selectedChat.id, 'escalate_priority')}
                         disabled={!canManage}
-                        className="flex-1 py-2 border border-rose-205 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-600 dark:text-rose-400 font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                        className="flex-1 py-2 border border-rose-205 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-955/20 text-rose-600 dark:text-rose-450 font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors text-[10px]"
                       >
                         <AlertCircle className="w-4 h-4 text-rose-505" />
                         {localT.boost}
@@ -1492,68 +1855,117 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                       <button
                         onClick={() => handleApplyEscalationAction(selectedChat.id, 'resolve')}
                         disabled={!canManage}
-                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-350 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-350 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-colors text-[10px]"
                       >
                         <Check className="w-4 h-4" />
                         {localT.closeEscalation}
                       </button>
                     </div>
                   </div>
+
+                  {/* Whisper Coaching Intervention Input */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!whisperInput) return;
+                      setConversations((prev) =>
+                        prev.map((c) => {
+                          if (c.id === selectedChat.id) {
+                            return { ...c, status: 'escalated' };
+                          }
+                          return c;
+                        })
+                      );
+                      addAuditLog(`Supervisor sent coaching whisper to interaction ${selectedChat.id}: "${whisperInput}"`, 'success');
+                      setWhisperInput('');
+                    }}
+                    className="space-y-2 pt-3 border-t border-slate-105 dark:border-slate-850"
+                  >
+                    <label className="block text-slate-500 font-semibold">Live Whisper Coaching</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Type coaching instructions..."
+                        value={whisperInput}
+                        onChange={(e) => setWhisperInput(e.target.value)}
+                        className="flex-1 px-3 py-1.5 border border-slate-205 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none text-slate-700 dark:text-slate-350 text-xs font-semibold"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!canEdit || !whisperInput}
+                        className="px-3 py-1.5 bg-purple-650 hover:bg-purple-700 disabled:bg-purple-300 text-white font-bold rounded-xl cursor-pointer text-[10px]"
+                      >
+                        Send
+                      </button>
+                    </div>
+                  </form>
                 </div>
               ) : (
-                <div className="p-5 text-center text-slate-400 italic bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl">
+                <div className="p-5 text-center text-slate-400 italic bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
                   Select an escalation item to inspect.
                 </div>
               )}
             </div>
-          </div>
 
-          {/* 3. Supervisor Intervention History & Resolution SLA Log */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 w-full">
-            <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
-              <ShieldAlert className="w-4 h-4 text-rose-505" />
-              {isRtl ? 'سجل تدخلات المشرف وتاريخ موازنة الخدمة' : 'Supervisor Intervention History & Resolution SLA Log'}
-            </h3>
-            
-            <div className="overflow-x-auto min-w-0">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
-                    <th className="pb-3 pr-2">{isRtl ? 'معرف الجلسة' : 'Interaction ID'}</th>
-                    <th className="pb-3 pr-2">{isRtl ? 'العميل' : 'Customer'}</th>
-                    <th className="pb-3 pr-2">{isRtl ? 'الوكيل المسؤول' : 'Responsible Agent'}</th>
-                    <th className="pb-3 pr-2">{isRtl ? 'سبب التصعيد' : 'Reason / Sentiment'}</th>
-                    <th className="pb-3 pr-2">{isRtl ? 'إجراء المشرف' : 'Intervention Action'}</th>
-                    <th className="pb-3 text-right">{isRtl ? 'حالة الحل' : 'SLA Target'}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
-                  {[
-                    { id: 'conv-2', customer: 'Oliver Queen', agent: 'Nadia Vance', reason: 'Toxicity Score: 78% (Angry waiting)', action: 'Sent Live Coaching Whisper instructions', status: 'resolved_in_sla' },
-                    { id: 'conv-1', customer: 'Bruce Wayne', agent: 'Liam Bennett', reason: 'VIP SLA Breached (2 mins overdue)', action: 'Reassigned interaction to Nadia Vance', status: 'resolved_in_sla' },
-                    { id: 'conv-3', customer: 'Clark Kent', agent: 'Liam Bennett', reason: 'Negative Feedback Rating received', action: 'Initiated supervisory check and follow up', status: 'escalation_boosted' }
-                  ].map((row, idx) => (
-                    <tr key={idx}>
-                      <td className="py-3 font-mono font-semibold text-slate-900 dark:text-white pr-2">{row.id}</td>
-                      <td className="py-3 font-semibold text-slate-700 dark:text-slate-300 pr-2">{row.customer}</td>
-                      <td className="py-3 pr-2">{row.agent}</td>
-                      <td className="py-3 pr-2">
-                        <span className="text-[11px] text-rose-500 font-semibold">{row.reason}</span>
-                      </td>
-                      <td className="py-3 text-slate-500 font-medium pr-2">{row.action}</td>
-                      <td className="py-3 text-right">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
-                          row.status === 'resolved_in_sla'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
-                            : 'bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455 animate-pulse'
-                        }`}>
-                          {row.status.replace('_', ' ')}
-                        </span>
-                      </td>
+            {/* Supervisor Intervention History & Resolution SLA Log */}
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-105 dark:border-slate-850 pb-2">
+                <ShieldAlert className="w-4 h-4 text-rose-505" />
+                {isRtl ? 'سجل تدخلات المشرف وتاريخ موازنة الخدمة' : 'Supervisor Intervention History & Resolution SLA Log'}
+              </h3>
+              
+              <div className="overflow-x-auto min-w-0">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-105 dark:border-slate-800 text-slate-455 font-bold">
+                      <th className="pb-3 pr-2">{isRtl ? 'معرف الجلسة' : 'Interaction ID'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'العميل' : 'Customer'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'الوكيل المسؤول' : 'Responsible Agent'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'سبب التصعيد' : 'Reason / Sentiment'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'إجراء المشرف' : 'Intervention Action'}</th>
+                      <th className="pb-3 pr-2">{isRtl ? 'حالة الحل' : 'SLA Target'}</th>
+                      <th className="pb-3 text-right">{isRtl ? 'الإجراء' : 'Intervention Override'}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
+                    {interventionLogs.map((row) => (
+                      <tr key={row.id}>
+                        <td className="py-3 font-mono font-semibold text-slate-900 dark:text-white pr-2">{row.id}</td>
+                        <td className="py-3 font-semibold text-slate-700 dark:text-slate-300 pr-2">{row.customer}</td>
+                        <td className="py-3 pr-2">{row.agent}</td>
+                        <td className="py-3 pr-2">
+                          <span className="text-[11px] text-rose-500 font-semibold">{row.reason}</span>
+                        </td>
+                        <td className="py-3 text-slate-500 font-medium pr-2">{row.action}</td>
+                        <td className="py-3 pr-2">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
+                            row.status === 'resolved_in_sla' || row.status === 'sla_overridden'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400'
+                              : 'bg-rose-100 text-rose-800 dark:bg-rose-955/20 dark:text-rose-455 animate-pulse'
+                          }`}>
+                            {row.status.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td className="py-3 text-right">
+                          {row.status !== 'resolved_in_sla' && row.status !== 'sla_overridden' ? (
+                            <button
+                              onClick={() => handleOverrideSla(row.id)}
+                              disabled={!canManage}
+                              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[9px] rounded-lg cursor-pointer transition-colors disabled:opacity-50 uppercase font-mono"
+                            >
+                              Override SLA
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 italic font-mono">
+                              {row.status === 'sla_overridden' ? 'Overridden' : 'Resolved'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

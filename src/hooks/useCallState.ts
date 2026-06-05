@@ -184,16 +184,19 @@ export function useCallState(onAddCallToHistory: (call: CallHistoryItem) => void
     setCall((prev) => {
       if (!prev || prev.status !== 'ringing') return prev;
       
-      // Save missed record directly to history
-      onAddCallToHistory({
-        id: `call-${Date.now()}`,
-        phoneNumber: prev.phoneNumber,
-        contactName: prev.contactName,
-        direction: 'inbound',
-        timestamp: 'Just now',
-        duration: '00:00',
-        status: 'missed'
-      });
+      const callSnapshot = { ...prev };
+      // Defer side effect to the next tick to avoid render-phase state updates
+      setTimeout(() => {
+        onAddCallToHistory({
+          id: `call-${Date.now()}`,
+          phoneNumber: callSnapshot.phoneNumber,
+          contactName: callSnapshot.contactName,
+          direction: 'inbound',
+          timestamp: 'Just now',
+          duration: '00:00',
+          status: 'missed'
+        });
+      }, 0);
 
       return {
         ...prev,
@@ -267,19 +270,22 @@ export function useCallState(onAddCallToHistory: (call: CallHistoryItem) => void
     setCall((prev) => {
       if (!prev) return null;
       
-      // Save completed record to history
-      onAddCallToHistory({
-        id: `call-${Date.now()}`,
-        phoneNumber: prev.phoneNumber,
-        contactName: prev.contactName,
-        direction: prev.direction,
-        timestamp: 'Just now',
-        duration: formatDuration(prev.duration),
-        status: prev.duration > 0 ? 'completed' : 'missed',
-        recordingUrl: prev.isRecording ? 'https://storage.googleapis.com/mpaas-recordings/sim.wav' : undefined,
-        notes,
-        disposition: code
-      });
+      const callSnapshot = { ...prev };
+      // Defer side effect to the next tick to avoid render-phase state updates
+      setTimeout(() => {
+        onAddCallToHistory({
+          id: `call-${Date.now()}`,
+          phoneNumber: callSnapshot.phoneNumber,
+          contactName: callSnapshot.contactName,
+          direction: callSnapshot.direction,
+          timestamp: 'Just now',
+          duration: formatDuration(callSnapshot.duration),
+          status: callSnapshot.duration > 0 ? 'completed' : 'missed',
+          recordingUrl: callSnapshot.isRecording ? 'https://storage.googleapis.com/mpaas-recordings/sim.wav' : undefined,
+          notes,
+          disposition: code
+        });
+      }, 0);
 
       return null; // Go back to idle status
     });

@@ -55,6 +55,7 @@ export function Header({
   const setLang = useUIStore((s) => s.setLang);
   const theme = useUIStore((s) => s.theme);
   const setTheme = useUIStore((s) => s.setTheme);
+  const setActiveScreen = useUIStore((s) => s.setActiveScreen);
   const auditLogs = useNotificationsStore((s) => s.auditLogs);
   const unreadCount = useUnreadCount();
   const t = translations[lang];
@@ -122,7 +123,8 @@ export function Header({
                         if (item.value === 'public_bot') {
                           router.push('/portal/public');
                         } else {
-                          setRole(item.value);
+                          setRole(item.value as UserRole);
+                          setActiveScreen(item.defaultScreen);
                           router.push(item.route);
                         }
                       }}

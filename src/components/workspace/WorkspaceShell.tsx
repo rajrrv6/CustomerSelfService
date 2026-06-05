@@ -49,7 +49,8 @@ export function WorkspaceShell({ initialScreen }: WorkspaceShellProps) {
   const lang = useUIStore((s) => s.lang);
   const auditLogs = useNotificationsStore((s) => s.auditLogs);
   const { logout, user } = useAuth();
-  const defaultScreen = initialScreen ?? ROLE_DEFAULT_SCREEN[role];
+  const roleDefaultScreen = ROLE_DEFAULT_SCREEN[role];
+  const defaultScreen = initialScreen && canAccessScreen(role, initialScreen) ? initialScreen : roleDefaultScreen;
 
   return (
     <WorkspaceShellInner
@@ -81,9 +82,31 @@ function WorkspaceShellInner({
   initialScreen: string;
   onLogout: () => void;
 }) {
+  const activeScreen = useUIStore((s) => s.activeScreen);
+  const setActiveScreen = useUIStore((s) => s.setActiveScreen);
   const router = useRouter();
   const t: TranslationKeys = translations[lang];
-  const [activeScreen, setActiveScreen] = useState(initialScreen);
+  const previousRoleRef = React.useRef<UserRole | null>(null);
+
+  React.useEffect(() => {
+    let targetScreen = initialScreen;
+
+    if (role === 'support_agent') {
+      targetScreen = 'agent_dashboard';
+    } else if (role === 'supervisor') {
+      targetScreen = 'supervisor_monitor';
+    } else if (role === 'qa_manager') {
+      targetScreen = 'qa_queue';
+    } else if (role === 'client_admin') {
+      targetScreen = 'bots';
+    }
+
+    if (activeScreen !== targetScreen) {
+      setActiveScreen(targetScreen);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
+
   const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [showPublicBotOverlay, setShowPublicBotOverlay] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -111,59 +134,7 @@ function WorkspaceShellInner({
     return () => window.removeEventListener('navigate-to-screen', handler as EventListener);
   }, []);
 
-  const permissionsState = usePermissionStore((s) => s.permissions);
-  const apiPermissionsState = usePermissionStore((s) => s.apiPermissions);
-
-  const renderedScreen = React.useMemo(() => {
-    // 1. If currently active screen is authorized, stay there
-    if (canAccessScreen(role, activeScreen)) {
-      return activeScreen;
-    }
-
-    // 2. Check default screen for this role
-    const defaultScreen = ROLE_DEFAULT_SCREEN[role];
-    if (canAccessScreen(role, defaultScreen)) {
-      return defaultScreen;
-    }
-
-    // 3. Find any first allowed screen from role configuration
-    const allowedScreens = ROLE_PERMISSIONS[role];
-    if (allowedScreens) {
-      const firstAllowed = allowedScreens.find((scr) => canAccessScreen(role, scr));
-      if (firstAllowed) {
-        return firstAllowed;
-      }
-    }
-
-    // 4. Fallback to first matrix allowed screen to avoid blank states
-    const matrixRole = mapUserRoleToMatrixRole(role);
-    const roleRules = permissionsState[matrixRole];
-    if (roleRules) {
-      const allowedModule = Object.keys(roleRules).find((mod) => {
-        const level = roleRules[mod as keyof RolePermissions];
-        return LEVEL_RANKS[level] >= LEVEL_RANKS.view;
-      });
-      if (allowedModule) {
-        const mappedScreen = Object.keys(SCREEN_TO_MODULE_MAP).find(
-          (scr) => SCREEN_TO_MODULE_MAP[scr] === allowedModule
-        );
-        if (mappedScreen && canAccessScreen(role, mappedScreen)) {
-          return mappedScreen;
-        }
-      }
-    }
-
-    // If absolutely nothing is allowed, just stick to activeScreen and let unauthorized message render
-    return activeScreen;
-  }, [role, activeScreen, permissionsState, apiPermissionsState]);
-
-  React.useEffect(() => {
-    if (activeScreen !== renderedScreen) {
-      setActiveScreen(renderedScreen);
-    }
-  }, [activeScreen, renderedScreen]);
-
-  const authorized = canAccessScreen(role, renderedScreen);
+  const authorized = canAccessScreen(role, activeScreen);
 
   const handleLogout = () => {
     onLogout();
@@ -179,7 +150,7 @@ function WorkspaceShellInner({
       {isSidebarOpen && <button type="button" aria-label="Close navigation drawer" onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/50 lg:hidden" />}
 
       <Sidebar
-        activeScreen={renderedScreen}
+        activeScreen={activeScreen}
         setActiveScreen={(screenId) => {
           setActiveScreen(screenId);
           setIsSidebarOpen(false);
@@ -191,7 +162,7 @@ function WorkspaceShellInner({
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header
-          activeScreenTitle={getScreenTitle(renderedScreen, t)}
+          activeScreenTitle={getScreenTitle(activeScreen, t)}
           onLogout={handleLogout}
           onOpenAuditLogs={() => setShowAuditLogs(true)}
           onOpenMenu={() => setIsSidebarOpen(true)}
@@ -222,30 +193,30 @@ function WorkspaceShellInner({
                 {lang === 'ar' ? (
                   <>
                     دورك الحالي (<strong className="uppercase">{role.replace('_', ' ')}</strong>) غير مصرح له
-                    بالوصول إلى <strong>/{renderedScreen}</strong>.
+                    بالوصول إلى <strong>/{activeScreen}</strong>.
                   </>
                 ) : (
                   <>
                     Your role (<strong className="uppercase">{role.replace('_', ' ')}</strong>) is not authorized for{' '}
-                    <strong>/{renderedScreen}</strong>.
+                    <strong>/{activeScreen}</strong>.
                     {userEmail && <span className="block mt-2 text-slate-400">Signed in as {userEmail}</span>}
                   </>
                 )}
               </p>
             </div>
-          ) : renderedScreen === 'analytics_center' ? (
+          ) : activeScreen === 'analytics_center' ? (
             <AnalyticsCenterLayout />
           ) : (
             <>
-              {role === 'super_admin' && <SuperAdminView activeSubScreen={renderedScreen} />}
+              {role === 'super_admin' && <SuperAdminView activeSubScreen={activeScreen} />}
               {(role === 'client_admin' || role === 'operations_manager' || role === 'viewer') && (
-                <ClientAdminView activeSubScreen={renderedScreen} />
+                <ClientAdminView activeSubScreen={activeScreen} />
               )}
-              {role === 'qa_manager' && <QAManagerView activeSubScreen={renderedScreen} />}
-              {role === 'supervisor' && <SupervisorView activeSubScreen={renderedScreen} />}
-              {role === 'support_agent' && <SupportAgentView activeSubScreen={renderedScreen} />}
+              {role === 'qa_manager' && <QAManagerView activeSubScreen={activeScreen} />}
+              {role === 'supervisor' && <SupervisorView activeSubScreen={activeScreen} />}
+              {role === 'support_agent' && <SupportAgentView activeSubScreen={activeScreen} />}
               {role === 'customer' && (
-                <CustomerPortalView activeSubScreen={renderedScreen} setActiveSubScreen={setActiveScreen} />
+                <CustomerPortalView activeSubScreen={activeScreen} setActiveSubScreen={setActiveScreen} />
               )}
             </>
           )}

@@ -98,7 +98,12 @@ export const useUIStore = create<UIState>()((set) => {
     },
 
     setActiveScreen: (activeScreen) => {
-      set({ activeScreen });
+      set((state) => {
+        if (state.activeScreen === activeScreen) {
+          return state;
+        }
+        return { activeScreen };
+      });
     },
   };
 });

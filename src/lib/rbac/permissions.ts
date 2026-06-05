@@ -116,6 +116,12 @@ export const SUPER_ADMIN_SCREENS = [
 ];
 
 export function canAccessScreen(role: UserRole, screenId: string): boolean {
+  console.log({
+    role,
+    screen: screenId,
+    permissions: ROLE_PERMISSIONS[role]
+  });
+
   if (screenId === 'launcher') {
     return true;
   }
@@ -129,8 +135,8 @@ export function canAccessScreen(role: UserRole, screenId: string): boolean {
     return ROLE_PERMISSIONS.customer.includes(screenId);
   }
   const allowed = ROLE_PERMISSIONS[role];
-  if (allowed && !allowed.includes(screenId)) {
-    return false;
+  if (allowed && allowed.includes(screenId)) {
+    return true;
   }
   return canView(screenId, role);
 }
