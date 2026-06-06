@@ -542,7 +542,7 @@ emptyTitle={isRtl ? 'لا توجد خطوط اتصالات' : 'No SIP Trunks Pro
                   type="button"
                   onClick={() => runSipDiagnostics(trunk)}
                   disabled={trunk.status === 'connecting'}
-                  className="p-1 hover:bg-slate-105 dark:hover:bg-slate-800 text-purple-650 rounded cursor-pointer transition-colors disabled:opacity-40"
+                  className="p-1 hover:bg-slate-105 dark:hover:bg-slate-800 text-purple-600 rounded cursor-pointer transition-colors disabled:opacity-40"
                   title={isRtl ? 'تشخيص خط الاتصال' : 'SIP Diagnostics'}
                 >
                   <HeartPulse className="w-3.5 h-3.5" />

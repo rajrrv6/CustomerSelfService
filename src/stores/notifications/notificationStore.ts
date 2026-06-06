@@ -72,7 +72,7 @@ const seedAlerts: SystemAlert[] = [
       sourceSystem: 'SIEM SLA Monitor',
     },
     actions: [
-      { label: 'View Queue', actionType: 'navigate', payload: { screenId: 'agents' } },
+      { label: 'View Queue', actionType: 'navigate', payload: { screenId: 'live_queues' } },
       { label: 'Acknowledge', actionType: 'acknowledge' }
     ]
   },
@@ -171,7 +171,7 @@ const seedAlerts: SystemAlert[] = [
       sourceSystem: 'Workforce Planner',
     },
     actions: [
-      { label: 'View Roster', actionType: 'navigate', payload: { screenId: 'agents' } }
+      { label: 'View Roster', actionType: 'navigate', payload: { screenId: 'agent_presence' } }
     ]
   },
   {

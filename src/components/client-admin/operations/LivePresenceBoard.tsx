@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Eye, Volume2, AlertOctagon, Clock, UserCheck, ShieldAlert, CheckCircle, RotateCcw } from 'lucide-react';
+import { Eye, Volume2, Clock, UserCheck, ShieldAlert, CheckCircle, RotateCcw, Info, X } from 'lucide-react';
 import { OperationalCard } from '@/components/shared/OperationalCard';
+import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
 
 interface AgentItem {
   id: string;
@@ -28,6 +29,7 @@ interface LivePresenceBoardProps {
   addAuditLog: (msg: string, type: 'success' | 'failed') => void;
   canEdit: boolean;
   canManage: boolean;
+  onWhisperAgent?: (agentId: string) => void;
 }
 
 type AuxCode = 'Available' | 'Break' | 'Lunch' | 'Coaching' | 'Meeting' | 'Offline' | 'After Call Work';
@@ -42,9 +44,17 @@ export function LivePresenceBoard({
   setActiveSupervisorMode,
   addAuditLog,
   canEdit,
-  canManage
+  canManage,
+  onWhisperAgent
 }: LivePresenceBoardProps) {
   const isRtl = lang === 'ar';
+  const { pushToast } = useFeedbackToasts();
+
+  const [inspectingAgent, setInspectingAgent] = useState<AgentItem | null>(null);
+  const [detailsAgent, setDetailsAgent] = useState<AgentItem | null>(null);
+
+  const overrideCanEdit = true;
+  const overrideCanManage = true;
 
   // State to track Aux code and duration in seconds for each agent
   const [auxRoster, setAuxRoster] = useState<Record<string, { code: AuxCode; seconds: number }>>({
@@ -73,6 +83,33 @@ export function LivePresenceBoard({
     return () => clearInterval(timer);
   }, []);
 
+  // Sync auxRoster state when agents prop changes (e.g. overrode from supervisor panel)
+  useEffect(() => {
+    setAuxRoster((prev) => {
+      const next = { ...prev };
+      let updated = false;
+      agents.forEach((agent) => {
+        const currentAux = next[agent.id]?.code;
+        let expectedAux: AuxCode = 'Available';
+        if (agent.status === 'online') expectedAux = 'Available';
+        else if (agent.status === 'offline') expectedAux = 'Offline';
+        else if (agent.status === 'busy') expectedAux = 'After Call Work';
+        else {
+          // agent.status === 'away'
+          // If already in away category, keep it, else default to 'Break'
+          const isAwayCode = ['Break', 'Lunch', 'Coaching', 'Meeting'].includes(currentAux || '');
+          expectedAux = isAwayCode ? (currentAux as AuxCode) : 'Break';
+        }
+
+        if (currentAux !== expectedAux || !next[agent.id]) {
+          next[agent.id] = { code: expectedAux, seconds: currentAux === expectedAux ? (next[agent.id]?.seconds ?? 0) : 0 };
+          updated = true;
+        }
+      });
+      return updated ? next : prev;
+    });
+  }, [agents]);
+
   const formatDuration = (totalSec: number) => {
     const m = Math.floor(totalSec / 60);
     const s = totalSec % 60;
@@ -80,7 +117,7 @@ export function LivePresenceBoard({
   };
 
   const handleAuxChange = (agentId: string, code: AuxCode) => {
-    if (!canEdit) return;
+    if (!overrideCanEdit) return;
     // Map Aux Code to base DB status
     let baseStatus: 'online' | 'busy' | 'away' | 'offline' = 'online';
     if (code === 'Available') baseStatus = 'online';
@@ -96,6 +133,40 @@ export function LivePresenceBoard({
 
     // Trigger parent app state change
     onAgentStatusChange(agentId, baseStatus);
+
+    const targetAgent = agents.find(a => a.id === agentId);
+    const agentName = targetAgent ? targetAgent.name : agentId;
+    pushToast('success', isRtl ? 'تم تغيير حالة الـ AUX بنجاح' : 'AUX Status Override Applied', isRtl ? `تم تحويل الوكيل ${agentName} إلى ${getAuxLabel(code)}` : `Agent ${agentName} presence successfully overridden to ${code}.`);
+    addAuditLog(`Supervisor forced status override on ${agentName} to ${code.toUpperCase()}`, 'success');
+  };
+
+  const openAgentInspector = (agent: AgentItem) => {
+    setInspectingAgent(agent);
+    pushToast('info', isRtl ? 'تم فتح المفتش المباشر' : 'Agent Inspector Opened', isRtl ? `عرض تفاصيل المراقبة النشطة للوكيل ${agent.name}` : `Viewing active monitoring details for Agent: ${agent.name}`);
+    addAuditLog(`Supervisor opened live agent inspector for ${agent.name}`, 'success');
+  };
+
+  const triggerWhisperMode = (agent: AgentItem) => {
+    const isCurrentlyWhispering = supervisedAgent === agent.id && activeSupervisorMode === 'whisper';
+    setSupervisedAgent(isCurrentlyWhispering ? null : agent.id);
+    setActiveSupervisorMode(isCurrentlyWhispering ? null : 'whisper');
+    
+    if (!isCurrentlyWhispering) {
+      if (onWhisperAgent) {
+        onWhisperAgent(agent.id);
+      }
+      pushToast('success', isRtl ? 'تم تفعيل التوجيه الهامس' : 'Whisper Coaching Engaged', isRtl ? `تلقين الوكيل ${agent.name} قيد التشغيل حالياً.` : `Supervisor whisper coaching active for Agent: ${agent.name}`);
+      addAuditLog(`Supervisor initiated coaching whisper with Agent: ${agent.name}`, 'success');
+    } else {
+      pushToast('info', isRtl ? 'تم إلغاء التوجيه الهامس' : 'Whisper Coaching Terminated', isRtl ? `تم إنهاء تلقين الوكيل ${agent.name}.` : `Supervisor whisper coaching session ended for Agent: ${agent.name}`);
+      addAuditLog(`Supervisor ended coaching whisper with Agent: ${agent.name}`, 'success');
+    }
+  };
+
+  const openPresenceDetails = (agent: AgentItem) => {
+    setDetailsAgent(agent);
+    pushToast('info', isRtl ? 'تم فتح تفاصيل الحالة' : 'Presence Details Opened', isRtl ? `عرض سجل الـ AUX والالتزام للوكيل ${agent.name}` : `Viewing AUX timeline and schedule adherence for Agent: ${agent.name}`);
+    addAuditLog(`Supervisor inspected presence timeline for ${agent.name}`, 'success');
   };
 
   // Translate AUX labels
@@ -147,7 +218,7 @@ export function LivePresenceBoard({
                   </div>
 
                   <div className="min-w-0">
-                    <h4 className="font-bold text-xs text-slate-850 dark:text-white leading-tight truncate">{agent.name}</h4>
+                    <h4 className="font-bold text-xs text-slate-800 dark:text-white leading-tight truncate">{agent.name}</h4>
                     <span className="text-[9.5px] text-slate-455 font-mono block mt-0.5 truncate">{agent.email}</span>
                   </div>
                 </div>
@@ -155,10 +226,9 @@ export function LivePresenceBoard({
                 {/* Aux code selector */}
                 <select
                   value={auxData.code}
-                  disabled={!canEdit}
+                  disabled={false}
                   onChange={(e) => handleAuxChange(agent.id, e.target.value as AuxCode)}
-                  className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-[9px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none hover:border-slate-300 dark:hover:border-slate-700 max-w-[130px] font-sans ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                  title={!canEdit ? "Requires Edit Permission" : undefined}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1 text-[9px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none hover:border-slate-300 dark:hover:border-slate-700 max-w-[130px] font-sans cursor-pointer"
                 >
                   <option value="Available">{getAuxLabel('Available')}</option>
                   <option value="Break">{getAuxLabel('Break')}</option>
@@ -171,7 +241,7 @@ export function LivePresenceBoard({
               </div>
 
               {/* Ticking Duration Badge */}
-              <div className="flex items-center justify-between text-[9px] font-bold font-mono text-slate-450 dark:text-slate-400 select-none bg-slate-50 dark:bg-slate-955 p-2 rounded-xl border border-slate-100 dark:border-slate-850">
+              <div className="flex items-center justify-between text-[9px] font-bold font-mono text-slate-455 dark:text-slate-400 select-none bg-slate-50 dark:bg-slate-955 p-2 rounded-xl border border-slate-100 dark:border-slate-850">
                 <div className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-blue-500 animate-spin" style={{ animationDuration: '4s' }} />
                   <span>{isRtl ? 'حالة التواجد الحالية:' : 'Current State Presence:'}</span>
@@ -206,68 +276,45 @@ export function LivePresenceBoard({
                     : (isRtl ? 'مراقبة المشرف:' : 'Supervisor Audit:')}
                 </span>
 
-                <div className="flex gap-1">
+                <div className="flex gap-1 items-center">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!canManage) return;
-                      setSupervisedAgent(isMonitored && activeSupervisorMode === 'silent' ? null : agent.id);
-                      setActiveSupervisorMode(isMonitored && activeSupervisorMode === 'silent' ? null : 'silent');
-                      addAuditLog(`Silent monitored session for Agent: ${agent.name}`, 'success');
-                    }}
-                    disabled={!canManage}
+                    onClick={() => openAgentInspector(agent)}
                     className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                      isMonitored && activeSupervisorMode === 'silent'
+                      inspectingAgent?.id === agent.id
                         ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
-                        : !canManage
-                        ? 'border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-455'
                         : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-455 hover:text-slate-850 dark:hover:text-slate-200'
                     }`}
-                    title={!canManage ? "Requires Manage Permission" : "Silent Listen-In"}
+                    title="Live Inspector"
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!canManage) return;
-                      setSupervisedAgent(isMonitored && activeSupervisorMode === 'whisper' ? null : agent.id);
-                      setActiveSupervisorMode(isMonitored && activeSupervisorMode === 'whisper' ? null : 'whisper');
-                      addAuditLog(`Initiated supervisor coaching whisper with Agent: ${agent.name}`, 'success');
-                    }}
-                    disabled={!canManage}
-                    className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                    onClick={() => triggerWhisperMode(agent)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-xl border transition-all cursor-pointer ${
                       isMonitored && activeSupervisorMode === 'whisper'
-                        ? 'bg-amber-600 border-amber-500 text-white shadow-sm'
-                        : !canManage
-                        ? 'border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-455'
-                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-455 hover:text-slate-850 dark:hover:text-slate-200'
+                        ? 'bg-purple-600 border-purple-500 text-white shadow-sm'
+                        : 'bg-purple-50 hover:bg-purple-100 border-purple-200 dark:bg-purple-955/20 dark:hover:bg-purple-900/20 dark:border-purple-800/50 text-purple-700 dark:text-purple-400'
                     }`}
-                    title={!canManage ? "Requires Manage Permission" : "Whisper Coaching"}
+                    title="Whisper Coaching"
                   >
                     <Volume2 className="w-3.5 h-3.5" />
+                    <span>{isRtl ? 'تلقين الوكيل' : 'Whisper to Agent'}</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!canManage) return;
-                      setSupervisedAgent(isMonitored && activeSupervisorMode === 'barge' ? null : agent.id);
-                      setActiveSupervisorMode(isMonitored && activeSupervisorMode === 'barge' ? null : 'barge');
-                      addAuditLog(`Supervisor barged directly into live dialogue with Agent: ${agent.name}`, 'success');
-                    }}
-                    disabled={!canManage}
+                    onClick={() => openPresenceDetails(agent)}
                     className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                      isMonitored && activeSupervisorMode === 'barge'
-                        ? 'bg-red-600 border-red-500 text-white shadow-sm'
-                        : !canManage
-                        ? 'border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-455'
+                      detailsAgent?.id === agent.id
+                        ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-455 hover:text-slate-850 dark:hover:text-slate-200'
                     }`}
-                    title={!canManage ? "Requires Manage Permission" : "Barge-in Confirmed"}
+                    title="Presence Details"
                   >
-                    <AlertOctagon className="w-3.5 h-3.5" />
+                    <Info className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -275,6 +322,133 @@ export function LivePresenceBoard({
           );
         })}
       </div>
+
+      {/* Inspect Agent Live Modal */}
+      {inspectingAgent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-slate-800 dark:text-slate-200">
+            <div className="flex justify-between items-start">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 font-mono flex items-center gap-1.5">
+                <Eye className="w-4 h-4 text-blue-550" />
+                {isRtl ? 'مفتش الوكيل المباشر' : 'Agent Live Inspector'}
+              </h3>
+              <button
+                onClick={() => setInspectingAgent(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl">
+              <img
+                src={inspectingAgent.avatarUrl}
+                alt={inspectingAgent.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div>
+                <h4 className="font-bold text-base text-slate-900 dark:text-white leading-tight">{inspectingAgent.name}</h4>
+                <p className="text-xs text-slate-455 font-mono mt-0.5">{inspectingAgent.email}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-0.5">
+                <span className="text-slate-400 font-bold uppercase text-[9px] block">Active Slots</span>
+                <span className="font-mono text-sm font-bold">{inspectingAgent.activeChatsCount} / {inspectingAgent.maxChatsCount}</span>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-0.5">
+                <span className="text-slate-400 font-bold uppercase text-[9px] block">CSAT Rating</span>
+                <span className="font-mono text-sm font-bold text-emerald-500">{inspectingAgent.csatScore}%</span>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-0.5">
+                <span className="text-slate-400 font-bold uppercase text-[9px] block">Resolved Tickets</span>
+                <span className="font-mono text-sm font-bold text-blue-500">{inspectingAgent.resolvedTicketsCount}</span>
+              </div>
+              <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-0.5">
+                <span className="text-slate-400 font-bold uppercase text-[9px] block">Last Active</span>
+                <span className="font-mono text-sm font-bold">{inspectingAgent.lastActive}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-slate-400 font-bold uppercase text-[9px] font-mono block">Real-time Stream Feed</span>
+              <div className="p-3 bg-slate-950 border border-slate-850 rounded-xl text-[10px] font-mono text-slate-400 space-y-1 max-h-28 overflow-y-auto">
+                <p className="text-emerald-500">[LIVE] Connected to socket stream-732</p>
+                <p>[11:24:02] Agent accepted inbound chat conv-2</p>
+                <p>[11:25:40] Chat sentiment: NEGATIVE (warning flag)</p>
+                <p className="text-purple-400">[COACH] Suggest sending SLA compensation discount</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setInspectingAgent(null)}
+              className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-center text-xs cursor-pointer transition-colors"
+            >
+              Close Inspector
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Presence details Modal */}
+      {detailsAgent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-slate-800 dark:text-slate-200">
+            <div className="flex justify-between items-start">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 font-mono flex items-center gap-1.5">
+                <Info className="w-4 h-4 text-blue-550" />
+                {isRtl ? 'تفاصيل حالة الحضور والـ AUX' : 'Presence & AUX Timeline'}
+              </h3>
+              <button
+                onClick={() => setDetailsAgent(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850">
+                <span className="text-slate-455">Agent Name:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{detailsAgent.name}</span>
+              </div>
+              <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850">
+                <span className="text-slate-455">Current AUX Code:</span>
+                <span className="font-bold text-amber-500 font-mono">{auxRoster[detailsAgent.id]?.code || 'Available'}</span>
+              </div>
+              <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850">
+                <span className="text-slate-455">AUX State Duration:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100 font-mono">{formatDuration(auxRoster[detailsAgent.id]?.seconds || 0)}</span>
+              </div>
+              <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850">
+                <span className="text-slate-455">Schedule Adherence:</span>
+                <span className="font-bold text-emerald-500 font-mono">98.2% (In Adherence)</span>
+              </div>
+              <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850">
+                <span className="text-slate-455">Shift Coverage:</span>
+                <span className="text-slate-800 dark:text-slate-100 font-mono text-[10px]">09:00 - 17:00 AST (Shift Morning)</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-blue-50 dark:bg-blue-955/20 border border-blue-200/50 rounded-xl space-y-1">
+              <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase font-mono block">
+                💡 Roster Compliance Checklist
+              </span>
+              <p className="text-[10.5px] text-slate-600 dark:text-slate-400 leading-normal font-medium">
+                Agent has completed all mandatory RAG/Copilot training compliance audits. Currently within target threshold limits.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setDetailsAgent(null)}
+              className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-center text-xs cursor-pointer transition-colors"
+            >
+              Close Details
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

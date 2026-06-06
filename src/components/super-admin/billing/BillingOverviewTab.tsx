@@ -874,7 +874,7 @@ export function BillingOverviewTab() {
                     </span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-purple-650 h-full rounded-full" style={{ width: detailsRecord.usageTier === 'free' ? '56%' : detailsRecord.usageTier === 'growth' ? '48%' : '62.4%' }} />
+                    <div className="bg-purple-600 h-full rounded-full" style={{ width: detailsRecord.usageTier === 'free' ? '56%' : detailsRecord.usageTier === 'growth' ? '48%' : '62.4%' }} />
                   </div>
                 </div>
               </div>

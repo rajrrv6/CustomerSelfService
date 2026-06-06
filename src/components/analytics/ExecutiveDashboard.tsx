@@ -266,7 +266,7 @@ export function ExecutiveDashboard() {
             <span className="block text-[9px] text-slate-400 mt-1 font-semibold">{t.analyticsCenter.execDashboard.kpiDeflectionSub}</span>
           </div>
           <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-850">
-            <span className="text-[10px] text-purple-650 dark:text-purple-400 font-bold">{t.analyticsCenter.execDashboard.kpiDeflectionTarget}</span>
+            <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">{t.analyticsCenter.execDashboard.kpiDeflectionTarget}</span>
             <Sparkline data={deflectionTrends.map(d => d.value)} color="#8b5cf6" />
           </div>
         </div>

@@ -34,7 +34,7 @@ export const triggerSlaBreach = (queueName: string, waitTime: string, threshold:
       sourceSystem: 'SIEM SLA Monitor',
     },
     actions: [
-      { label: 'View Queue', actionType: 'navigate', payload: { screenId: 'agents' } },
+      { label: 'View Queue', actionType: 'navigate', payload: { screenId: 'live_queues' } },
       { label: 'Acknowledge', actionType: 'acknowledge' }
     ]
   });
@@ -135,7 +135,7 @@ export const triggerStaffingShortage = (queueName: string, activeCount: number, 
       sourceSystem: 'Workforce Scheduler',
     },
     actions: [
-      { label: 'View Roster', actionType: 'navigate', payload: { screenId: 'agents' } }
+      { label: 'View Roster', actionType: 'navigate', payload: { screenId: 'agent_presence' } }
     ]
   });
 };

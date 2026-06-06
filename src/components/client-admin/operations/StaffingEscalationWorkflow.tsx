@@ -141,7 +141,7 @@ export function StaffingEscalationWorkflow({ lang }: StaffingEscalationWorkflowP
               </div>
               <button
                 onClick={() => handleTriggerProtocol('backfill')}
-                className="w-full py-1.5 bg-amber-650 hover:bg-amber-700 text-white font-bold text-[9px] uppercase tracking-wider rounded-lg transition-all cursor-pointer"
+                className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-[9px] uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-sm"
               >
                 {isRtl ? 'طلب استدعاء' : 'Request Backfill'}
               </button>

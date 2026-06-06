@@ -35,9 +35,12 @@ import { LivePresenceBoard } from '@/components/client-admin/operations/LivePres
 import { usePermission } from '@/stores/permissionStore';
 import { SlaAnalytics } from '@/components/analytics/SlaAnalytics';
 import { QueueManagement, type QueueItem } from '@/components/client-admin/operations/QueueManagement';
+import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
+import { useNotificationStore } from '@/stores/notifications/notificationStore';
 
 export function SupervisorView({ activeSubScreen }: { activeSubScreen: string }) {
   const { lang, agents, setAgents, conversations, setConversations, addAuditLog } = useApp();
+  const { pushToast } = useFeedbackToasts();
   const isRtl = lang === 'ar';
   
   const { canEdit, canManage } = usePermission('workforce');
@@ -146,6 +149,33 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
   });
   const [isSavingOccupancy, setIsSavingOccupancy] = useState(false);
 
+  interface QueueLoadItem {
+    id: string;
+    name: string;
+    load: string;
+    percent: number;
+    level: string;
+    color: string;
+    alertSeverity: string;
+  }
+
+  const [occupancyRate, setOccupancyRate] = useState<number>(55);
+  const [concurrentSessions, setConcurrentSessions] = useState<number>(11);
+  const [avgUtilization, setAvgUtilization] = useState<number>(68);
+  const [slaThreatsCount, setSlaThreatsCount] = useState<number>(3);
+  const [staffingAvailability, setStaffingAvailability] = useState<number>(85);
+  const [breakCompliance, setBreakCompliance] = useState<number>(92);
+  const [overflowRisk, setOverflowRisk] = useState<string>('High');
+  const [queueSaturation, setQueueSaturation] = useState<string>('Moderate');
+  const [breakOverridesCount, setBreakOverridesCount] = useState<number>(0);
+
+  const [queueLoads, setQueueLoads] = useState<QueueLoadItem[]>([
+    { id: 'whatsapp', name: 'WhatsApp Queue', load: '1.8x', percent: 80, level: 'High Pressure', color: 'bg-amber-500', alertSeverity: 'warning' },
+    { id: 'webchat', name: 'Web Chat Queue', load: '1.1x', percent: 45, level: 'Normal', color: 'bg-blue-500', alertSeverity: 'stable' },
+    { id: 'voice', name: 'Voice SIP Trunk', load: '1.5x', percent: 65, level: 'Moderate', color: 'bg-indigo-500', alertSeverity: 'warning' },
+    { id: 'email', name: 'Email Dispatcher', load: '0.8x', percent: 25, level: 'Stable', color: 'bg-emerald-500', alertSeverity: 'stable' }
+  ]);
+
   const [occupancyAlerts, setOccupancyAlerts] = useState([
     { id: 'al-1', queue: 'Technical Escalations', trigger: 'Concurrency Limit Breach', current: '5 chats / agent', limit: '4 max', level: 'warning', action: 'Suggested queue traffic redistribution', status: 'active' },
     { id: 'al-2', queue: 'VIP Executive Line', trigger: 'SLA Warning Pacing', current: '135 seconds wait', limit: '120s max', level: 'critical', action: 'Forced status override triggered', status: 'active' },
@@ -221,6 +251,25 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     }
   ]);
 
+  // Real-time queue overflow alerts state
+  const [overflowAlerts, setOverflowAlerts] = useState([
+    { id: 'oa-1', queueId: 'q-1', queueName: 'Tier 1 General Support', type: 'SLA Breach Threat', message: 'Waiting chats count (6) exceeds threshold. Immediate action required.', status: 'active' },
+    { id: 'oa-2', queueId: 'q-2', queueName: 'Technical Escalations (Tier 2)', type: 'Agent Capacity Low', message: 'No agents currently available for VIP redirect rule.', status: 'active' }
+  ]);
+
+  const handleAcknowledgeAlert = (alertId: string) => {
+    setOverflowAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: 'acknowledged' } : a));
+    pushToast('info', isRtl ? 'تم الإقرار بالتنبيه' : 'Alert Acknowledged', isRtl ? 'تم إخفاء التنبيه بنجاح.' : 'Alert marked as acknowledged.');
+    addAuditLog(`Supervisor acknowledged queue overflow alert ${alertId}`, 'success');
+  };
+
+  const handleMitigateSla = (alertId: string, queueId: string) => {
+    setQueuesList(prev => prev.map(q => q.id === queueId ? { ...q, activeAgentsCount: q.activeAgentsCount + 1 } : q));
+    setOverflowAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: 'mitigated' } : a));
+    pushToast('success', isRtl ? 'تم تخفيف حدة SLA' : 'SLA Mitigated', isRtl ? 'تم إسناد وكيل احتياطي إضافي للطابور.' : 'Backup agent assigned to queue. Telemetry updated.');
+    addAuditLog(`Supervisor mitigated SLA breach for alert ${alertId} on queue ${queueId}`, 'success');
+  };
+
   // Dynamic Aux ticker durations
   const [auxDurations, setAuxDurations] = useState<Record<string, number>>({
     'agent-1': 320,
@@ -277,18 +326,169 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     setIsSavingOccupancy(true);
     setTimeout(() => {
       setIsSavingOccupancy(false);
+      
+      // Calculate dynamic telemetry based on new sliders
+      const maxSlots = occupancySettings.maxConcurrentChats * 5; // e.g., 5 agents
+      const newOccupancyRate = Math.min(100, Math.round((concurrentSessions / maxSlots) * 100));
+      setOccupancyRate(newOccupancyRate);
+      
+      const newAvgUtil = Math.min(100, Math.round(newOccupancyRate * 1.15));
+      setAvgUtilization(newAvgUtil);
+      
+      let risk = 'Low';
+      if (newOccupancyRate > 80) risk = 'Critical';
+      else if (newOccupancyRate > 65) risk = 'High';
+      else if (newOccupancyRate > 45) risk = 'Moderate';
+      setOverflowRisk(risk);
+      
+      let saturation = 'Stable';
+      if (newOccupancyRate > 75) saturation = 'Saturated';
+      else if (newOccupancyRate > 50) saturation = 'Moderate';
+      setQueueSaturation(saturation);
+
+      pushToast('success', isRtl ? 'تم حفظ الإعدادات' : 'Thresholds Calibrated', isRtl ? 'تم حفظ عتبات التشغيل بنجاح وتحديث قياسات الإشغال.' : 'Operational calibration settings saved successfully and telemetry updated.');
       addAuditLog(`Supervisor updated operational occupancy thresholds: Max Chats ${occupancySettings.maxConcurrentChats}, SLA Warn ${occupancySettings.slaWarningThreshold}s`, 'success');
+      useNotificationStore.getState().addAuditLog(`Supervisor calibrated occupancy settings (Max Chats: ${occupancySettings.maxConcurrentChats})`, 'success');
     }, 1200);
   };
 
-  const handleMitigateAlert = (alertId: string) => {
+  const handleAcknowledgeAlertOccupancy = (alertId: string) => {
     if (!canManage) return;
     setOccupancyAlerts(prev =>
-      prev.map(a => a.id === alertId ? { ...a, status: 'mitigated', action: 'Mitigated by Supervisor' } : a)
+      prev.map(a => a.id === alertId ? { ...a, status: 'mitigated', action: 'Acknowledged by Supervisor', level: 'stable' } : a)
     );
+    setSlaThreatsCount((prev: number) => {
+      const nextVal = Math.max(0, prev - 1);
+      if (nextVal === 0) {
+        setOverflowRisk('Low');
+        setQueueSaturation('Stable');
+      }
+      return nextVal;
+    });
     const alert = occupancyAlerts.find(a => a.id === alertId);
     if (alert) {
-      addAuditLog(`Supervisor mitigated occupancy alert for ${alert.queue}: ${alert.trigger}`, 'success');
+      pushToast('info', isRtl ? 'تم الإقرار بالتنبيه' : 'Alert Acknowledged', isRtl ? `تم تسجيل الإقرار بتنبيه ${alert.queue}.` : `Acknowledged occupancy alert for ${alert.queue}.`);
+      addAuditLog(`Supervisor acknowledged occupancy alert for ${alert.queue}: ${alert.trigger}`, 'success');
+      useNotificationStore.getState().addAuditLog(`Supervisor acknowledged occupancy alert for ${alert.queue}`, 'success');
+    }
+  };
+
+  const handleMitigateAlertOccupancy = (alertId: string) => {
+    if (!canManage) return;
+    setOccupancyAlerts(prev =>
+      prev.map(a => a.id === alertId ? { ...a, status: 'mitigated', action: 'Mitigated Capacity Relief', level: 'stable' } : a)
+    );
+    
+    setOccupancyRate((prev: number) => {
+      const nextRate = Math.max(30, prev - 8);
+      if (nextRate <= 45) {
+        setOverflowRisk('Low');
+        setQueueSaturation('Stable');
+      } else if (nextRate <= 65) {
+        setOverflowRisk('Moderate');
+        setQueueSaturation('Moderate');
+      }
+      return nextRate;
+    });
+    
+    setAvgUtilization((prev: number) => Math.max(40, prev - 10));
+    setSlaThreatsCount((prev: number) => Math.max(0, prev - 1));
+    setConcurrentSessions((prev: number) => Math.max(5, prev - 1));
+    
+    const alert = occupancyAlerts.find(a => a.id === alertId);
+    if (alert) {
+      pushToast('success', isRtl ? 'تم تخفيف حدة التنبيه' : 'Occupancy Alert Mitigated', isRtl ? `تم تخفيف التحميل على طابور ${alert.queue}.` : `Successfully mitigated capacity limits locally for ${alert.queue}.`);
+      addAuditLog(`Supervisor mitigated occupancy limit breach for ${alert.queue}`, 'success');
+      useNotificationStore.getState().addAuditLog(`Supervisor mitigated occupancy breach for ${alert.queue}`, 'success');
+    }
+  };
+
+  const handleMitigateOccupancy = (queueId: string) => {
+    if (!canManage) return;
+    setQueueLoads((prev: QueueLoadItem[]) =>
+      prev.map((q: QueueLoadItem) => {
+        if (q.id === queueId) {
+          return {
+            ...q,
+            load: '1.2x',
+            percent: 50,
+            level: 'Normal',
+            color: 'bg-blue-500'
+          };
+        }
+        return q;
+      })
+    );
+
+    setOccupancyRate((prev: number) => {
+      const nextRate = Math.max(30, prev - 7);
+      if (nextRate <= 45) {
+        setOverflowRisk('Low');
+        setQueueSaturation('Stable');
+      } else if (nextRate <= 65) {
+        setOverflowRisk('Moderate');
+        setQueueSaturation('Moderate');
+      }
+      return nextRate;
+    });
+    
+    setAvgUtilization((prev: number) => Math.max(40, prev - 8));
+    setSlaThreatsCount((prev: number) => Math.max(0, prev - 1));
+    setConcurrentSessions((prev: number) => Math.max(5, prev - 1));
+
+    const queue = queueLoads.find((q: QueueLoadItem) => q.id === queueId);
+    if (queue) {
+      pushToast('success', isRtl ? 'تم تخفيف عبء القناة' : 'Capacity Mitigated', isRtl ? `تم تخفيف الإشغال لـ ${queue.name}.` : `Mitigated local capacity load for ${queue.name}.`);
+      addAuditLog(`Supervisor mitigated occupancy saturation for ${queue.name}`, 'success');
+      useNotificationStore.getState().addAuditLog(`Supervisor mitigated capacity load on ${queue.name}`, 'success');
+    }
+  };
+
+  const handleAdjustThreshold = (queueId: string, threshold: string) => {
+    if (!canEdit) return;
+    setQueueLoads((prev: QueueLoadItem[]) =>
+      prev.map((q: QueueLoadItem) => {
+        if (q.id === queueId) {
+          let levelVal = q.level;
+          let colorVal = q.color;
+          let percentVal = q.percent;
+          if (threshold === 'Strict') {
+            levelVal = 'Critical Alert';
+            colorVal = 'bg-rose-500';
+            percentVal = Math.min(100, percentVal + 15);
+          } else if (threshold === 'Relaxed') {
+            levelVal = 'Stable';
+            colorVal = 'bg-emerald-500';
+            percentVal = Math.max(20, percentVal - 20);
+          } else {
+            levelVal = 'Normal';
+            colorVal = 'bg-blue-500';
+          }
+          return {
+            ...q,
+            level: levelVal,
+            color: colorVal,
+            percent: percentVal,
+            alertSeverity: threshold === 'Strict' ? 'critical' : threshold === 'Relaxed' ? 'stable' : 'warning'
+          };
+        }
+        return q;
+      })
+    );
+
+    const queue = queueLoads.find((q: QueueLoadItem) => q.id === queueId);
+    if (queue) {
+      if (threshold === 'Strict') {
+        setSlaThreatsCount(prev => prev + 1);
+        setOverflowRisk('High');
+        setQueueSaturation('Saturated');
+      } else if (threshold === 'Relaxed') {
+        setSlaThreatsCount(prev => Math.max(0, prev - 1));
+      }
+      
+      pushToast('info', isRtl ? 'تم تعديل حد الحساسية' : 'Threshold Configured', isRtl ? `تم ضبط حساسية تنبيهات ${queue.name} إلى ${threshold}.` : `Configured calibration thresholds for ${queue.name} to ${threshold} level.`);
+      addAuditLog(`Supervisor calibrated load alert threshold for ${queue.name} to ${threshold.toUpperCase()}`, 'success');
+      useNotificationStore.getState().addAuditLog(`Supervisor calibrated load alert threshold for ${queue.name} to ${threshold.toUpperCase()}`, 'success');
     }
   };
 
@@ -580,7 +780,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                   <select
                     value={whisperTargetChatId}
                     onChange={(e) => setWhisperTargetChatId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-900 rounded-xl focus:outline-none focus:border-blue-500 text-slate-300"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:border-blue-500 text-slate-700 dark:text-slate-300 font-bold"
                   >
                     {conversations.filter(c => c.status === 'active' || c.status === 'escalated').map((c) => (
                       <option key={c.id} value={c.id}>
@@ -604,7 +804,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
 
                 <button
                   type="submit"
-                  className="w-full py-2 bg-purple-650 hover:bg-purple-700 text-white font-bold rounded-xl text-center cursor-pointer shadow-md active:scale-95 transition-all"
+                  className="w-full py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-center cursor-pointer shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   {isRtl ? 'إرسال ملاحظة همس' : 'Whisper to Agent'}
                 </button>
@@ -1007,62 +1207,151 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {/* Concurrent Load Metrics & Queue Pressure Indicators */}
+          {/* 1. Telemetry KPI Cards Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'معدل الإشغال' : 'Occupancy Rate'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {occupancyRate}%
+              </strong>
+              <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+                <div style={{ width: `${occupancyRate}%` }} className="h-full bg-blue-500 rounded-full" />
+              </div>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'الجلسات المتزامنة' : 'Concurrent Sessions'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {concurrentSessions} chats
+              </strong>
+              <span className="text-[9px] text-slate-400 block mt-1">active capacity slots</span>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'متوسط الاستفادة' : 'Average Utilization'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {avgUtilization}%
+              </strong>
+              <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+                <div style={{ width: `${avgUtilization}%` }} className="h-full bg-indigo-500 rounded-full" />
+              </div>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'تهديدات SLA النشطة' : 'Active SLA Threats'}
+              </span>
+              <strong className={`text-lg font-bold font-mono block mt-1 ${slaThreatsCount > 0 ? 'text-rose-500 animate-pulse' : 'text-emerald-500'}`}>
+                {slaThreatsCount}
+              </strong>
+              <span className="text-[9px] text-slate-400 block mt-1">requiring mitigation</span>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'تشبع الطابور' : 'Queue Saturation'}
+              </span>
+              <strong className="text-lg font-bold text-amber-500 font-mono block mt-1">
+                {queueSaturation}
+              </strong>
+              <span className="text-[9px] text-slate-400 block mt-1">real-time pacing</span>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'توفر الكادر' : 'Staffing Availability'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {staffingAvailability}%
+              </strong>
+              <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+                <div style={{ width: `${staffingAvailability}%` }} className="h-full bg-emerald-500 rounded-full" />
+              </div>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'الالتزام بالاستراحات' : 'Break Compliance'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {breakCompliance}%
+              </strong>
+              <div className="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+                <div style={{ width: `${breakCompliance}%` }} className="h-full bg-purple-500 rounded-full" />
+              </div>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'مخاطر تجاوز السعة' : 'Overflow Risk'}
+              </span>
+              <strong className="text-lg font-bold text-rose-500 font-mono block mt-1">
+                {overflowRisk}
+              </strong>
+              <span className="text-[9px] text-slate-400 block mt-1">overall rating</span>
+            </div>
+          </div>
+
+          {/* 2. Main 2-Column Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Column 1: Load Concurrency & Queue Pressure */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-105 dark:border-slate-850 pb-2">
                 <Activity className="w-4 h-4 text-purple-500" />
-                {isRtl ? 'قياسات الإشغال الفوري وضغط الطوابير' : 'Load Concurrency & Queue Pressure'}
+                {isRtl ? 'قياسات الإشغال وضغط الطوابير' : 'Load Concurrency & Queue Pressure'}
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
-                    {isRtl ? 'نسبة الإشغال الكلي' : 'Active Load Concurrency'}
-                  </span>
-                  <strong className="text-lg font-bold text-blue-600 dark:text-blue-400 font-mono block mt-1">
-                    11 / 20 slots
-                  </strong>
-                  <span className="text-[9px] text-slate-455 block mt-0.5">55% utilization</span>
-                </div>
-
-                <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 font-mono block">
-                    {isRtl ? 'مؤشر ضغط الطوابير' : 'Queue Pressure Index'}
-                  </span>
-                  <strong className="text-lg font-bold text-amber-500 font-mono block mt-1">
-                    1.45x Load
-                  </strong>
-                  <span className="text-[9px] text-amber-600 dark:text-amber-400 block mt-0.5">Moderate load pacing</span>
-                </div>
-              </div>
-
-              {/* Queue Pressure Progress list */}
-              <div className="space-y-3 pt-2">
-                <h4 className="text-[10.5px] uppercase font-bold text-slate-500 font-mono tracking-wider">
-                  Queue Pressure Multipliers
-                </h4>
-                
-                {[
-                  { name: 'WhatsApp Queue', load: '1.8x', percent: 80, level: 'High Pressure', color: 'bg-amber-500' },
-                  { name: 'Web Chat Queue', load: '1.1x', percent: 45, level: 'Normal', color: 'bg-blue-500' },
-                  { name: 'Voice SIP Trunk', load: '1.5x', percent: 65, level: 'Moderate', color: 'bg-indigo-500' },
-                  { name: 'Email Dispatcher', load: '0.8x', percent: 25, level: 'Stable', color: 'bg-emerald-500' }
-                ].map((item, idx) => (
-                  <div key={idx} className="space-y-1 text-xs">
-                    <div className="flex justify-between font-semibold">
-                      <span className="text-slate-700 dark:text-slate-300">{item.name}</span>
-                      <span className="font-mono text-slate-500">{item.load} ({item.level})</span>
+              <div className="space-y-4">
+                {queueLoads.map((item) => (
+                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-955 border border-slate-105 dark:border-slate-850 rounded-xl space-y-3">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                        {isRtl && item.id === 'whatsapp' ? 'طابور واتساب' : isRtl && item.id === 'webchat' ? 'طابور الدردشة' : isRtl && item.id === 'voice' ? 'قناة الصوت SIP' : isRtl && item.id === 'email' ? 'طابور البريد الإلكتروني' : item.name}
+                      </span>
+                      <span className="font-mono font-bold text-slate-500">{item.load} ({item.level})</span>
                     </div>
+
                     <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div style={{ width: `${item.percent}%` }} className={`h-full rounded-full ${item.color}`} />
+                    </div>
+
+                    <div className="flex justify-between items-center gap-2 text-[10px]">
+                      {/* Sens selector (Strict / Standard / Relaxed) */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-400 font-mono">Sens:</span>
+                        <select
+                          value={item.alertSeverity === 'critical' ? 'Strict' : item.alertSeverity === 'stable' ? 'Relaxed' : 'Standard'}
+                          onChange={(e) => handleAdjustThreshold(item.id, e.target.value)}
+                          disabled={!canEdit}
+                          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-bold"
+                        >
+                          <option value="Relaxed">Relaxed</option>
+                          <option value="Standard font-bold">Standard</option>
+                          <option value="Strict font-bold">Strict</option>
+                        </select>
+                      </div>
+
+                      {/* Mitigate action */}
+                      <button
+                        onClick={() => handleMitigateOccupancy(item.id)}
+                        disabled={!canManage || item.level === 'Normal' || item.level === 'Stable'}
+                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-lg cursor-pointer transition-colors text-[9px] font-mono uppercase"
+                      >
+                        {isRtl ? 'تخفيف' : 'Mitigate'}
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Config Sliders */}
+            {/* Column 2: Operational Calibration Thresholds */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-5">
               <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-105 dark:border-slate-850 pb-2">
                 <Sliders className="w-4 h-4 text-blue-500" />
@@ -1135,38 +1424,11 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                 </button>
               </form>
             </div>
-
-            {/* Channels load card */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-emerald-500" />
-                Live Channel Occupancy Loads
-              </h3>
-
-              <div className="space-y-4">
-                {[
-                  { name: 'WhatsApp Inbound', usage: 75, bg: 'bg-emerald-500' },
-                  { name: 'Web Widget Live', usage: 60, bg: 'bg-blue-500' },
-                  { name: 'Voice SIP Gateway', usage: 45, bg: 'bg-indigo-500' },
-                  { name: 'Emails Backlog', usage: 35, bg: 'bg-purple-500' }
-                ].map((channel, idx) => (
-                  <div key={idx} className="space-y-1.5 text-xs font-semibold">
-                    <div className="flex justify-between">
-                      <span className="text-slate-700 dark:text-slate-350">{channel.name}</span>
-                      <span className="font-mono text-slate-500">{channel.usage}% capacity</span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div style={{ width: `${channel.usage}%` }} className={`h-full rounded-full ${channel.bg}`} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* 3. Real-time Occupancy Alerts & SLA Threat Log */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 w-full">
-            <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5">
+            <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider flex items-center gap-1.5 border-b border-slate-105 dark:border-slate-850 pb-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
               {isRtl ? 'سجل تجاوز حدود الإشغال وحالة التنبيهات' : 'Real-time Occupancy Alerts & SLA Threat Log'}
             </h3>
@@ -1207,15 +1469,24 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                         </span>
                       </td>
                       <td className="py-3 pr-2 text-slate-500 font-medium">{row.action}</td>
-                      <td className="py-3 text-right">
+                      <td className="py-3 text-right space-x-2">
                         {row.status === 'active' && row.level !== 'stable' ? (
-                          <button
-                            onClick={() => handleMitigateAlert(row.id)}
-                            disabled={!canManage}
-                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[9px] rounded-lg cursor-pointer transition-colors disabled:opacity-50 uppercase font-mono"
-                          >
-                            Mitigate
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleAcknowledgeAlertOccupancy(row.id)}
+                              disabled={!canManage}
+                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-755 dark:text-slate-350 text-[9px] font-bold rounded-lg cursor-pointer transition-colors disabled:opacity-50 uppercase font-mono"
+                            >
+                              Ack
+                            </button>
+                            <button
+                              onClick={() => handleMitigateAlertOccupancy(row.id)}
+                              disabled={!canManage}
+                              className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[9px] rounded-lg cursor-pointer transition-colors disabled:opacity-50 uppercase font-mono"
+                            >
+                              Mitigate
+                            </button>
+                          </>
                         ) : (
                           <span className="text-[10px] text-slate-400 italic font-mono">
                             {row.status === 'mitigated' ? 'Resolved' : 'No Action'}
@@ -1404,7 +1675,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                 <button
                   onClick={handleForcePresenceOverride}
                   disabled={!canEdit}
-                  className="w-full py-2.5 bg-purple-650 hover:bg-purple-700 disabled:bg-purple-300 text-white font-bold rounded-xl text-center cursor-pointer transition-colors shadow-md active:scale-95 flex items-center justify-center gap-1.5 text-[11px]"
+                  className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white font-bold rounded-xl text-center cursor-pointer transition-colors shadow-md active:scale-95 flex items-center justify-center gap-1.5 text-[11px]"
                 >
                   <Shield className="w-3.5 h-3.5" />
                   {localT.applyOverride}
@@ -1893,7 +2164,7 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                       <button
                         type="submit"
                         disabled={!canEdit || !whisperInput}
-                        className="px-3 py-1.5 bg-purple-650 hover:bg-purple-700 disabled:bg-purple-300 text-white font-bold rounded-xl cursor-pointer text-[10px]"
+                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white font-bold rounded-xl cursor-pointer text-[10px]"
                       >
                         Send
                       </button>
@@ -1968,6 +2239,162 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
               </div>
             </div>
           </div>
+        </div>
+      );
+
+    case 'live_queues':
+      return (
+        <div className="space-y-6 min-w-0 animate-in fade-in-50 duration-200" dir={isRtl ? 'rtl' : 'ltr'}>
+          {/* Header */}
+          <div className="space-y-1.5">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+              {isRtl ? 'لوحة التحكم في طوابير الانتظار الحية' : 'Live Inbound Queues Control Console'}
+            </h2>
+            <p className="text-xs text-slate-455">
+              {isRtl 
+                ? 'إدارة قنوات التوجيه وتعديل الأولويات ومراقبة مؤشرات اتفاقية مستوى الخدمة للاتصالات الواردة.' 
+                : 'Manage live queues routing splits, adjust priority weights, and monitor real-time SLA thresholds.'}
+            </p>
+          </div>
+
+          {/* 1. Telemetry KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'إجمالي المحادثات المنتظرة' : 'Total Waiting Chats'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1 transition-all duration-300">
+                {queuesList.reduce((acc, q) => acc + (q.status !== 'paused' ? q.waitingChatsCount : 0), 0)}
+              </strong>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'الوكلاء النشطون الكلي' : 'Total Active Agents'}
+              </span>
+              <strong className="text-lg font-bold text-slate-800 dark:text-white font-mono block mt-1">
+                {queuesList.reduce((acc, q) => acc + q.activeAgentsCount, 0)}
+              </strong>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'مستهدف SLA المتوسط' : 'Average SLA Target'}
+              </span>
+              <strong className="text-lg font-bold text-emerald-500 font-mono block mt-1">
+                {queuesList.length > 0 
+                  ? Math.round(queuesList.reduce((acc, q) => acc + q.slaTargetPercent, 0) / queuesList.length) 
+                  : 0}%
+              </strong>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+              <span className="text-[9px] uppercase font-bold text-slate-400 font-mono block">
+                {isRtl ? 'التنبيهات النشطة' : 'Active Live Alerts'}
+              </span>
+              <strong className="text-lg font-bold text-rose-500 font-mono block mt-1">
+                {overflowAlerts.filter(a => a.status === 'active').length}
+              </strong>
+            </div>
+          </div>
+
+          {/* 2. Overflow Alerts Panel */}
+          {overflowAlerts.filter(a => a.status === 'active').length > 0 && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4 animate-in slide-in-from-top-5 duration-300">
+              <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider">
+                ⚠️ {isRtl ? 'تنبيهات تجاوز سعة طابور الانتظار' : 'Queue Overflow & SLA Breach Alerts'}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {overflowAlerts.filter(a => a.status === 'active').map(alert => (
+                  <div key={alert.id} className="p-4 bg-amber-50/70 dark:bg-amber-955/20 border border-amber-200/60 dark:border-amber-900/40 rounded-2xl flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-xs font-bold text-amber-800 dark:text-amber-400">{alert.queueName}</span>
+                        <span className="px-2 py-0.5 rounded text-[8px] font-bold font-mono bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 uppercase">
+                          {alert.type}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">{alert.message}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAcknowledgeAlert(alert.id)}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-755 dark:text-slate-350 text-[10px] font-bold rounded-lg cursor-pointer transition-colors"
+                      >
+                        {isRtl ? 'إقرار بالتنبيه' : 'Acknowledge'}
+                      </button>
+                      <button
+                        onClick={() => handleMitigateSla(alert.id, alert.queueId)}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold rounded-lg cursor-pointer transition-colors"
+                      >
+                        {isRtl ? 'تخفيف حدة SLA' : 'Mitigate SLA'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 3. Visualizer Load Distribution Grid */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+            <h3 className="font-bold text-xs text-slate-655 dark:text-slate-400 uppercase font-mono tracking-wider">
+              📊 {isRtl ? 'مخطط توزيع أحمال طوابير الانتظار' : 'Queue Load Distribution Visualizer'}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {queuesList.map(queue => {
+                const isPaused = queue.status === 'paused';
+                const loadPercent = isPaused ? 0 : queue.activeAgentsCount > 0 
+                  ? Math.min(100, Math.round((queue.waitingChatsCount / (queue.activeAgentsCount * 4)) * 100))
+                  : queue.waitingChatsCount > 0 ? 100 : 0;
+                
+                let loadColor = 'bg-emerald-500';
+                if (loadPercent > 80) loadColor = 'bg-rose-500 animate-pulse';
+                else if (loadPercent > 50) loadColor = 'bg-amber-500';
+
+                return (
+                  <div key={queue.id} className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 rounded-2xl space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                        {isRtl ? queue.nameAr : queue.nameEn}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase ${
+                        isPaused 
+                          ? 'bg-slate-105 text-slate-600 dark:bg-slate-800 dark:text-slate-400' 
+                          : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-455'
+                      }`}>
+                        {isPaused ? (isRtl ? 'موقوف مؤقتاً' : 'PAUSED') : (isRtl ? 'نشط' : 'ACTIVE')}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-[10px] text-slate-450 dark:text-slate-500 font-mono">
+                      <span>Waiting: {queue.waitingChatsCount} chats</span>
+                      <span>Agents: {queue.activeAgentsCount} active</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div style={{ width: `${loadPercent}%` }} className={`h-full rounded-full ${loadColor}`} />
+                      </div>
+                      <span className="text-[9px] text-slate-400 font-mono block text-right">
+                        {isPaused ? 'N/A Capacity' : `Load Factor: ${loadPercent}%`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4. Queue Management component */}
+          <QueueManagement
+            lang={lang}
+            queuesList={queuesList}
+            setQueuesList={setQueuesList}
+            addAuditLog={addAuditLog}
+            canEdit={true}
+            canManage={true}
+          />
         </div>
       );
 

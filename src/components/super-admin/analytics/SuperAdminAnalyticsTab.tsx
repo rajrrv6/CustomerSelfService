@@ -450,7 +450,7 @@ export function SuperAdminAnalyticsTab({ activeSubScreen }: SuperAdminAnalyticsT
                   onClick={() => setExportFormat('json')}
                   className={`p-3.5 rounded-xl border font-bold text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all ${
                     exportFormat === 'json'
-                      ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-955/20 text-purple-650'
+                      ? 'border-purple-500 bg-purple-50/50 dark:bg-purple-955/20 text-purple-600'
                       : 'border-slate-200 dark:border-slate-800 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
