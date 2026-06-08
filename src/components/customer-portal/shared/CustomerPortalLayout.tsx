@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
-import { Sparkles, Search, BookOpen, ShieldCheck, Plus, PhoneCall, Volume2, CheckCircle, ArrowLeft } from 'lucide-react';
+import {
+  Sparkles, Search, BookOpen, ShieldCheck, Plus, PhoneCall, Volume2,
+  CheckCircle, ArrowLeft, ChevronDown, Shield
+} from 'lucide-react';
 import { AccessibilityWidget } from '../accessibility/AccessibilityWidget';
 import { VoiceCallModal } from '../callbacks/VoiceCallModal';
 import { CobrowseModal } from '../callbacks/CobrowseModal';
@@ -17,23 +20,29 @@ import { KbArticleView } from '../knowledge-base/KbArticleView';
 import { RefundWizard } from '../refunds/RefundWizard';
 import { LiveChatOverlay } from '../live-chat/LiveChatOverlay';
 import { CustomerChatHistory } from './CustomerChatHistory';
-import { CsatSurveyWidget } from '../feedback/CsatSurveyWidget';
-import { NpsSurveyWidget } from '../feedback/NpsSurveyWidget';
-import { CallbackQueueCard } from '../feedback/CallbackQueueCard';
+import { FeedbackHubPage } from '../feedback/FeedbackHubPage';
 import { useFeedbackToasts } from '../feedback/PostChatToasts';
+import { CustomerNotifications } from '../notifications/CustomerNotifications';
+import { CustomerSettings } from '../settings/CustomerSettings';
+import { FavoritesPage, RecentActivityPage } from './PersonalizationHub';
+import { HttpStatusPage, MaintenanceModeScreen } from './EnterpriseStates';
+import { SystemStatusPage } from '../status/SystemStatusPage';
+import { LiveSupportWorkspace } from '../support/LiveSupportWorkspace';
+import { GlobalSearch } from '../navigation/GlobalSearch';
+
+// Enterprise System Imports
+import { OrgSwitcher } from '../enterprise/OrgSwitcher';
+import { AuditLogViewer } from '../enterprise/AuditLogViewer';
+import { ActiveSessionsPanel } from '../enterprise/ActiveSessionsPanel';
+import { SessionTimeoutModal } from '../enterprise/SessionTimeoutModal';
+import { ExportCenter } from '../enterprise/ExportCenter';
+import { SsoStatusPanel } from '../enterprise/SsoStatusPanel';
+import { QuotaDashboard } from '../enterprise/QuotaDashboard';
+import { kbArticles, historicalChats } from './constants';
 
 interface CustomerPortalLayoutProps {
   activeSubScreen: string;
   setActiveSubScreen: (sub: string) => void;
-}
-
-interface Article {
-  id: string;
-  title: string;
-  category: string;
-  content: string;
-  helpfulCount: number;
-  tags: string[];
 }
 
 export function CustomerPortalLayout({
@@ -45,76 +54,77 @@ export function CustomerPortalLayout({
     createTicket,
     addAuditLog,
     lang,
-    conversations,
-    setConversations
+    role,
   } = useApp();
 
   const t = translations[lang];
   const { pushToast } = useFeedbackToasts();
 
+  // RBAC: Governance features visible to admin roles only
+  // (super_admin and client_admin per the UserRole type definition)
+  const canAccessGovernance =
+    role === 'super_admin' ||
+    role === 'client_admin';
+
   // ----------------------------------------------------
-  // Mock Data definitions
+  // Session Inactivity Timer (Phase 5)
   // ----------------------------------------------------
-  const kbArticles: Article[] = [
-    {
-      id: 'art-1',
-      title: 'How to Request a SaaS Subscription Refund',
-      category: 'Returns & Refunds',
-      tags: ['refund', 'billing', 'subscription'],
-      helpfulCount: 154,
-      content: `Under the standard AI-Native mPaaS subscription guidelines, corporate customers are eligible for a full refund within 30 days of shipment/renewal if the service tier parameters fall below the stated SLA metrics.
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(900);
+  const [showTimeoutModal, setShowTimeoutModal] = useState(false);
 
-To initiate a refund request:
-1. Locate your Order ID inside the Order Lookup portal (formatted as ORD-XXXXX).
-2. If the order date is within the 30-day window, you will see a 'Refund Eligible' indicator.
-3. Click 'Initiate Return/Refund' to open the wizard, select your return reason, and submit.
-4. Once verified, the credits will reflect in your active account statement within 3 to 5 banking days.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSessionTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setShowTimeoutModal(false);
+          addAuditLog('User security session expired automatically due to inactivity.', 'failed');
+          setActiveSubScreen('customer_system_403');
+          return 0;
+        }
+        if (prev === 121) {
+          setShowTimeoutModal(true);
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-For orders outside the 30-day window, please submit a formal ticket category 'Billing & Payments' with attachments proving system downtime or failure logs.`
-    },
-    {
-      id: 'art-2',
-      title: 'Setting Up OAuth for Client-Gate API Connectors',
-      category: 'Developer APIs',
-      tags: ['oauth', 'api', 'connector', 'integration'],
-      helpfulCount: 92,
-      content: `Our client-gate connectors support OAuth 2.0 authorization rules. To establish an API link:
-- Log in to your Client Admin console, navigate to settings, and locate the 'ERP Connectors' tab.
-- Generate a new client credentials pair (Client ID & Client Secret).
-- Ensure your security firewalls whitelist our gateway IPs: 147.28.112.5 and 147.28.112.6.
-- A HTTP 403 Forbidden indicates invalid permission scopes. Verify your tenant tokens have read:billing scopes enabled.`
-    },
-    {
-      id: 'art-3',
-      title: 'Resetting Locked Civil Registry Logins',
-      category: 'Account & Access',
-      tags: ['login', 'auth', 'password', 'civil-registry'],
-      helpfulCount: 210,
-      content: `If your civil registry login credentials fail 3 consecutive times, your user ID will be locked for security.
+    const resetTimer = () => {
+      setSessionTimeLeft((prev) => {
+        if (prev <= 120) return prev;
+        return 900;
+      });
+    };
 
-To unlock your access:
-1. Trigger the OTP request flow using your registered corporate email.
-2. Enter the 4-digit code (sent via email/SMS).
-3. Reset your credentials using a password with at least 12 characters, including one symbol, one uppercase letter, and one number.
-4. If OTP delivery fails, check that your telecom carrier allows inbound automated SMS broadcasts.`
-    },
-    {
-      id: 'art-4',
-      title: 'Handling Fiber Gateway Delivery Delays',
-      category: 'Returns & Refunds',
-      tags: ['shipping', 'delivery', 'delay', 'fiber'],
-      helpfulCount: 45,
-      content: `In the event that your Fiber Gateway Pack (ORD-77612) shows delayed logistics indicators on SAP:
-- Verify shipping milestone schedules.
-- If delivery exceeds the estimated ETA by 48 hours, a delivery agent will automatically prompt a voice callback to confirm coordinate metrics.
-- Delivery changes requested within 12 hours of dispatch can be performed directly inside the Order Status Timeline on your Portal.`
-    }
-  ];
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    events.forEach((ev) => window.addEventListener(ev, resetTimer));
 
-  const historicalChats = [
-    { id: 'ch-1', title: 'Help with locked registry credential resets', solvedDate: '2026-05-10', rating: 5, agent: 'Nadia Vance' },
-    { id: 'ch-2', title: 'Duplicate invoice transaction inquiry', solvedDate: '2026-05-14', rating: 4, agent: 'Farah Bot' }
-  ];
+    return () => {
+      clearInterval(interval);
+      events.forEach((ev) => window.removeEventListener(ev, resetTimer));
+    };
+  }, [setActiveSubScreen, addAuditLog]);
+
+  // ----------------------------------------------------
+  // Governance Dropdown State (Phase 5)
+  // ----------------------------------------------------
+  const [isGovernanceMenuOpen, setIsGovernanceMenuOpen] = useState(false);
+  const governanceMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (governanceMenuRef.current && !governanceMenuRef.current.contains(e.target as Node)) {
+        setIsGovernanceMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Global Search State
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  // accent color preference (retained, unused directly here but from chunk)
+  const [, setAccentColor] = useState('blue');
 
   // ----------------------------------------------------
   // State Hooks
@@ -155,7 +165,7 @@ To unlock your access:
   const [otpStep, setOtpStep] = useState<'none' | 'email' | 'code' | 'verified'>('none');
   const [lookupEmail, setLookupEmail] = useState('');
   const [lookupOtp, setLookupOtp] = useState('');
-  const [lookupOrderNum, setLookupOrderNum] = useState('ORD-99881');
+  const [lookupOrderNum] = useState('ORD-99881');
   const [refundStep, setRefundStep] = useState<'none' | 'select' | 'confirm' | 'submitting' | 'done'>('none');
   const [refundReason, setRefundReason] = useState('Damaged on Arrival');
   const [refundAttachment, setRefundAttachment] = useState<string>('');
@@ -289,7 +299,7 @@ To unlock your access:
         response = 'Refund Policy ks-1 allows return actions within 30 days of renewal. Type "order status" or check the refund options in the home screen.';
       } else if (lower.includes('price') || lower.includes('cost') || lower.includes('سعر')) {
         response = 'SaaS Standard accounts run at $49/month and Premium channels at $99/month. Direct invoicing can be set up via CRM Connectors.';
-      } else if (lower.includes('delay') || lower.includes('delay') || lower.includes('تأخير')) {
+      } else if (lower.includes('delay') || lower.includes('تأخير')) {
         response = 'Fiber Gateway ORD-77612 shows a pending carrier milestone. Try scheduling a voice callback or checking order timeline logs.';
       } else if (lower.includes('agent') || lower.includes('human') || lower.includes('انسان')) {
         setChatStatus('queue');
@@ -347,6 +357,15 @@ To unlock your access:
 
   const fontClass = fontSize === 'sm' ? 'text-[11px]' : fontSize === 'lg' ? 'text-[14px]' : 'text-[12px]';
 
+  // Governance routes list
+  const governanceRoutes = [
+    { id: 'customer_org_switcher', labelEN: 'Workspace Settings', labelAR: 'إعدادات بيئة العمل' },
+    { id: 'customer_audit_logs', labelEN: 'Compliance Audit Logs', labelAR: 'سجلات تدقيق الامتثال' },
+    { id: 'customer_exports', labelEN: 'Compliance Exports', labelAR: 'تصدير بيانات الامتثال' },
+    { id: 'customer_sso_status', labelEN: 'SSO & Federation Status', labelAR: 'حالة الربط والـ SSO' },
+    { id: 'customer_quotas', labelEN: 'Rate Limits & Quotas', labelAR: 'حدود الاستخدام والحصص' }
+  ];
+
   return (
     <div
       className={`max-w-6xl mx-auto space-y-6 ${highContrast ? 'high-contrast-mode p-4 border-4 rounded-3xl' : 'text-slate-800 dark:text-slate-200'} ${fontSize === 'sm' ? 'portal-scale-sm' : fontSize === 'lg' ? 'portal-scale-lg' : 'portal-scale-base'} transition-all`}
@@ -364,36 +383,104 @@ To unlock your access:
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveSubScreen('customer_chat_history')}
-            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold rounded-xl transition-all font-mono"
-          >
-            {t.portal.homeHero.pastChats}
-          </button>
-          
-          <button
-            onClick={() => setShowCobrowseModal(true)}
-            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold rounded-xl transition-all font-mono"
-          >
-            {t.portal.homeHero.coBrowse}
-          </button>
+        {/* Header right-side control strip */}
+        <div className="flex items-center gap-3">
+          {/* OrgSwitcher in header (admin-only visible component) */}
+          {canAccessGovernance && (
+            <>
+              <div className="border-l border-slate-200 dark:border-slate-800 h-6 mx-2" />
+              <OrgSwitcher />
+            </>
+          )}
 
-          <button
-            onClick={() => setActiveSubScreen('customer_feedback_hub')}
-            className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-400 text-[10px] font-bold rounded-xl transition-all font-mono"
-          >
-            {lang === 'ar' ? 'مركز التقييمات' : 'Feedback Hub'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setGlobalSearchOpen(true)}
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold rounded-xl transition-all font-mono flex items-center gap-1.5"
+              aria-label="Open global search"
+            >
+              <Search className="w-3.5 h-3.5" />
+              {lang === 'ar' ? 'البحث' : 'Search'}
+            </button>
 
-          <button
-            onClick={() => setShowAccessibilityWidget(true)}
-            data-testid="accessibility-options-btn"
-            className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-bold rounded-xl hover:bg-blue-100 font-mono"
-          >
-            {t.portal.homeHero.accessibilityOptions}
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubScreen('customer_chat_history')}
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold rounded-xl transition-all font-mono"
+            >
+              {t.portal.homeHero.pastChats}
+            </button>
+
+            <button
+              onClick={() => setShowCobrowseModal(true)}
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold rounded-xl transition-all font-mono"
+            >
+              {t.portal.homeHero.coBrowse}
+            </button>
+
+            <button
+              onClick={() => setActiveSubScreen('customer_feedback_hub')}
+              className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-400 text-[10px] font-bold rounded-xl transition-all font-mono"
+            >
+              {lang === 'ar' ? 'مركز التقييمات' : 'Feedback Hub'}
+            </button>
+
+            <button
+              onClick={() => setShowAccessibilityWidget(true)}
+              data-testid="accessibility-options-btn"
+              className="px-3.5 py-1.5 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 text-[10px] font-bold rounded-xl hover:bg-blue-100 font-mono"
+            >
+              {t.portal.homeHero.accessibilityOptions}
+            </button>
+
+            {/* Governance Dropdown — admin roles only */}
+            {canAccessGovernance && (
+              <div className="relative" ref={governanceMenuRef}>
+                <button
+                  onClick={() => setIsGovernanceMenuOpen((v) => !v)}
+                  className={`px-3.5 py-1.5 text-[10px] font-bold rounded-xl transition-all font-mono flex items-center gap-1.5 ${
+                    isGovernanceMenuOpen
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                      : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700'
+                  }`}
+                  aria-haspopup="true"
+                  aria-expanded={isGovernanceMenuOpen}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  {lang === 'ar' ? 'الحوكمة' : 'Governance'}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-100 ${isGovernanceMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isGovernanceMenuOpen && (
+                  <div
+                    className={`absolute top-10 ${lang === 'ar' ? 'left-0' : 'right-0'} bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-2xl shadow-2xl z-50 w-56 text-xs font-semibold animate-in zoom-in-95 duration-100 origin-top`}
+                    role="menu"
+                  >
+                    <span className="block text-[8.5px] uppercase font-bold text-slate-400 font-mono mb-2 px-2">
+                      {lang === 'ar' ? 'إدارة المؤسسة والامتثال' : 'Enterprise & Compliance'}
+                    </span>
+                    <div className="space-y-1">
+                      {governanceRoutes.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setActiveSubScreen(item.id);
+                            setIsGovernanceMenuOpen(false);
+                          }}
+                          className="w-full flex items-center text-left p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer text-slate-700 dark:text-slate-350"
+                          style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}
+                          role="menuitem"
+                        >
+                          <span className="text-[10.5px] font-bold">{lang === 'ar' ? item.labelAR : item.labelEN}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -504,21 +591,21 @@ To unlock your access:
             handlePostReply={handlePostReply}
           />
         )}
-        
-          {activeSubScreen === 'customer_ticket_submit' && (
-            <SubmitTicketPage
-              ticketTitle={ticketTitle}
-              setTicketTitle={setTicketTitle}
-              ticketCategory={ticketCategory}
-              setTicketCategory={setTicketCategory}
-              ticketPriority={ticketPriority}
-              setTicketPriority={setTicketPriority}
-              ticketDesc={ticketDesc}
-              setTicketDesc={setTicketDesc}
-              handleTicketSubmit={handleTicketSubmit}
-              onBack={() => setActiveSubScreen('customer_home')}
-            />
-          )}
+
+        {activeSubScreen === 'customer_ticket_submit' && (
+          <SubmitTicketPage
+            ticketTitle={ticketTitle}
+            setTicketTitle={setTicketTitle}
+            ticketCategory={ticketCategory}
+            setTicketCategory={setTicketCategory}
+            ticketPriority={ticketPriority}
+            setTicketPriority={setTicketPriority}
+            ticketDesc={ticketDesc}
+            setTicketDesc={setTicketDesc}
+            handleTicketSubmit={handleTicketSubmit}
+            onBack={() => setActiveSubScreen('customer_home')}
+          />
+        )}
 
         {activeSubScreen === 'customer_order_refund' && (
           <RefundWizard
@@ -559,62 +646,197 @@ To unlock your access:
         )}
 
         {activeSubScreen === 'customer_feedback_hub' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setActiveSubScreen('customer_home')}
-                className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
-              >
-                <ArrowLeft className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} />
-              </button>
-              <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                  {lang === 'ar' ? 'مركز التقييمات والدعم' : 'Customer Feedback & Queue Center'}
-                </h2>
-                <span className="text-[10px] text-slate-450 dark:text-slate-450 font-semibold block mt-0.5">
-                  {lang === 'ar' ? 'عينة تفاعلية لتجربة الاستبيانات وحجز الاتصال الصوتي.' : 'Interactive playground for CSAT, NPS, and real-time voice callback simulations.'}
-                </span>
+          <FeedbackHubPage
+            lang={lang}
+            onBack={() => setActiveSubScreen('customer_home')}
+            pushToast={pushToast}
+          />
+        )}
+
+        {activeSubScreen === 'customer_notifications' && (
+          <CustomerNotifications />
+        )}
+
+        {activeSubScreen === 'customer_live_support' && (
+          <LiveSupportWorkspace />
+        )}
+
+        {activeSubScreen === 'customer_recent_activity' && (
+          <RecentActivityPage />
+        )}
+
+        {activeSubScreen === 'customer_favorites' && (
+          <FavoritesPage
+            onSelectArticle={(id) => {
+              setSelectedArticleId(id);
+              setActiveSubScreen('customer_kb_article');
+            }}
+          />
+        )}
+
+        {activeSubScreen === 'customer_system_status' && (
+          <SystemStatusPage setActiveSubScreen={setActiveSubScreen} />
+        )}
+
+        {activeSubScreen === 'customer_settings' && (
+          <CustomerSettings />
+        )}
+
+        {activeSubScreen === 'customer_system_403' && (
+          <HttpStatusPage status="403" onBack={() => setActiveSubScreen('customer_home')} />
+        )}
+
+        {activeSubScreen === 'customer_system_404' && (
+          <HttpStatusPage status="404" onBack={() => setActiveSubScreen('customer_home')} />
+        )}
+
+        {activeSubScreen === 'customer_system_500' && (
+          <HttpStatusPage status="500" onBack={() => setActiveSubScreen('customer_home')} />
+        )}
+
+        {activeSubScreen === 'customer_system_maintenance' && (
+          <MaintenanceModeScreen />
+        )}
+
+        {/* ============================================================
+            Enterprise Governance Routes — RBAC Guarded
+            Only admin roles (super_admin, client_admin, operations_admin,
+            compliance_admin) may access these screens.
+            Customer role receives 403 Forbidden.
+        ============================================================ */}
+
+        {activeSubScreen === 'customer_org_switcher' && (
+          canAccessGovernance ? (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveSubScreen('customer_home')}
+                  className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
+                >
+                  <ArrowLeft className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                </button>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                    {lang === 'ar' ? 'إعدادات المؤسسة وبيئة العمل' : 'Workspace & Tenant Settings'}
+                  </h2>
+                  <span className="text-[10px] text-slate-450 dark:text-slate-455 font-semibold block mt-0.5">
+                    {lang === 'ar'
+                      ? 'تبديل بين بيئات المؤسسة وإدارة الجلسات النشطة.'
+                      : 'Switch between organizational environments and manage active device sessions.'}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                <div className="md:col-span-1 space-y-4">
+                  <span className="block text-[9px] uppercase font-bold text-slate-400 font-mono tracking-wider">
+                    {lang === 'ar' ? 'مبدل بيئة العمل' : 'Active Tenant Select'}
+                  </span>
+                  <OrgSwitcher />
+                </div>
+                <div className="md:col-span-2">
+                  <ActiveSessionsPanel />
+                </div>
               </div>
             </div>
+          ) : (
+            <HttpStatusPage status="403" onBack={() => setActiveSubScreen('customer_home')} />
+          )
+        )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-              {/* CSAT Column */}
-              <div className="space-y-3">
-                <span className="font-mono text-[9px] uppercase font-bold text-slate-400 tracking-wider block">
-                  {lang === 'ar' ? 'استطلاع رضا العملاء (CSAT)' : 'CSAT Survey Widget'}
-                </span>
-                <CsatSurveyWidget
-                  lang={lang}
-                  onToastTrigger={pushToast}
-                />
-              </div>
+        {activeSubScreen === 'customer_audit_logs' && (
+          canAccessGovernance ? (
+            <AuditLogViewer onBack={() => setActiveSubScreen('customer_home')} />
+          ) : (
+            <HttpStatusPage status="403" onBack={() => setActiveSubScreen('customer_home')} />
+          )
+        )}
 
-              {/* NPS Column */}
-              <div className="space-y-3">
-                <span className="font-mono text-[9px] uppercase font-bold text-slate-400 tracking-wider block">
-                  {lang === 'ar' ? 'مؤشر الترويج الصافي (NPS)' : 'NPS Recommendation Widget'}
-                </span>
-                <NpsSurveyWidget
-                  lang={lang}
-                  onToastTrigger={pushToast}
-                />
+        {activeSubScreen === 'customer_exports' && (
+          canAccessGovernance ? (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveSubScreen('customer_home')}
+                  className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
+                >
+                  <ArrowLeft className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                </button>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                    {lang === 'ar' ? 'مركز الامتثال وتصدير البيانات' : 'Compliance Snapshots & Export'}
+                  </h2>
+                  <span className="text-[10px] text-slate-450 dark:text-slate-455 font-semibold block mt-0.5">
+                    {lang === 'ar'
+                      ? 'قم بتوليد وتحميل نسخ مشفرة من سجلات التدقيق والدلائل للجهات الخارجية.'
+                      : 'Request signed audit log datasets or user seat metadata collections for external audits.'}
+                  </span>
+                </div>
               </div>
-
-              {/* Callback Queue Card Column */}
-              <div className="space-y-3">
-                <span className="font-mono text-[9px] uppercase font-bold text-slate-400 tracking-wider block">
-                  {lang === 'ar' ? 'طابور الاتصال النشط' : 'Active Callback Queue'}
-                </span>
-                <CallbackQueueCard
-                  lang={lang}
-                  phoneNumber="+966 50 882 1993"
-                  initialPosition={4}
-                  onToastTrigger={pushToast}
-                />
-              </div>
+              <ExportCenter />
             </div>
-          </div>
+          ) : (
+            <HttpStatusPage status="403" onBack={() => setActiveSubScreen('customer_home')} />
+          )
+        )}
+
+        {activeSubScreen === 'customer_sso_status' && (
+          canAccessGovernance ? (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveSubScreen('customer_home')}
+                  className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
+                >
+                  <ArrowLeft className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                </button>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                    {lang === 'ar' ? 'مراقبة الربط الموحد (SSO)' : 'SSO Connection & Federation'}
+                  </h2>
+                  <span className="text-[10px] text-slate-450 dark:text-slate-455 font-semibold block mt-0.5">
+                    {lang === 'ar'
+                      ? 'مراقبة زمن استجابة الـ IdP، والتحقق من صلاحية شهادات SAML/OIDC النشطة.'
+                      : 'Monitor federation latency, success rates, and active identity provider configurations.'}
+                  </span>
+                </div>
+              </div>
+              <SsoStatusPanel />
+            </div>
+          ) : (
+            <HttpStatusPage status="403" onBack={() => setActiveSubScreen('customer_home')} />
+          )
+        )}
+
+        {activeSubScreen === 'customer_quotas' && (
+          canAccessGovernance ? (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveSubScreen('customer_home')}
+                  className="p-2 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
+                >
+                  <ArrowLeft className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} />
+                </button>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                    {lang === 'ar' ? 'قياسات الحصة والترخيص' : 'Telemetry & Limit Quotas'}
+                  </h2>
+                  <span className="text-[10px] text-slate-450 dark:text-slate-455 font-semibold block mt-0.5">
+                    {lang === 'ar'
+                      ? 'استعراض معدلات الاستخدام للـ API، والرسائل، والجلسات المصرح بها.'
+                      : 'Review API call rates, message throughput, and licensed session consumption metrics.'}
+                  </span>
+                </div>
+              </div>
+              <QuotaDashboard />
+            </div>
+          ) : (
+            <HttpStatusPage status="403" onBack={() => setActiveSubScreen('customer_home')} />
+          )
         )}
       </div>
 
@@ -689,6 +911,49 @@ To unlock your access:
         transcriptEmail={transcriptEmail}
         setTranscriptEmail={setTranscriptEmail}
         handleSendChatMessage={handleSendChatMessage}
+      />
+
+      {/* Global Search Overlay (Phase 5) */}
+      <GlobalSearch
+        isOpen={globalSearchOpen}
+        onClose={() => setGlobalSearchOpen(false)}
+        setActiveSubScreen={setActiveSubScreen}
+        setSelectedArticleId={(id) => setSelectedArticleId(id)}
+        setSelectedTicketId={(id) => setSelectedTicketId(id)}
+        onTriggerAction={(action) => {
+          if (action === 'open_ticket_modal') setShowSubmitModal(true);
+          else if (action === 'open_callback_modal') setShowCallbackModal(true);
+          else if (action === 'open_voice_modal') setShowVoiceModal(true);
+          else if (action === 'open_cobrowse_modal') setShowCobrowseModal(true);
+          else if (action === 'toggle_accessibility') setShowAccessibilityWidget(true);
+          else if (action === 'change_accent_blue') setAccentColor('blue');
+          else if (action === 'change_accent_indigo') setAccentColor('indigo');
+          else if (action === 'change_accent_emerald') setAccentColor('emerald');
+          setGlobalSearchOpen(false);
+        }}
+      />
+
+      {/* Session Timeout Modal (Phase 5) */}
+      <SessionTimeoutModal
+        isOpen={showTimeoutModal}
+        timeLeftSeconds={sessionTimeLeft}
+        onExtend={() => {
+          setSessionTimeLeft(900);
+          setShowTimeoutModal(false);
+          addAuditLog('Customer extended active security session manually', 'success');
+          pushToast(
+            'success',
+            lang === 'ar' ? 'تم تمديد الجلسة' : 'Session Extended',
+            lang === 'ar' ? 'تم تجديد وقت جلسة العمل بنجاح.' : 'Your active security token was successfully refreshed.'
+          );
+        }}
+        onLogout={() => {
+          setSessionTimeLeft(900);
+          setShowTimeoutModal(false);
+          addAuditLog('Customer terminated active security session manually', 'failed');
+          setActiveSubScreen('customer_system_403');
+        }}
+        lang={lang}
       />
 
       {submitSuccessMessage && (

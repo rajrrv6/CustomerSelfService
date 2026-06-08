@@ -5,7 +5,7 @@ import { SubmitTicketModal } from '@/components/customer-portal/tickets/SubmitTi
 import { OtpAuth } from '@/components/customer-portal/refunds/OtpAuth';
 
 describe('Customer Portal Subsystem QA Tests', () => {
-  it('renders SubmitTicketModal fields and submits details', () => {
+  it('renders SubmitTicketModal step 0 with category and priority tiles', () => {
     const handleClose = vi.fn();
     const handleTitleChange = vi.fn();
     const handleCategoryChange = vi.fn();
@@ -29,14 +29,27 @@ describe('Customer Portal Subsystem QA Tests', () => {
       />
     );
 
-    expect(screen.getByPlaceholderText(/e.g. Invoicing dispute logs/i)).toHaveValue('API connection timeout');
-    expect(screen.getByPlaceholderText(/outline the full steps/i)).toHaveValue('The endpoint is returning 504 Gateway Timeout');
+    // Step 0: Classification — category tiles and priority buttons are visible
+    expect(screen.getByText(/API Integrations/i)).toBeInTheDocument();
+    expect(screen.getByText(/High/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Next/i })).toBeInTheDocument();
 
-    // Simulate input actions
+    // Navigate to Step 1 where subject and description inputs appear
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+
+    // Step 1: Details — input fields should now be visible
+    expect(screen.getByPlaceholderText(/e.g. Invoicing dispute logs/i)).toHaveValue('API connection timeout');
+    expect(screen.getByPlaceholderText(/Please outline the full steps/i)).toHaveValue('The endpoint is returning 504 Gateway Timeout');
+
+    // Simulate typing in subject
     fireEvent.change(screen.getByPlaceholderText(/e.g. Invoicing dispute logs/i), { target: { value: 'API connection timeout updated' } });
     expect(handleTitleChange).toHaveBeenCalledWith('API connection timeout updated');
 
-    fireEvent.submit(screen.getByRole('button', { name: /Submit Case/i }));
+    // Navigate to Step 2 (Attachments) to access Submit Case button
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+
+    // Step 2: click Submit Case (calls handleFinalSubmit → handleTicketSubmit)
+    fireEvent.click(screen.getByRole('button', { name: /Submit Case/i }));
     expect(handleSubmit).toHaveBeenCalled();
   });
 

@@ -29,7 +29,13 @@ import {
   GitBranch,
   Bell,
   ChevronDown,
-  Sliders
+  Sliders,
+  BookOpen,
+  Heart,
+  History,
+  MessageSquare,
+  Activity,
+  Settings
 } from 'lucide-react';
 import { UserRole } from '@/types';
 import { canAccessScreen } from '@/lib/rbac/permissions';
@@ -175,9 +181,14 @@ export function Sidebar({
       // Customer Portal
       customer_home: { id: 'customer_home', label: isRtl ? 'الرئيسية' : 'Dashboard', icon: <HelpCircle className="w-4 h-4" /> },
       customer_kb: { id: 'customer_kb', label: isRtl ? 'مساعد الذكاء الاصطناعي' : 'AI Copilot', icon: <Brain className="w-4 h-4" /> },
+      customer_kb_article: { id: 'customer_kb_article', label: isRtl ? 'مركز المعرفة' : 'Knowledge Hub', icon: <BookOpen className="w-4 h-4" /> },
+      customer_my_tickets: { id: 'customer_my_tickets', label: isRtl ? 'تذاكري' : 'My Tickets', icon: <Layers className="w-4 h-4" /> },
       customer_notifications: { id: 'customer_notifications', label: isRtl ? 'التنبيهات' : 'Notifications', icon: <Bell className="w-4 h-4" /> },
-      customer_kb_article: { id: 'customer_kb_article', label: isRtl ? 'مركز المساعدة' : 'Help Center', icon: <HelpCircle className="w-4 h-4" /> },
-      customer_my_tickets: { id: 'customer_my_tickets', label: isRtl ? 'تذاكري' : 'My Tickets', icon: <Layers className="w-4 h-4" /> }
+      customer_live_support: { id: 'customer_live_support', label: isRtl ? 'الدعم المباشر' : 'Live Support', icon: <MessageSquare className="w-4 h-4" /> },
+      customer_recent_activity: { id: 'customer_recent_activity', label: isRtl ? 'النشاط الأخير' : 'Recent Activity', icon: <History className="w-4 h-4" /> },
+      customer_favorites: { id: 'customer_favorites', label: isRtl ? 'المفضلة' : 'Favorites', icon: <Heart className="w-4 h-4" /> },
+      customer_system_status: { id: 'customer_system_status', label: isRtl ? 'حالة النظام' : 'System Status', icon: <Activity className="w-4 h-4" /> },
+      customer_settings: { id: 'customer_settings', label: isRtl ? 'الإعدادات' : 'Settings', icon: <Settings className="w-4 h-4" /> }
     };
   }, [t, isRtl, role]);
 
@@ -196,9 +207,14 @@ export function Sidebar({
       order = [
         'customer_home',
         'customer_kb',
-        'customer_notifications',
         'customer_kb_article',
-        'customer_my_tickets'
+        'customer_my_tickets',
+        'customer_notifications',
+        'customer_live_support',
+        'customer_recent_activity',
+        'customer_favorites',
+        'customer_system_status',
+        'customer_settings'
       ];
     } else {
       order = [

@@ -1,13 +1,18 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import { QueueSwitcher } from '@/components/agent-workspace/QueueSwitcher';
 import { AIReplyComposer } from '@/components/agent-workspace/AIReplyComposer';
 import { ConferenceModal } from '@/components/agent-workspace/ConferenceModal';
 import { TransferModal } from '@/components/agent-workspace/TransferModal';
 import { WrapupModal } from '@/components/agent-workspace/WrapupModal';
+import { useAuthStore } from '@/stores/authStore';
 
 describe('Agent Workspace Subsystem QA Tests', () => {
+  beforeEach(() => {
+    useAuthStore.getState().setRole('support_agent');
+  });
+
   it('renders QueueSwitcher and responds to click triggers', () => {
     const mockQueues = [
       { id: 'q1', name: 'General Support', count: 5, active: true, avgWaitMins: 2, priority: 'medium' as const },

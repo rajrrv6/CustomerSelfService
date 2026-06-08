@@ -26,13 +26,15 @@ import {
   ShieldCheck, 
   Mail, 
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import { WfmAlertsPanel } from '@/components/client-admin/operations/WfmAlertsPanel';
 import { QueueHeatmapDashboard } from '@/components/client-admin/operations/QueueHeatmapDashboard';
 import { StaffingEscalationWorkflow } from '@/components/client-admin/operations/StaffingEscalationWorkflow';
 import { LivePresenceBoard } from '@/components/client-admin/operations/LivePresenceBoard';
 import { usePermission } from '@/stores/permissionStore';
+import { useAuthStore } from '@/stores/authStore';
 import { SlaAnalytics } from '@/components/analytics/SlaAnalytics';
 import { QueueManagement, type QueueItem } from '@/components/client-admin/operations/QueueManagement';
 import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
@@ -43,10 +45,45 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
   const { pushToast } = useFeedbackToasts();
   const isRtl = lang === 'ar';
   
-  const { canEdit, canManage } = usePermission('workforce');
+  const { canEdit: permCanEdit, canManage: permCanManage } = usePermission('workforce');
+  const role = useAuthStore((s) => s.role);
+  const canEdit = permCanEdit || role === 'supervisor' || role === 'client_admin' || role === 'super_admin';
+  const canManage = permCanManage || role === 'supervisor' || role === 'client_admin' || role === 'super_admin';
   
   const [whisperTargetChatId, setWhisperTargetChatId] = useState('conv-2');
   const [whisperInput, setWhisperInput] = useState('');
+  const [inspectingAgent, setInspectingAgent] = useState<any | null>(null);
+  const [detailsAgent, setDetailsAgent] = useState<any | null>(null);
+  const [agentAuxCodes, setAgentAuxCodes] = useState<Record<string, string>>({
+    'agent-1': 'Available',
+    'agent-2': 'Break',
+    'agent-3': 'Lunch',
+    'agent-4': 'After Call Work',
+    'agent-5': 'Coaching'
+  });
+
+  useEffect(() => {
+    setAgentAuxCodes((prev) => {
+      const next = { ...prev };
+      let updated = false;
+      agents.forEach((agent) => {
+        const currentAux = next[agent.id];
+        let expectedAux = 'Available';
+        if (agent.status === 'online') expectedAux = 'Available';
+        else if (agent.status === 'offline') expectedAux = 'Offline';
+        else if (agent.status === 'busy') expectedAux = 'After Call Work';
+        else {
+          const isAwayCode = ['Break', 'Lunch', 'Coaching', 'Meeting'].includes(currentAux || '');
+          expectedAux = isAwayCode ? currentAux : 'Break';
+        }
+        if (currentAux !== expectedAux) {
+          next[agent.id] = expectedAux;
+          updated = true;
+        }
+      });
+      return updated ? next : prev;
+    });
+  }, [agents]);
   
   // Supervisor monitoring state for presence board integration
   const [supervisedAgent, setSupervisedAgent] = useState<string | null>(null);
@@ -306,6 +343,13 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     const request = shiftRequests.find(r => r.id === requestId);
     if (request) {
       addAuditLog(`Supervisor ${status} shift change request for ${request.agent} on ${request.date}`, 'success');
+      pushToast(
+        status === 'approved' ? 'success' : 'info',
+        status === 'approved' ? (isRtl ? 'تمت الموافقة على الطلب' : 'Request Approved') : (isRtl ? 'تم رفض الطلب' : 'Request Rejected'),
+        isRtl 
+          ? `تم ${status === 'approved' ? 'الموافقة على' : 'رفض'} طلب تغيير الوردية لـ ${request.agent}.` 
+          : `Shift change request for ${request.agent} has been ${status}.`
+      );
     }
   };
 
@@ -317,6 +361,13 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     const swap = shiftSwaps.find(s => s.id === swapId);
     if (swap) {
       addAuditLog(`Supervisor ${status} shift swap between ${swap.agentRequesting} and ${swap.agentTarget} on ${swap.date}`, 'success');
+      pushToast(
+        status === 'approved' ? 'success' : 'info',
+        status === 'approved' ? (isRtl ? 'تمت الموافقة على التبادل' : 'Swap Approved') : (isRtl ? 'تم رفض التبادل' : 'Swap Rejected'),
+        isRtl 
+          ? `تم ${status === 'approved' ? 'الموافقة على' : 'رفض'} طلب تبادل المناوبات بين ${swap.agentRequesting} و ${swap.agentTarget}.` 
+          : `Shift swap request between ${swap.agentRequesting} and ${swap.agentTarget} has been ${status}.`
+      );
     }
   };
 
@@ -513,7 +564,20 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
       [selectedAgentForOverride]: 0
     }));
 
+    // Update agentAuxCodes state directly
+    setAgentAuxCodes(prev => ({
+      ...prev,
+      [selectedAgentForOverride]: targetAuxCode
+    }));
+
     addAuditLog(`Supervisor forced status override on ${targetAgent.name} to ${targetAuxCode.toUpperCase()}`, 'success');
+    pushToast(
+      'success',
+      isRtl ? 'تم تطبيق التجاوز' : 'Status Override Applied',
+      isRtl 
+        ? `تم فرض تجاوز حالة الوكيل ${targetAgent.name} إلى ${targetAuxCode}.` 
+        : `Forced status override on ${targetAgent.name} to ${targetAuxCode}.`
+    );
   };
 
   const handleInlinePresenceOverride = (agentId: string, auxCode: string) => {
@@ -537,7 +601,20 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
       [agentId]: 0
     }));
 
+    // Update agentAuxCodes state directly
+    setAgentAuxCodes(prev => ({
+      ...prev,
+      [agentId]: auxCode
+    }));
+
     addAuditLog(`Supervisor forced inline status override on ${targetAgent.name} to ${auxCode.toUpperCase()}`, 'success');
+    pushToast(
+      'success',
+      isRtl ? 'تم تطبيق التجاوز' : 'Status Override Applied',
+      isRtl 
+        ? `تم فرض تجاوز حالة الوكيل ${targetAgent.name} إلى ${auxCode}.` 
+        : `Forced status override on ${targetAgent.name} to ${auxCode}.`
+    );
   };
 
   const handleTriggerQueueRebalance = () => {
@@ -546,6 +623,13 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     setTimeout(() => {
       setIsRebalancing(false);
       addAuditLog(`Queue routing weights rebalanced successfully. Current splits: WA ${trafficWeights.whatsapp}%, Web ${trafficWeights.webchat}%, Voice ${trafficWeights.voice}%, Email ${trafficWeights.email}%`, 'success');
+      pushToast(
+        'success',
+        isRtl ? 'تمت إعادة التوازن' : 'Queue Splits Rebalanced',
+        isRtl 
+          ? `تم تحديث نسب توزيع حركة المرور بنجاح: واتساب ${trafficWeights.whatsapp}٪، دردشة ${trafficWeights.webchat}٪، صوت ${trafficWeights.voice}٪، بريد ${trafficWeights.email}٪.` 
+          : `Omnichannel traffic weights rebalanced: WA ${trafficWeights.whatsapp}%, Web ${trafficWeights.webchat}%, Voice ${trafficWeights.voice}%, Email ${trafficWeights.email}%.`
+      );
     }, 1200);
   };
 
@@ -573,10 +657,25 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
       if (actionType === 'reassign') {
         const agentName = reassignAgentId === 'agent-1' ? 'Liam Bennett' : 'Nadia Vance';
         addAuditLog(`Reassigned escalated conversation ${convId} to ${agentName}`, 'success');
+        pushToast(
+          'success',
+          isRtl ? 'تم إعادة تعيين الوكيل' : 'Interaction Reassigned',
+          isRtl ? `تم إعادة تعيين المحادثة لـ ${agentName}.` : `Interaction successfully reassigned to ${agentName}.`
+        );
       } else if (actionType === 'escalate_priority') {
         addAuditLog(`Boosted priority of conversation ${convId} to critical alert`, 'success');
+        pushToast(
+          'info',
+          isRtl ? 'تم تصعيد الأولوية' : 'Priority Boosted',
+          isRtl ? `تم رفع أولوية المحادثة ${convId} وتحديث حد الـ SLA.` : `Boosted interaction ${convId} to urgent warning level.`
+        );
       } else if (actionType === 'resolve') {
         addAuditLog(`Resolved escalation alert for conversation ${convId}`, 'success');
+        pushToast(
+          'success',
+          isRtl ? 'تم حل التصعيد' : 'Escalation Resolved',
+          isRtl ? `تم إغلاق تنبيه التصعيد للمحادثة بنجاح.` : `Escalation resolved and closed successfully.`
+        );
       }
     }
   };
@@ -598,6 +697,11 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
     );
 
     addAuditLog(`Supervisor sent coaching whisper to interaction ${whisperTargetChatId}: "${whisperInput}"`, 'success');
+    pushToast(
+      'success',
+      isRtl ? 'تم إرسال الهمس' : 'Coaching Whisper Sent',
+      isRtl ? `تم إرسال تعليمات التوجيه الهامسة بنجاح.` : `Live whisper instruction dispatched to agent dashboard.`
+    );
     setWhisperInput('');
   };
 
@@ -607,6 +711,11 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
       prev.map(log => log.id === id ? { ...log, status: 'sla_overridden', action: 'SLA Breach Overridden by Supervisor' } : log)
     );
     addAuditLog(`Supervisor overrode SLA targets for interaction ${id}`, 'success');
+    pushToast(
+      'success',
+      isRtl ? 'تم تجاوز SLA' : 'SLA Target Overridden',
+      isRtl ? `تم تطبيق تجاوز أهداف SLA للمحادثة ${id} بنجاح.` : `SLA response target overridden for interaction ${id}.`
+    );
   };
 
   const handleAgentStatusChange = (agentId: string, status: 'online' | 'busy' | 'away' | 'offline') => {
@@ -617,6 +726,22 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
       }
       return a;
     }));
+
+    // Synchronize agentAuxCodes state directly
+    setAgentAuxCodes(prev => {
+      let expectedAux = 'Available';
+      if (status === 'online') expectedAux = 'Available';
+      else if (status === 'offline') expectedAux = 'Offline';
+      else if (status === 'busy') expectedAux = 'After Call Work';
+      else {
+        const isAwayCode = ['Break', 'Lunch', 'Coaching', 'Meeting'].includes(prev[agentId] || '');
+        expectedAux = isAwayCode ? prev[agentId] : 'Break';
+      }
+      return {
+        ...prev,
+        [agentId]: expectedAux
+      };
+    });
   };
 
   const getOccupancyRate = () => {
@@ -1332,8 +1457,8 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                           className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-1.5 py-0.5 text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-bold"
                         >
                           <option value="Relaxed">Relaxed</option>
-                          <option value="Standard font-bold">Standard</option>
-                          <option value="Strict font-bold">Strict</option>
+                          <option value="Standard">Standard</option>
+                          <option value="Strict">Strict</option>
                         </select>
                       </div>
 
@@ -1606,16 +1731,58 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                               )}
                             </div>
                           </td>
-                          <td className="py-3 text-right">
+                          <td className="py-3 text-right flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setInspectingAgent(agent)}
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
+                              title="Live Inspector"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const isCurrentlyWhispering = supervisedAgent === agent.id && activeSupervisorMode === 'whisper';
+                                setSupervisedAgent(isCurrentlyWhispering ? null : agent.id);
+                                setActiveSupervisorMode(isCurrentlyWhispering ? null : 'whisper');
+                                pushToast(
+                                  isCurrentlyWhispering ? 'info' : 'success',
+                                  isCurrentlyWhispering ? (isRtl ? 'تم إلغاء التوجيه الهامس' : 'Whisper Ended') : (isRtl ? 'تم تفعيل التوجيه الهامس' : 'Whisper Active'),
+                                  isCurrentlyWhispering 
+                                    ? (isRtl ? `تم إنهاء تلقين الوكيل ${agent.name}.` : `Ended whisper coaching session with ${agent.name}.`) 
+                                    : (isRtl ? `تلقين الوكيل ${agent.name} قيد التشغيل حالياً.` : `Supervisor whisper coaching active for Agent: ${agent.name}.`)
+                                );
+                              }}
+                              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                supervisedAgent === agent.id && activeSupervisorMode === 'whisper'
+                                  ? 'bg-purple-600 border-purple-500 text-white'
+                                  : 'border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-purple-600'
+                              }`}
+                              title="Whisper Coaching"
+                            >
+                              <Volume2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setDetailsAgent(agent)}
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
+                              title="Presence Details"
+                            >
+                              <Info className="w-3.5 h-3.5" />
+                            </button>
+
                             <select
+                              value={agentAuxCodes[agent.id] || ''}
                               onChange={(e) => {
                                 if (e.target.value) {
                                   handleInlinePresenceOverride(agent.id, e.target.value);
-                                  e.target.value = '';
                                 }
                               }}
                               disabled={!canEdit}
-                              className="px-2 py-1 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-850 rounded-lg text-[10px] text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer font-bold focus:border-purple-500"
+                              className="px-2 py-1 bg-slate-50 dark:bg-slate-955 border border-slate-205 dark:border-slate-850 rounded-lg text-[10px] text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer font-bold focus:border-purple-500"
                             >
                               <option value="">Override...</option>
                               <option value="Available">Available</option>
@@ -1733,6 +1900,120 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
               </table>
             </div>
           </div>
+
+          {/* Inspect Agent Live Modal */}
+          {inspectingAgent && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-slate-800 dark:text-slate-200 animate-in zoom-in-95" dir={isRtl ? 'rtl' : 'ltr'}>
+                <div className="flex justify-between items-start">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 font-mono flex items-center gap-1.5">
+                    <Eye className="w-4 h-4 text-blue-550" />
+                    {isRtl ? 'مفتش الوكيل المباشر' : 'Agent Live Inspector'}
+                  </h3>
+                  <button
+                    onClick={() => setInspectingAgent(null)}
+                    className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-300 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-2xl">
+                  <div className="w-12 h-12 rounded-full bg-slate-105 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-700 dark:text-slate-300 text-sm">
+                    {inspectingAgent.name.substring(0,2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-base text-slate-900 dark:text-white leading-tight">{inspectingAgent.name}</h4>
+                    <p className="text-xs text-slate-455 font-mono mt-0.5">{inspectingAgent.email}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-0.5">
+                    <span className="text-slate-400 font-bold uppercase text-[9px] block">Active Slots</span>
+                    <span className="font-mono text-sm font-bold">{inspectingAgent.activeChatsCount} / {inspectingAgent.maxChatsCount}</span>
+                  </div>
+                  <div className="p-3 bg-slate-55 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-0.5">
+                    <span className="text-slate-400 font-bold uppercase text-[9px] block">CSAT Rating</span>
+                    <span className="font-mono text-sm font-bold text-emerald-500">{inspectingAgent.csatScore}%</span>
+                  </div>
+                  <div className="p-3 bg-slate-55 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-0.5">
+                    <span className="text-slate-400 font-bold uppercase text-[9px] block">Resolved Tickets</span>
+                    <span className="font-mono text-sm font-bold text-blue-500">{inspectingAgent.resolvedTicketsCount}</span>
+                  </div>
+                  <div className="p-3 bg-slate-55 dark:bg-slate-955 border border-slate-100 dark:border-slate-850 rounded-xl space-y-0.5">
+                    <span className="text-slate-400 font-bold uppercase text-[9px] block">Last Active</span>
+                    <span className="font-mono text-sm font-bold">{inspectingAgent.lastActive}</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setInspectingAgent(null)}
+                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-805 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-center text-xs cursor-pointer transition-colors"
+                >
+                  Close Inspector
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Presence details Modal */}
+          {detailsAgent && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-slate-800 dark:text-slate-200 animate-in zoom-in-95" dir={isRtl ? 'rtl' : 'ltr'}>
+                <div className="flex justify-between items-start">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 font-mono flex items-center gap-1.5">
+                    <Info className="w-4 h-4 text-blue-550" />
+                    {isRtl ? 'تفاصيل حالة الحضور والـ AUX' : 'Presence & AUX Timeline'}
+                  </h3>
+                  <button
+                    onClick={() => setDetailsAgent(null)}
+                    className="text-slate-400 hover:text-slate-655 dark:hover:text-slate-300 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850 flex-row">
+                    <span className="text-slate-455">Agent Name:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-100">{detailsAgent.name}</span>
+                  </div>
+                  <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850 flex-row">
+                    <span className="text-slate-455">Adherence Status:</span>
+                    <span className="font-bold text-emerald-500 font-mono">98.2% (In Adherence)</span>
+                  </div>
+                  <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850 flex-row">
+                    <span className="text-slate-455">Current AUX State:</span>
+                    <span className="font-bold text-slate-805 dark:text-slate-100">
+                      {(() => {
+                        const agentId = detailsAgent.id;
+                        const durationVal = auxDurations[agentId] || 0;
+                        let displayAux = 'Available';
+                        if (detailsAgent.status === 'away') displayAux = 'Break';
+                        else if (detailsAgent.status === 'offline') displayAux = 'Offline';
+                        else if (detailsAgent.status === 'busy') displayAux = 'After Call Work';
+                        return `${displayAux} (${formatDuration(durationVal)})`;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs py-2 border-b border-slate-100 dark:border-slate-850 flex-row">
+                    <span className="text-slate-455">Shift Details:</span>
+                    <span className="text-slate-800 dark:text-slate-100 font-mono text-[10px]">09:00 - 17:00 AST (Morning)</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDetailsAgent(null)}
+                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-805 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-center text-xs cursor-pointer transition-colors"
+                >
+                  Close Details
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       );
 
@@ -2148,6 +2429,11 @@ export function SupervisorView({ activeSubScreen }: { activeSubScreen: string })
                         })
                       );
                       addAuditLog(`Supervisor sent coaching whisper to interaction ${selectedChat.id}: "${whisperInput}"`, 'success');
+                      pushToast(
+                        'success',
+                        isRtl ? 'تم إرسال الهمس' : 'Coaching Whisper Sent',
+                        isRtl ? `تم إرسال تعليمات التوجيه الهامسة بنجاح.` : `Live whisper instruction dispatched to agent dashboard.`
+                      );
                       setWhisperInput('');
                     }}
                     className="space-y-2 pt-3 border-t border-slate-105 dark:border-slate-850"
