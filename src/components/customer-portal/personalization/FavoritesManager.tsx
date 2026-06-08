@@ -13,12 +13,16 @@ interface FavoritesManagerProps {
   onSelectArticle: (id: string) => void;
   onSelectTicket?: (id: string) => void;
   onSelectChat?: (id: string) => void;
+  maxItems?: number;
+  onViewAllClick?: () => void;
 }
 
 export function FavoritesManager({
   onSelectArticle,
   onSelectTicket,
-  onSelectChat
+  onSelectChat,
+  maxItems,
+  onViewAllClick
 }: FavoritesManagerProps) {
   const { lang, addAuditLog } = useApp();
   const isRtl = lang === 'ar';
@@ -81,17 +85,29 @@ export function FavoritesManager({
     }
   };
 
+  const displayedFavorites = maxItems ? favorites.slice(0, maxItems) : favorites;
+
   return (
     <div className="space-y-4" dir={isRtl ? 'rtl' : 'ltr'}>
-      <div>
-        <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
-          {isRtl ? 'المحفوظات والمفضلة' : 'My Flagged Favorites'}
-        </h4>
-        <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">
-          {isRtl 
-            ? 'الوصول السريع للمقالات، التذاكر، والمحادثات الذكية التي قمت بتمييزها.' 
-            : 'Flagged knowledge base pages, active tickets, and AI conversations.'}
-        </span>
+      <div className="flex justify-between items-start">
+        <div>
+          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
+            {isRtl ? 'المحفوظات والمفضلة' : 'My Flagged Favorites'}
+          </h4>
+          <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">
+            {isRtl 
+              ? 'الوصول السريع للمقالات، التذاكر، والمحادثات الذكية التي قمت بتمييزها.' 
+              : 'Flagged knowledge base pages, active tickets, and AI conversations.'}
+          </span>
+        </div>
+        {maxItems && onViewAllClick && favorites.length > maxItems && (
+          <button
+            onClick={onViewAllClick}
+            className="text-[10.5px] text-blue-500 hover:underline font-bold focus-visible:outline-none shrink-0"
+          >
+            {isRtl ? 'عرض الكل' : 'View All'}
+          </button>
+        )}
       </div>
 
       {favorites.length === 0 ? (
@@ -108,7 +124,7 @@ export function FavoritesManager({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {favorites.map(fav => (
+          {displayedFavorites.map(fav => (
             <div
               key={fav.id}
               onClick={() => handleSelect(fav)}

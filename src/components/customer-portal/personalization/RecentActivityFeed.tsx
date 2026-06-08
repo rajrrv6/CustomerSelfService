@@ -137,14 +137,16 @@ export function RecentActivityFeed() {
       </div>
 
       {activities.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
-          <History className="w-8 h-8 text-slate-400 stroke-1" aria-hidden="true" />
-          <h5 className="font-extrabold text-xs text-slate-700 dark:text-slate-350">
-            {isRtl ? 'السجل فارغ حالياً' : 'Activity history empty'}
-          </h5>
-          <p className="text-[10px] text-slate-450 dark:text-slate-500 leading-relaxed max-w-xs">
-            {isRtl ? 'لم يتم تسجيل أي نشاط للبوابة بعد.' : 'No audit event logs recorded for this account.'}
-          </p>
+        <div className="flex items-center gap-2.5 p-3.5 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+          <History className="w-4.5 h-4.5 text-slate-400 shrink-0" aria-hidden="true" />
+          <div className="text-[10.5px]">
+            <h5 className="font-bold text-slate-700 dark:text-slate-300">
+              {isRtl ? 'السجل فارغ حالياً' : 'Activity history empty'}
+            </h5>
+            <span className="text-[9.5px] text-slate-400 block font-normal mt-0.5">
+              {isRtl ? 'لم يتم تسجيل أي نشاط للبوابة بعد.' : 'No audit event logs recorded for this account.'}
+            </span>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

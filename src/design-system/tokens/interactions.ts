@@ -88,6 +88,9 @@ export const HOVER_MICRO = TRANSITION_MICRO;
 /** Card hover lift effect */
 export const HOVER_LIFT = `${TRANSITION_STANDARD} hover:-translate-y-1 hover:shadow-xl`;
 
+/** Faster micro-interaction for hover/focus state changes */
+export const SUPPORT_MICRO_TRANSITION = TRANSITION_MICRO;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Chat Message Transitions
 // ─────────────────────────────────────────────────────────────────────────────

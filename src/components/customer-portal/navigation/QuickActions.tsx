@@ -59,10 +59,10 @@ export function QuickActions({ onActionClick }: QuickActionsProps) {
           <button
             key={act.id}
             onClick={() => onActionClick(act.id)}
-            className={`w-full h-full min-h-[145px] flex flex-col items-start p-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl transition-all duration-300 text-left cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:border-blue-500/35 hover:bg-white dark:hover:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${act.bgClass}`}
+            className={`w-full h-full min-h-[110px] flex flex-col items-start p-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl transition-all duration-300 text-left cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:border-blue-500/35 hover:bg-white dark:hover:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${act.bgClass}`}
             style={{ textAlign: isRtl ? 'right' : 'left' }}
           >
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-850/50 mb-3 shadow-xs transition-transform duration-300 group-hover:scale-110">
+            <div className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-850/50 mb-2 shadow-xs transition-transform duration-300 group-hover:scale-110">
               {act.icon}
             </div>
             <h5 className="font-bold text-xs text-slate-900 dark:text-white leading-tight">
