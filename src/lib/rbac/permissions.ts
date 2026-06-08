@@ -79,6 +79,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'customer_favorites',
     'customer_system_status',
     'customer_settings',
+    'customer_system_403',
+    'customer_system_404',
+    'customer_system_500',
+    'customer_system_maintenance',
   ],
   viewer: ['surveys', 'sla', 'analytics_center'],
 };

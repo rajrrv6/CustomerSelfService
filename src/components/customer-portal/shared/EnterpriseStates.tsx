@@ -158,26 +158,26 @@ export function HttpStatusPage({ status, onBack }: HttpPageProps) {
     '403': {
       icon: <Lock className="w-8 h-8 text-amber-500" />,
       bg: 'bg-amber-500/10',
-      title: isRtl ? '403 - غير مصرح بالوصول' : '403 - Forbidden Access',
+      title: isRtl ? '403 - تم تقييد الوصول' : '403 - Access Restricted',
       desc: isRtl 
-        ? 'عذراً، لا تمتلك الصلاحيات الكافية للوصول إلى هذه الميزات. يرجى مراجعة إدارة RBAC.' 
-        : 'You do not have the required permissions to view this resource. Contact RBAC Admins.'
+        ? 'ليس لديك الإذن حاليًا للوصول إلى هذه الصفحة. إذا كنت تعتقد أن هذا غير صحيح، يرجى الاتصال بمسؤول المؤسسة الخاص بك.' 
+        : 'You do not currently have permission to access this page.\n\nIf you believe this is incorrect, please contact your organization administrator.'
     },
     '404': {
       icon: <FileQuestion className="w-8 h-8 text-blue-500" />,
       bg: 'bg-blue-500/10',
       title: isRtl ? '404 - لم يتم العثور على الصفحة' : '404 - Page Not Found',
       desc: isRtl 
-        ? 'عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.' 
-        : 'The page you are looking for does not exist or has been moved.'
+        ? 'تعذر تحديد موقع الصفحة المطلوبة أو قد لا تكون متاحة بعد الآن.' 
+        : 'The requested page could not be located or may no longer be available.'
     },
     '500': {
       icon: <Server className="w-8 h-8 text-rose-500" />,
       bg: 'bg-rose-500/10',
-      title: isRtl ? '500 - خطأ داخلي في الخادم' : '500 - Internal Server Error',
+      title: isRtl ? '500 - الخدمة غير متوفرة مؤقتاً' : '500 - Service Temporarily Unavailable',
       desc: isRtl 
-        ? 'حدثت مشكلة فنية غير متوقعة في خوادمنا. فريق العمل يعمل على إصلاحها.' 
-        : 'An unexpected technical issue occurred on our servers. Our team is resolving it.'
+        ? 'لقد واجهنا مشكلة غير متوقعة أثناء معالجة طلبك. تم إخطار فرق الهندسة لدينا وتعمل بنشاط على حل المشكلة.' 
+        : 'We encountered an unexpected issue while processing your request.\n\nOur engineering teams have been notified and are actively working on a resolution.'
     }
   };
 
@@ -189,9 +189,9 @@ export function HttpStatusPage({ status, onBack }: HttpPageProps) {
         {current.icon}
       </div>
       
-      <div className="space-y-2">
+      <div className="space-y-2 text-center">
         <h2 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">{current.title}</h2>
-        <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed font-medium">
+        <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed font-medium whitespace-pre-line">
           {current.desc}
         </p>
       </div>
@@ -201,7 +201,7 @@ export function HttpStatusPage({ status, onBack }: HttpPageProps) {
         className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl text-xs font-bold transition-all cursor-pointer"
       >
         <ArrowLeft className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} />
-        <span>{isRtl ? 'العودة للرئيسية' : 'Return to Home'}</span>
+        <span>{isRtl ? 'العودة إلى لوحة التحكم' : 'Return to Dashboard'}</span>
       </button>
     </div>
   );
@@ -242,8 +242,8 @@ export function MaintenanceModeScreen() {
         </h2>
         <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed font-medium">
           {isRtl 
-            ? 'نقوم بتحسين البنية التحتية لبوابة الدعم لخدمتكم بشكل أفضل. سنعود للعمل قريباً.' 
-            : 'We are optimizing our portal databases to provide faster response pipelines. We will be back online soon.'}
+            ? 'نقوم بإجراء صيانة مجدولة للمنصة لتحسين الموثوقية والأداء.' 
+            : 'We are performing scheduled platform maintenance to improve reliability and performance.'}
         </p>
       </div>
 
