@@ -29,6 +29,7 @@ import { HttpStatusPage, MaintenanceModeScreen } from './EnterpriseStates';
 import { SystemStatusPage } from '../status/SystemStatusPage';
 import { LiveSupportWorkspace } from '../support/LiveSupportWorkspace';
 import { GlobalSearch } from '../navigation/GlobalSearch';
+import { AIWorkspace } from '../ai-copilot/AIWorkspace';
 
 // Enterprise System Imports
 import { OrgSwitcher } from '../enterprise/OrgSwitcher';
@@ -131,7 +132,7 @@ export function CustomerPortalLayout({
   // ----------------------------------------------------
   const [searchQuery, setSearchQuery] = useState('');
   const [kbCategoryFilter, setKbCategoryFilter] = useState('All');
-  const [selectedArticleId, setSelectedArticleId] = useState<string>('art-1');
+  const [selectedArticleId, setSelectedArticleId] = useState<string>('');
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [articleFeedbackGiven, setArticleFeedbackGiven] = useState<Record<string, 'up' | 'down' | null>>({});
 
@@ -506,7 +507,7 @@ export function CustomerPortalLayout({
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    setActiveSubScreen('customer_kb');
+                    setActiveSubScreen('customer_kb_article');
                   }}
                   className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white text-slate-850 text-xs focus:outline-none shadow-md font-semibold"
                 />
@@ -517,7 +518,7 @@ export function CustomerPortalLayout({
               <button
                 onClick={() => {
                   setKbCategoryFilter('All');
-                  setActiveSubScreen('customer_kb');
+                  setActiveSubScreen('customer_kb_article');
                 }}
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:border-blue-500 transition-all text-left space-y-2.5 shadow-sm"
               >
@@ -559,26 +560,30 @@ export function CustomerPortalLayout({
         )}
 
         {activeSubScreen === 'customer_kb' && (
-          <KbSearch
-            kbArticles={kbArticles}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            kbCategoryFilter={kbCategoryFilter}
-            setKbCategoryFilter={setKbCategoryFilter}
-            setSelectedArticleId={setSelectedArticleId}
-            setActiveSubScreen={setActiveSubScreen}
-          />
+          <AIWorkspace />
         )}
 
         {activeSubScreen === 'customer_kb_article' && (
-          <KbArticleView
-            kbArticles={kbArticles}
-            selectedArticleId={selectedArticleId}
-            setSelectedArticleId={setSelectedArticleId}
-            setActiveSubScreen={setActiveSubScreen}
-            articleFeedbackGiven={articleFeedbackGiven}
-            handleArticleHelpful={handleArticleHelpful}
-          />
+          selectedArticleId ? (
+            <KbArticleView
+              kbArticles={kbArticles}
+              selectedArticleId={selectedArticleId}
+              setSelectedArticleId={setSelectedArticleId}
+              setActiveSubScreen={setActiveSubScreen}
+              articleFeedbackGiven={articleFeedbackGiven}
+              handleArticleHelpful={handleArticleHelpful}
+            />
+          ) : (
+            <KbSearch
+              kbArticles={kbArticles}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              kbCategoryFilter={kbCategoryFilter}
+              setKbCategoryFilter={setKbCategoryFilter}
+              setSelectedArticleId={setSelectedArticleId}
+              setActiveSubScreen={setActiveSubScreen}
+            />
+          )
         )}
 
         {activeSubScreen === 'customer_ticket_detail' && (

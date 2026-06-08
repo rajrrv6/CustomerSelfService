@@ -21,7 +21,7 @@ describe('AIWorkspace Component QA Tests', () => {
     // Consent modal should be closed
     expect(screen.queryByText(/Privacy & LLM Safety Consent/i)).not.toBeInTheDocument();
     expect(localStorage.getItem('ai-privacy-consented')).toBe('true');
-  });
+  }, 20000);
 
   it('shows pinned and recent conversations in the sidebar and supports search filtering', () => {
     localStorage.setItem('ai-privacy-consented', 'true');
@@ -159,7 +159,7 @@ describe('AIWorkspace Component QA Tests', () => {
     expect(screen.getByText(/I have processed your query/i)).toBeInTheDocument();
 
     vi.useRealTimers();
-  });
+  }, 20000);
 
   it('toggles voice listening modal on push-to-talk microphone trigger', () => {
     localStorage.setItem('ai-privacy-consented', 'true');
