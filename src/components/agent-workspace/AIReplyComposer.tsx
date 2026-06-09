@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, RefreshCcw, FileText, Wand2 } from 'lucide-react';
+import { Sparkles, RefreshCcw, FileText, Wand2, Paperclip, Undo2 } from 'lucide-react';
 import { useIsDesktopOperational } from '@/hooks/useMediaQuery';
 import { MobileSheet } from '@/components/responsive/MobileSheet';
 import { translations } from '@/i18n/translations';
 import { usePermission } from '@/stores/permissionStore';
+import { useConversationStore } from '@/stores/conversationStore';
+import { ComposerAttachmentPreview } from './ComposerAttachmentPreview';
 
 interface AIReplyComposerProps {
   draftText: string;
@@ -19,8 +21,8 @@ interface AIReplyComposerProps {
 }
 
 export function AIReplyComposer({
-  draftText,
-  onChangeDraft,
+  draftText: propsDraftText,
+  onChangeDraft: propsOnChangeDraft,
   onSend,
   suggestedReplyText,
   lang,
@@ -28,10 +30,35 @@ export function AIReplyComposer({
   channel = 'web',
   status
 }: AIReplyComposerProps) {
+  const store = useConversationStore();
+  const activeConversationId = store.activeConversationId || '';
+  const draftText = propsDraftText !== undefined ? propsDraftText : (store.drafts[activeConversationId] || '');
+
+  const onChangeDraft = (val: string) => {
+    if (propsOnChangeDraft) {
+      propsOnChangeDraft(val);
+    }
+    store.saveDraft(activeConversationId, val);
+  };
   const isDesktop = useIsDesktopOperational();
   const { canEdit } = usePermission('inbox');
-  const [activeTab, setActiveTab] = useState<'customer' | 'note'>('customer');
-  const [selectedTone, setSelectedTone] = useState<'professional' | 'empathetic' | 'concise'>('professional');
+
+  const composerMode = store.composerModes[activeConversationId] || (channel === 'email' ? 'email_reply' : 'reply');
+  const activeTab = composerMode === 'internal_note' ? 'note' : 'customer';
+
+  const setActiveTab = (tab: 'customer' | 'note') => {
+    if (tab === 'note') {
+      store.setComposerMode(activeConversationId, 'internal_note');
+    } else {
+      store.setComposerMode(activeConversationId, channel === 'email' ? 'email_reply' : 'reply');
+    }
+  };
+
+  const selectedTone = store.activeTones[activeConversationId] || 'professional';
+  const setSelectedTone = (tone: 'professional' | 'empathetic' | 'concise' | 'escalation-ready') => {
+    store.setActiveTone(activeConversationId, tone);
+  };
+
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
 
@@ -46,11 +73,41 @@ export function AIReplyComposer({
   const t = translations[lang];
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const chatTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const emailTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setToolsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
+      window.removeEventListener('keydown', handleKeyDown);
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  const insertTextAtCursor = (textToInsert: string) => {
+    const inputEl = channel === 'email' ? emailTextareaRef.current : chatTextareaRef.current;
+    if (inputEl) {
+      const start = inputEl.selectionStart ?? 0;
+      const end = inputEl.selectionEnd ?? 0;
+      const textBefore = draftText.substring(0, start);
+      const textAfter = draftText.substring(end);
+      const newText = textBefore + textToInsert + textAfter;
+      onChangeDraft(newText);
+      setTimeout(() => {
+        inputEl.focus();
+        const newCursorPos = start + textToInsert.length;
+        inputEl.setSelectionRange(newCursorPos, newCursorPos);
+      }, 0);
+    } else {
+      onChangeDraft(draftText ? draftText + ' ' + textToInsert : textToInsert);
+    }
+  };
 
   const streamText = (text: string) => {
     if (!canEdit) return;
@@ -82,23 +139,32 @@ export function AIReplyComposer({
 
   const handleApplyMacro = (val: string) => {
     if (!canEdit) return;
-    streamText(val);
+    store.trackMacroInsertion(activeConversationId, val);
+    insertTextAtCursor(val);
   };
 
   const handleRewriteTone = () => {
     if (!canEdit) return;
     setLoadingSuggestion(true);
+    store.setRewriteState(activeConversationId, 'rewriting');
     const runRewrite = () => {
       let result = draftText || suggestedReplyText;
+      if (!store.originalDrafts[activeConversationId]) {
+        store.saveOriginalDraft(activeConversationId, draftText);
+      }
+
       if (selectedTone === 'empathetic') {
         result = `I truly understand how frustrating this must be. Let me resolve this exception right away: ${result}`;
       } else if (selectedTone === 'concise') {
         result = `Processing exception for ${result.substring(0, 50)}... Done.`;
+      } else if (selectedTone === 'escalation-ready') {
+        result = `Escalating case INC-99881. Support documentation: ${result}`;
       } else {
         result = `Dear Client, regarding your request, we have initiated standard process: ${result}`;
       }
       setLoadingSuggestion(false);
-      streamText(result);
+      store.setRewriteState(activeConversationId, 'success');
+      onChangeDraft(result);
     };
 
     if (process.env.NODE_ENV === 'test') {
@@ -110,7 +176,37 @@ export function AIReplyComposer({
 
   const handleApplyAISuggestion = () => {
     if (!canEdit) return;
-    streamText(suggestedReplyText);
+    let textToInsert = suggestedReplyText;
+    
+    // Combined Tone + Suggestion Flow
+    if (selectedTone !== 'professional' && selectedTone) {
+      if (selectedTone === 'empathetic') {
+        textToInsert = `I truly understand how frustrating this must be. Let me resolve this: ${textToInsert}`;
+      } else if (selectedTone === 'concise') {
+        textToInsert = `Concise response: ${textToInsert}`;
+      } else if (selectedTone === 'escalation-ready') {
+        textToInsert = `Escalating case details: ${textToInsert}`;
+      }
+    }
+
+    store.setAppliedSuggestion(activeConversationId, textToInsert);
+    insertTextAtCursor(textToInsert);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    Array.from(e.target.files).forEach((file) => {
+      const isImg = file.type.startsWith('image/');
+      const staged = {
+        id: `staged-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: file.name,
+        url: isImg ? URL.createObjectURL(file) : '#',
+        sizeBytes: file.size,
+        type: isImg ? ('image' as const) : file.name.endsWith('.pdf') ? ('pdf' as const) : file.name.endsWith('.doc') || file.name.endsWith('.docx') ? ('doc' as const) : ('generic' as const),
+      };
+      store.stageAttachment(activeConversationId, staged);
+    });
+    e.target.value = '';
   };
 
   const advancedToolsBlock = (
@@ -122,11 +218,18 @@ export function AIReplyComposer({
           <button
             type="button"
             onClick={handleApplyAISuggestion}
-            disabled={!canEdit}
-            className={`rounded bg-blue-100 px-2 py-1 text-[10px] font-bold text-blue-800 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            disabled={!canEdit || store.copilotLoadingStates[activeConversationId]}
+            className={`rounded bg-blue-100 px-2 py-1 text-[10px] font-bold text-blue-800 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-300 ${!canEdit || store.copilotLoadingStates[activeConversationId] ? 'opacity-60 cursor-not-allowed' : ''}`}
             title={!canEdit ? "Requires Edit Permission" : undefined}
           >
-            {t.agentWorkspace.aiComposer.applySuggestion}
+            {store.copilotLoadingStates[activeConversationId] ? (
+              <span className="flex items-center gap-1">
+                <RefreshCcw className="h-3 w-3 animate-spin" />
+                <span>Generating...</span>
+              </span>
+            ) : (
+              t.agentWorkspace.aiComposer.applySuggestion
+            )}
           </button>
         </div>
         <button
@@ -161,7 +264,7 @@ export function AIReplyComposer({
           <span className="font-mono font-bold uppercase text-slate-400">{t.agentWorkspace.aiComposer.tone}</span>
           <select
             value={selectedTone}
-            onChange={(e) => setSelectedTone(e.target.value as 'professional' | 'empathetic' | 'concise')}
+            onChange={(e) => setSelectedTone(e.target.value as any)}
             disabled={!canEdit}
             aria-label={lang === 'ar' ? 'حدد نبرة الرد' : 'Select response tone'}
             className={`rounded-lg border border-slate-300 bg-slate-55 px-2 py-1 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -170,6 +273,7 @@ export function AIReplyComposer({
             <option value="professional">{t.agentWorkspace.aiComposer.professional}</option>
             <option value="empathetic">{t.agentWorkspace.aiComposer.empathetic}</option>
             <option value="concise">{t.agentWorkspace.aiComposer.concise}</option>
+            <option value="escalation-ready">{lang === 'ar' ? 'جاهز للتصعيد' : 'Escalation-Ready'}</option>
           </select>
           <button
             type="button"
@@ -207,8 +311,38 @@ export function AIReplyComposer({
     </>
   );
 
+  const isInternalNote = activeTab === 'note';
+
   return (
-    <div className="shrink-0 min-w-0 space-y-3 border-t border-slate-200 bg-slate-50/95 p-3 text-xs font-semibold dark:border-slate-800 dark:bg-slate-900/60 sm:p-4">
+    <div className={`shrink-0 min-w-0 space-y-3 border-t p-3 text-xs font-semibold sm:p-4 transition-colors duration-200 ${
+      isInternalNote
+        ? 'border-purple-300 bg-purple-50/90 dark:border-purple-900/50 dark:bg-purple-950/20'
+        : 'border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-900/60'
+    }`}>
+      {/* Staged attachments preview list */}
+      {(store.stagedAttachments[activeConversationId] || []).length > 0 && (
+        <ComposerAttachmentPreview
+          attachments={store.stagedAttachments[activeConversationId] || []}
+          onRemove={(id) => store.removeStagedAttachment(activeConversationId, id)}
+          lang={lang}
+        />
+      )}
+
+      {/* Undo Rewrite Banner */}
+      {store.originalDrafts[activeConversationId] && (
+        <div className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 rounded-xl text-[10px] text-blue-900 dark:text-blue-300 animate-in slide-in-from-top-1 duration-200">
+          <span>{lang === 'ar' ? 'تم تطبيق تعديل النبرة بالذكاء الاصطناعي.' : 'AI tone rewrite applied.'}</span>
+          <button
+            type="button"
+            onClick={() => store.restoreOriginalDraft(activeConversationId)}
+            className="flex items-center gap-1 rounded bg-blue-100 dark:bg-blue-900 px-2 py-1 text-[9px] font-bold text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-850"
+          >
+            <Undo2 className="h-3 w-3 animate-pulse" />
+            {lang === 'ar' ? 'تراجع عن الصياغة' : 'Undo Rewrite'}
+          </button>
+        </div>
+      )}
+
       {isDesktop ? (
         advancedToolsBlock
       ) : (
@@ -216,12 +350,12 @@ export function AIReplyComposer({
           <button
             type="button"
             onClick={handleApplyAISuggestion}
-            disabled={!canEdit}
-            className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-100 px-2 py-2 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            disabled={!canEdit || store.copilotLoadingStates[activeConversationId]}
+            className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-100 px-2 py-2 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300 ${!canEdit || store.copilotLoadingStates[activeConversationId] ? 'opacity-60 cursor-not-allowed' : ''}`}
             title={!canEdit ? "Requires Edit Permission" : undefined}
           >
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            {t.agentWorkspace.aiComposer.applyAi}
+            {store.copilotLoadingStates[activeConversationId] ? 'Generating...' : t.agentWorkspace.aiComposer.applyAi}
           </button>
           <button
             type="button"
@@ -353,6 +487,7 @@ export function AIReplyComposer({
             </div>
           </div>
           <textarea
+            ref={emailTextareaRef}
             value={draftText}
             onChange={(e) => {
               if (!canEdit) return;
@@ -409,7 +544,25 @@ export function AIReplyComposer({
       ) : (
         <div className="flex gap-2 items-center">
           <input
-            type="text"
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            multiple
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!canEdit}
+            aria-label={lang === 'ar' ? 'إرفاق ملف' : 'Attach file'}
+            className={`shrink-0 rounded-xl p-2.5 border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={!canEdit ? "Requires Edit Permission" : undefined}
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
+          <textarea
+            ref={chatTextareaRef}
+            rows={1}
             value={draftText}
             onChange={(e) => {
               if (!canEdit) return;
@@ -422,7 +575,7 @@ export function AIReplyComposer({
                 : t.agentWorkspace.aiComposer.writeResponse
             }
             aria-label={activeTab === 'note' ? (lang === 'ar' ? 'ملاحظة داخلية' : 'Internal note draft') : (lang === 'ar' ? 'رد المحادثة' : 'Chat response draft')}
-            className={`min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-55 px-3 py-2.5 text-xs font-semibold focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 ${
+            className={`min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-55 px-3 py-2.5 text-xs font-semibold focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 resize-none ${
               activeTab === 'note'
                 ? 'text-purple-600 dark:text-purple-400'
                 : channel === 'whatsapp'
@@ -431,8 +584,11 @@ export function AIReplyComposer({
             } ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
             title={!canEdit ? "Requires Edit Permission" : undefined}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 if (!canEdit) return;
+                const hasStaged = (store.stagedAttachments[activeConversationId] || []).length > 0;
+                if (!draftText.trim() && !hasStaged) return;
                 onSend(draftText, activeTab === 'customer' ? 'chat' : 'note');
               }
             }}
@@ -441,9 +597,11 @@ export function AIReplyComposer({
             type="button"
             onClick={() => {
               if (!canEdit) return;
+              const hasStaged = (store.stagedAttachments[activeConversationId] || []).length > 0;
+              if (!draftText.trim() && !hasStaged) return;
               onSend(draftText, activeTab === 'customer' ? 'chat' : 'note');
             }}
-            disabled={!canEdit}
+            disabled={!canEdit || (!draftText.trim() && !(store.stagedAttachments[activeConversationId] || []).length)}
             aria-label={activeTab === 'note' ? (lang === 'ar' ? 'حفظ الملاحظة الداخلية' : 'Save internal note') : (lang === 'ar' ? 'إرسال الرد' : 'Send response')}
             className={`shrink-0 rounded-xl p-2.5 text-white shadow-lg transition-all ${
               activeTab === 'note'
@@ -451,7 +609,7 @@ export function AIReplyComposer({
                 : channel === 'whatsapp'
                 ? 'bg-emerald-600 hover:bg-emerald-700'
                 : 'bg-blue-600 hover:bg-blue-700'
-            } ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
+            } ${!canEdit || (!draftText.trim() && !(store.stagedAttachments[activeConversationId] || []).length) ? 'opacity-60 cursor-not-allowed' : ''}`}
             title={!canEdit ? "Requires Edit Permission" : undefined}
           >
             <Sparkles className="h-4 w-4" />

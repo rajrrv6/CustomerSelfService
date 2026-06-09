@@ -108,6 +108,10 @@ export interface Message {
   timestamp: string;
   translatedText?: string;
   sentiment?: 'positive' | 'neutral' | 'negative';
+  status?: 'sending' | 'sent' | 'failed';
+  messageType?: 'chat' | 'email' | 'voice_note' | 'internal_note' | 'system' | 'escalation';
+  attachments?: { id: string; name: string; url: string; sizeBytes: number; type: 'image' | 'pdf' | 'doc' | 'generic'; }[];
+  emailHeaders?: { from: string; to: string; cc?: string; subject: string; };
 }
 
 export interface Conversation {
@@ -244,5 +248,55 @@ export interface CallLog {
 
 export * from './tenant';
 export * from './systemOperations';
+
+export interface TransferState {
+  targetQueue: string;
+  assigneeId?: string;
+  notes?: string;
+  status: 'pending' | 'completed' | 'cancelled';
+}
+
+export interface Participant {
+  id: string;
+  name: string;
+  role: 'agent' | 'supervisor' | 'customer';
+  joinedAt: string;
+  isMuted?: boolean;
+  isOnHold?: boolean;
+}
+
+export interface ConferenceState {
+  status: 'inactive' | 'active' | 'ended';
+  participants: Participant[];
+}
+
+export interface ConsultationState {
+  supervisorId: string;
+  status: 'inactive' | 'consulting' | 'ended';
+  notes?: string;
+}
+
+export interface EscalationState {
+  status: 'none' | 'escalated' | 'resolved';
+  type?: 'sla_breach' | 'manager_request' | 'technical_failure' | 'refund_dispute' | 'priority_customer' | 'sentiment_risk';
+  escalatedAt?: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  type: string;
+  message: string;
+  timestamp: string;
+  actor: string;
+}
+
+export interface SupervisorRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  actionType: 'escalate' | 'transfer' | 'consult' | 'ignore';
+  confidence: number;
+}
+
 
 

@@ -19,7 +19,9 @@ import {
   ArrowRight,
   TrendingUp,
   Settings,
-  Scale
+  Scale,
+  Download,
+  Loader2
 } from 'lucide-react';
 import AgentWorkspaceLayout from '@/components/agent-workspace/AgentWorkspaceLayout';
 import { SurveysTab } from '@/components/client-admin/operations/SurveysTab';
@@ -61,6 +63,7 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
   const [disputeReason, setDisputeReason] = useState<string>('');
   const [disputeResponse, setDisputeResponse] = useState<string>('');
   const [disputeResolutionType, setDisputeResolutionType] = useState<'accept' | 'reject'>('accept');
+  const [isExporting, setIsExporting] = useState(false);
 
   const selectedReview = qaReviews.find((r) => r.id === selectedReviewId);
   const selectedConversation = selectedReview
@@ -205,6 +208,41 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
 
     addAuditLog(`Dispute resolved for review ${reviewId} (${disputeResolutionType})`, 'success');
     setDisputeResponse('');
+  };
+
+  const handleExportScorecardPdf = (review: QAReview) => {
+    if (isExporting) return;
+    setIsExporting(true);
+    addAuditLog(`Initiated QA Scorecard PDF export for ${review.agentName}`, 'success');
+
+    setTimeout(() => {
+      const mockPdfContent = `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`
+        + `2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n`
+        + `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R >>\nendobj\n`
+        + `4 0 obj\n<< /Length 300 >>\nstream\n`
+        + `BT\n/F1 12 Tf\n70 700 Td\n(QA Scorecard Evaluation Audit Report) Tj\n`
+        + `0 -20 Td\n(Agent: ${review.agentName}) Tj\n`
+        + `0 -20 Td\n(Audit Date: ${review.date}) Tj\n`
+        + `0 -20 Td\n(QA Score: ${review.score}%) Tj\n`
+        + `0 -20 Td\n(Status: ${review.status.toUpperCase()}) Tj\n`
+        + `0 -20 Td\n(Strengths: ${review.positives.join(', ')}) Tj\n`
+        + `0 -20 Td\n(Gaps: ${review.negatives.join(', ')}) Tj\n`
+        + `0 -20 Td\n(Generated: ${new Date().toLocaleString()})\n`
+        + `ET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000056 00000 n\n0000000111 00000 n\n0000000202 00000 n\ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n350\n%%EOF`;
+
+      const blob = new Blob([mockPdfContent], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `qa_scorecard_${review.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setIsExporting(false);
+      addAuditLog(`QA Scorecard PDF downloaded successfully for ${review.agentName}`, 'success');
+    }, 1200);
   };
 
   const tableHeaders = [
@@ -560,7 +598,20 @@ export function QAManagerView({ activeSubScreen }: { activeSubScreen: string }) 
                         {selectedReview.score > 0 ? `${selectedReview.score}%` : 'N/A'}
                       </span>
                     </div>
-                    <Award className="w-8 h-8 text-emerald-500 opacity-80" />
+                    <div className="flex items-center gap-2">
+                      {selectedReview.score > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleExportScorecardPdf(selectedReview)}
+                          disabled={isExporting}
+                          className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 rounded-xl cursor-pointer disabled:opacity-50"
+                          title={isRtl ? 'تصدير تقرير التقييم PDF' : 'Export Scorecard PDF'}
+                        >
+                          {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        </button>
+                      )}
+                      <Award className="w-8 h-8 text-emerald-500 opacity-80" />
+                    </div>
                   </div>
 
                   {/* Read-Only Completed View OR Editable Grading Form */}

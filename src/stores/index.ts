@@ -16,3 +16,4 @@
 export { useUIStore } from './uiStore';
 export { useAuthStore } from './authStore';
 export { useNotificationsStore } from './notificationsStore';
+export { useConversationStore } from './conversationStore';

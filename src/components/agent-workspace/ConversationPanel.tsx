@@ -11,6 +11,10 @@ import { TypingIndicator } from './TypingIndicator';
 import { translations } from '@/i18n/translations';
 import { usePermission } from '@/stores/permissionStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useConversationStore } from '@/stores/conversationStore';
+import { groupMessages } from './timelineGrouping';
+import { EscalationBanner } from './EscalationBanner';
+import { ConferencePanel } from './ConferencePanel';
 
 const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -118,7 +122,12 @@ export function ConversationPanel({
   const bottomRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
   const [showCcBcc, setShowCcBcc] = useState(false);
-  const [isCustomerTyping, setIsCustomerTyping] = useState(false);
+  const isCustomerTyping = useConversationStore((s) => s.typingStates[activeChat.id] || false);
+  const isIdle = useConversationStore((s) => s.idleStates[activeChat.id] || false);
+  const escalations = useConversationStore((s) => s.escalationRecommendations[activeChat.id] || []);
+  const wrapup = useConversationStore((s) => s.wrapupRecommendations[activeChat.id] || []);
+  const intent = useConversationStore((s) => s.intentStates[activeChat.id]);
+  const composerMode = useConversationStore((s) => s.composerModes[activeChat.id]);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -126,8 +135,12 @@ export function ConversationPanel({
   }, [activeChat.messages, isCustomerTyping]);
 
   useEffect(() => {
+    const store = useConversationStore.getState();
+    
+    // Clear typing indicator for current conversation when switching
+    store.clearTypingState(activeChat.id);
+
     if (activeChat.status === 'resolved') {
-      setIsCustomerTyping(false);
       return;
     }
     const isChat =
@@ -136,17 +149,30 @@ export function ConversationPanel({
       activeChat.channel === 'instagram' ||
       activeChat.channel === 'messenger';
     if (!isChat) {
-      setIsCustomerTyping(false);
       return;
     }
 
-    setIsCustomerTyping(true);
-    const interval = setInterval(() => {
-      setIsCustomerTyping((prev) => !prev);
-    }, 6000);
+    // Set typing state to true initially
+    store.setTypingState(activeChat.id, true);
 
-    return () => clearInterval(interval);
+    // Keep simulating typing events every 12 seconds (typing for 6s, then idle for 6s)
+    const interval = setInterval(() => {
+      // Trigger typing state
+      store.setTypingState(activeChat.id, true);
+    }, 12000);
+
+    return () => {
+      clearInterval(interval);
+      // Clean up typing indicator on switch
+      store.clearTypingState(activeChat.id);
+    };
   }, [activeChat.id, activeChat.channel, activeChat.status]);
+
+  // Trigger AI Copilot suggestion regeneration on key conversation events
+  useEffect(() => {
+    if (activeChat.status === 'resolved') return;
+    useConversationStore.getState().generateCopilotSuggestions(activeChat.id);
+  }, [activeChat.id, activeChat.messages.length, activeChat.status, composerMode]);
 
   const getSuggestedReply = () => {
     if (activeChat.id === 'conv-102') {
@@ -624,6 +650,43 @@ export function ConversationPanel({
           aria-relevant="additions"
           className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 min-w-0"
         >
+          {/* Escalation Banner */}
+          <EscalationBanner conversationId={activeChat.id} lang={lang} />
+
+          {/* Conference Panel */}
+          <ConferencePanel conversationId={activeChat.id} lang={lang} />
+
+          {/* Session Idle Warning Alert Banner */}
+          {isIdle && (
+            <div
+              data-testid="idle-warning-banner"
+              className="border border-amber-300 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30 rounded-2xl p-4 flex items-start justify-between gap-3 text-amber-900 dark:text-amber-300 shadow-sm animate-in slide-in-from-top-2 duration-300"
+            >
+              <div className="flex items-start gap-3">
+                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5 animate-pulse" />
+                <div className="space-y-1 text-xs">
+                  <p className="font-extrabold uppercase tracking-wider text-[11.5px] text-amber-700 dark:text-amber-400">
+                    {lang === 'ar' ? 'تحذير خمول الجلسة' : 'Session Idle Warning'}
+                  </p>
+                  <p className="font-normal text-xs leading-relaxed">
+                    {lang === 'ar'
+                      ? 'هذه المحادثة غير نشطة منذ أكثر من 30 ثانية. يرجى إرسال رد أو تحديث الحالة.'
+                      : 'This conversation has been inactive for over 30 seconds. Please send a reply or update status.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  useConversationStore.getState().clearIdleState(activeChat.id);
+                }}
+                className="text-xs font-bold text-amber-750 dark:text-amber-400 underline hover:text-amber-800"
+              >
+                {lang === 'ar' ? 'تجاهل' : 'Dismiss'}
+              </button>
+            </div>
+          )}
+
           {/* Escalation Warning Sticky Banner */}
           {isEscalated && (
             <div className="border border-rose-300 bg-rose-50/80 dark:border-rose-900 dark:bg-rose-950/30 rounded-2xl p-4 flex items-start gap-3 text-rose-900 dark:text-rose-300 shadow-sm animate-in slide-in-from-top-2 duration-300">
@@ -689,24 +752,117 @@ export function ConversationPanel({
             <CoachingWidget whisper={whisper} onApplyWhisper={handleApplyWhisper} onClose={onCloseWhisper} />
           )}
 
-          {activeChat.messages.map((msg) => {
-            if (msg.sender === 'system') {
-              return <ConversationTimeline key={msg.id} text={msg.text} timestamp={msg.timestamp} />;
-            }
-            return (
-              <ConversationMessage
-                key={msg.id}
-                message={msg}
-                lang={lang}
-                channel={activeChat.channel}
-                status={activeChat.status}
-              />
-            );
-          })}
+          {(() => {
+            const groupedItems = groupMessages(activeChat.messages, activeChat.channel);
+            return groupedItems.map((item) => {
+              if (item.type === 'special') {
+                const msg = item.message;
+                if (msg.sender === 'system') {
+                  return <ConversationTimeline key={msg.id} text={msg.text} timestamp={msg.timestamp} />;
+                }
+                return (
+                  <ConversationMessage
+                    key={msg.id}
+                    message={msg}
+                    lang={lang}
+                    channel={activeChat.channel}
+                    status={activeChat.status}
+                    onRetry={() => {
+                      const store = useConversationStore.getState();
+                      const mockSendApiCall = (txt: string) => {
+                        return new Promise<import('@/types').Message>((resolve, reject) => {
+                          setTimeout(() => {
+                            if (txt.toLowerCase().includes('fail')) {
+                              reject(new Error('Simulated network error'));
+                            } else {
+                              resolve({
+                                id: `msg-${Date.now()}`,
+                                sender: 'agent',
+                                senderName: 'Liam Bennett',
+                                text: txt,
+                                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                              });
+                            }
+                          }, 1000);
+                        });
+                      };
+                      store.retryMessage(activeChat.id, msg.id, mockSendApiCall);
+                    }}
+                  />
+                );
+              }
 
-          {isCustomerTyping && (
-            <TypingIndicator name={activeChat.customerName} />
+              // Standard chat group
+              return (
+                <div key={item.id} className="space-y-1">
+                  {item.messages.map((msg, index) => {
+                    const isFirst = index === 0;
+                    return (
+                      <ConversationMessage
+                        key={msg.id}
+                        message={msg}
+                        lang={lang}
+                        channel={activeChat.channel}
+                        status={activeChat.status}
+                        showName={isFirst}
+                        showAvatar={isFirst}
+                        onRetry={() => {
+                          const store = useConversationStore.getState();
+                          const mockSendApiCall = (txt: string) => {
+                            return new Promise<import('@/types').Message>((resolve, reject) => {
+                              setTimeout(() => {
+                                if (txt.toLowerCase().includes('fail')) {
+                                  reject(new Error('Simulated network error'));
+                                } else {
+                                  resolve({
+                                    id: `msg-${Date.now()}`,
+                                    sender: 'agent',
+                                    senderName: 'Liam Bennett',
+                                    text: txt,
+                                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                  });
+                                }
+                              }, 1000);
+                            });
+                          };
+                          store.retryMessage(activeChat.id, msg.id, mockSendApiCall);
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            });
+          })()}
+
+          {/* AI Suggested Escalation Audit Marker */}
+          {escalations.length > 0 && (
+            <div className="flex justify-center my-1.5 animate-pulse" data-testid="ai-escalation-marker">
+              <span className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-350 dark:border-rose-900 rounded-full px-3 py-1 font-mono text-[9px] font-extrabold uppercase shadow-sm">
+                🤖 AI Suggested Escalation: {escalations[0].reason}
+              </span>
+            </div>
           )}
+
+          {/* AI Generated Wrap-Up Audit Marker */}
+          {wrapup.length > 0 && (
+            <div className="flex justify-center my-1.5" data-testid="ai-wrapup-marker">
+              <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-350 dark:border-emerald-900 rounded-full px-3 py-1 font-mono text-[9px] font-extrabold uppercase shadow-sm">
+                🤖 AI Generated Wrap-Up disposition: {wrapup[0].code}
+              </span>
+            </div>
+          )}
+
+          {/* AI Intent Classified Audit Marker */}
+          {intent && (
+            <div className="flex justify-center my-1.5" data-testid="ai-intent-marker">
+              <span className="bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-950/20 dark:border-blue-900/30 rounded-full px-3 py-1 font-mono text-[9px] font-extrabold uppercase shadow-sm">
+                🤖 Intent Classified: {intent.name} ({intent.confidence}% confidence)
+              </span>
+            </div>
+          )}
+
+          <TypingIndicator name={activeChat.customerName} conversationId={activeChat.id} />
 
           <div ref={bottomRef} />
         </div>

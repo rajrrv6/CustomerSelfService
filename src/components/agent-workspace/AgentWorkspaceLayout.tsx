@@ -4,6 +4,8 @@ import { useUIStore } from '@/stores/uiStore';
 import { useNotificationsStore } from '@/stores/notificationsStore';
 import { translations } from '@/i18n/translations';
 import { useAuthStore } from '@/stores/authStore';
+import { useConversationStore, startRealtimeTicker, stopRealtimeTicker } from '@/stores/conversationStore';
+import { Conversation, Message } from '@/types';
 import { UnifiedInbox } from './UnifiedInbox';
 import { ConversationPanel } from './ConversationPanel';
 import { RightWorkspacePanel } from './RightWorkspacePanel';
@@ -57,9 +59,33 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   const { agents } = useApp();
   const t = translations[lang];
 
-  // Active workspace states (local state scoped to AgentWorkspaceLayout)
-  const [conversations, setConversations] = useState(conversationsSeed);
-  const [activeChatId, setActiveChatId] = useState<string>('conv-102');
+  // Active workspace states (bound to centralized store)
+  const conversationsMap = useConversationStore((s) => s.conversations);
+  const conversations = Object.values(conversationsMap);
+  const activeChatId = useConversationStore((s) => s.activeConversationId) || 'conv-102';
+  
+  const setActiveChatId = (id: string | null) => {
+    const storeState = useConversationStore.getState();
+    storeState.setActiveConversation(id);
+    if (id) {
+      storeState.generateCopilotSuggestions(id);
+    }
+  };
+
+  const setConversations = (
+    update: Conversation[] | ((prev: Conversation[]) => Conversation[])
+  ) => {
+    const store = useConversationStore.getState();
+    const currentArray = Object.values(store.conversations);
+    const newArray = typeof update === 'function' ? update(currentArray) : update;
+    
+    const newRecord = newArray.reduce((acc, conv) => {
+      acc[conv.id] = conv;
+      return acc;
+    }, {} as Record<string, Conversation>);
+
+    store.setConversations(newRecord);
+  };
 
   // Incident tickets list state
   const [ticketSearch, setTicketSearch] = useState('');
@@ -74,18 +100,38 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     { id: 'TIC-0992', customerName: 'Marcus Aurelius', title: 'Stripe API webhook failures', status: 'closed', priority: 'high', date: '2026-05-10' }
   ]);
 
-  // Inbox filters (tab, search, queue, status) — extracted hook
+  // Inbox filters (tab, search, queue, status) — extracted hook and synchronized with store
+  const store = useConversationStore();
+  const storeFilters = store.queueFilters;
+
   const {
     activeTab,
-    setActiveTab,
+    setActiveTab: setLocalActiveTab,
     statusFilter,
-    setStatusFilter,
+    setStatusFilter: setLocalStatusFilter,
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: setLocalSearchQuery,
     selectedQueue,
-    setSelectedQueue,
+    setSelectedQueue: setLocalSelectedQueue,
     filteredConversations,
-  } = useInboxFilters(conversations);
+  } = useInboxFilters(conversations, storeFilters.activeTab, storeFilters.selectedQueue, storeFilters.statusFilter);
+
+  const setActiveTab = (tab: any) => {
+    setLocalActiveTab(tab);
+    store.setActiveTab(tab);
+  };
+  const setStatusFilter = (status: any) => {
+    setLocalStatusFilter(status);
+    store.setStatusFilter(status);
+  };
+  const setSelectedQueue = (q: any) => {
+    setLocalSelectedQueue(q);
+    store.setSelectedQueue(q);
+  };
+  const setSearchQuery = (q: any) => {
+    setLocalSearchQuery(q);
+    store.setSearchQuery(q);
+  };
 
   // AUX timer + queue metrics — extracted hook
   const {
@@ -136,6 +182,26 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     hasActiveVoiceCall,
   } = useVoiceState(addAuditLog, callHistorySeed);
 
+  // Live hold timer state & logic
+  const [holdDuration, setHoldDuration] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    const isHeld = (call?.status === 'held') || (parkedHeldCall !== null);
+    
+    if (isHeld) {
+      interval = setInterval(() => {
+        setHoldDuration((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setHoldDuration(0);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [call?.status, parkedHeldCall]);
+
   // Voice Sub-tabs state
   const [voiceTab, setVoiceTab] = useState<'history' | 'queue' | 'voicemail' | 'supervisor'>('history');
   const [mobileOverlay, setMobileOverlay] = useState<'inbox' | 'customer360' | null>(null);
@@ -166,6 +232,81 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
     return () => clearTimeout(timer);
   }, [auxStatus, call, queue, receiveInbound, dequeueCall, addAuditLog]);
 
+  // Centralized realtime systems ticker: SLA countdowns, inactivity sweeps, queue metric shifts.
+  // Delegates to the singleton ticker in conversationStore to prevent duplicate intervals
+  // when this layout remounts during rapid navigation.
+  useEffect(() => {
+    startRealtimeTicker();
+    return () => stopRealtimeTicker();
+  }, []);
+
+  // Periodic simulated incoming customer messages & typing events for active chat.
+  // The inner setTimeout is tracked via a ref so it is always cancelled on unmount
+  // or on the next simulation tick — preventing state updates on an unmounted component.
+  const typingSimTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const simulationInterval = setInterval(() => {
+      const storeState = useConversationStore.getState();
+      const activeId = storeState.activeConversationId;
+      if (!activeId) return;
+
+      const chat = storeState.conversations[activeId];
+      if (!chat || chat.status === 'resolved') return;
+
+      const isChatChannel =
+        chat.channel === 'whatsapp' ||
+        chat.channel === 'web' ||
+        chat.channel === 'instagram' ||
+        chat.channel === 'messenger';
+      if (!isChatChannel) return;
+
+      // Start typing simulation
+      storeState.simulateTypingEvent(activeId, true);
+
+      // Clear any prior pending delivery timeout before scheduling a new one
+      if (typingSimTimeoutRef.current !== null) {
+        clearTimeout(typingSimTimeoutRef.current);
+      }
+
+      // Deliver mock incoming message after 3 seconds
+      typingSimTimeoutRef.current = setTimeout(() => {
+        typingSimTimeoutRef.current = null;
+        const currentChat = useConversationStore.getState().conversations[activeId];
+        if (currentChat && currentChat.status !== 'resolved') {
+          const messages = [
+            'Hi, just checking if there is any update on my order?',
+            'Can you also verify if my shipping address was corrected?',
+            'Thanks for the quick response. Let me know if you need anything else.',
+            'Okay, I will wait for your update.'
+          ];
+          const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+          useConversationStore.getState().simulateIncomingMessage(activeId, randomMsg);
+        }
+      }, 3000);
+
+    }, 40000); // 40-second interval
+
+    return () => {
+      clearInterval(simulationInterval);
+      // Cancel any in-flight 3-second typing delivery to prevent unmounted state updates
+      if (typingSimTimeoutRef.current !== null) {
+        clearTimeout(typingSimTimeoutRef.current);
+        typingSimTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  // On layout unmount, revoke all staged attachment blob URLs to prevent memory leaks.
+  // This handles the edge case where an agent navigates away with staged attachments that
+  // were never sent (e.g. user cancels out of the conversation).
+  useEffect(() => {
+    return () => {
+      const store = useConversationStore.getState();
+      Object.keys(store.stagedAttachments).forEach((convId) => {
+        store.clearStagedAttachments(convId);
+      });
+    };
+  }, []);
 
 
   const executePendingCallIntent = (intent: PendingCallIntent) => {
@@ -309,20 +450,15 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   const activeCustomerProfile = customer360Seed[activeChat?.id];
 
   // Send messaging dispatch
-  const [draftText, setDraftText] = useState('');
+  const draftText = useConversationStore((s) => s.drafts[activeChatId] || '');
+  const setDraftText = (val: string) => {
+    const storeState = useConversationStore.getState();
+    storeState.saveDraft(activeChatId, val);
+    storeState.setConversationActivity(activeChatId);
+  };
 
   const handleEscalateChat = () => {
-    setConversations(prev => prev.map(c => {
-      if (c.id === activeChat.id) {
-        return {
-          ...c,
-          status: 'escalated',
-          slaStatus: 'warning',
-          slaDeadline: '15m'
-        };
-      }
-      return c;
-    }));
+    useConversationStore.getState().triggerEscalation(activeChat.id, 'manager_request');
     addAuditLog(`Escalated chat session ${activeChat.id}`, 'failed');
   };
 
@@ -347,85 +483,82 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   };
 
   const handleSendMessage = (text: string, type: 'chat' | 'note') => {
-    if (!text) return;
+    const store = useConversationStore.getState();
+    const staged = store.stagedAttachments[activeChatId] || [];
+    if (!text.trim() && staged.length === 0) return;
 
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const isNote = type === 'note';
 
-    const newMsg = {
-      id: `msg-${Date.now()}`,
-      sender: isNote ? 'system' as const : 'agent' as const,
-      senderName: isNote ? 'System (Liam Notes)' : 'Liam Bennett',
-      text: isNote ? `[Internal Note]: ${text}` : text,
-      timestamp
+    // 1. Append optimistic message
+    const tempId = store.appendOptimisticMessage(
+      activeChatId,
+      isNote ? `[Internal Note]: ${text}` : text,
+      isNote ? 'system' : 'agent',
+      isNote ? 'System (Liam Notes)' : 'Liam Bennett',
+      staged
+    );
+
+    // 2. Clear draft in store and refresh activity
+    store.saveDraft(activeChatId, '');
+    store.setConversationActivity(activeChatId);
+    store.clearStagedAttachments(activeChatId);
+    store.clearOriginalDraft(activeChatId);
+
+    // 3. Dispatch simulated send
+    const simulatedSend = () => {
+      return new Promise<Message>((resolve, reject) => {
+        setTimeout(() => {
+          // If the text contains 'fail', simulate a network failure
+          if (text.toLowerCase().includes('fail')) {
+            reject(new Error('Simulated network error'));
+          } else {
+            resolve({
+              id: `msg-${Date.now()}`,
+              sender: isNote ? 'system' : 'agent',
+              senderName: isNote ? 'System (Liam Notes)' : 'Liam Bennett',
+              text: isNote ? `[Internal Note]: ${text}` : text,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              attachments: staged.length > 0 ? staged : undefined,
+            });
+          }
+        }, 1500); // 1.5s delay
+      });
     };
 
-    setConversations(prev => prev.map((c) => {
-      if (c.id === activeChat.id) {
-        return {
-          ...c,
-          lastMessage: isNote ? `Note: ${text}` : text,
-          lastMessageTime: timestamp,
-          messages: [...c.messages, newMsg]
-        };
-      }
-      return c;
-    }));
-
-    addAuditLog(`Sent ${isNote ? 'internal note' : 'customer response'} to conversation: ${activeChat.id}`, 'success');
-    setDraftText('');
+    simulatedSend()
+      .then((finalMsg) => {
+        store.commitMessage(activeChatId, tempId, finalMsg);
+        addAuditLog(`Sent ${isNote ? 'internal note' : 'customer response'} to conversation: ${activeChatId}`, 'success');
+      })
+      .catch((err) => {
+        store.failMessage(activeChatId, tempId);
+        addAuditLog(`Failed to send message: ${err.message}`, 'failed');
+      });
   };
 
   // Conference Submit call handler
-  const handleDialConference = (name: string, dialDest: string) => {
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const systemMsg = {
-      id: `msg-sys-${Date.now()}`,
-      sender: 'system' as const,
-      senderName: 'System',
-      text: `Liam Bennett dialed in participant ${name} (${dialDest}) for a 3-way conference.`,
-      timestamp
-    };
-
-    setConversations(prev => prev.map((c) => {
-      if (c.id === activeChat.id) {
-        return {
-          ...c,
-          messages: [...c.messages, systemMsg]
-        };
-      }
-      return c;
+  const handleDialConference = (participants: { name: string; role: 'supervisor' | 'agent' | 'customer'; destination: string }[]) => {
+    const formatted = participants.map((p, index) => ({
+      id: `part-${Date.now()}-${index}`,
+      name: p.name,
+      role: p.role,
+      joinedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isMuted: false,
+      isOnHold: false
     }));
 
-    addAuditLog(`Started conference call with ${name} on chat ${activeChat.id}`, 'success');
+    useConversationStore.getState().startConference(activeChat.id, formatted);
+    const names = participants.map(p => p.name).join(', ');
+    addAuditLog(`Started conference call with ${names} on chat ${activeChat.id}`, 'success');
     setShowConferenceModal(false);
   };
 
   // Transfer Submit agent handler
-  const handleTransferAgentSubmit = (agentId: string, notes: string) => {
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const handleTransferAgentSubmit = (agentId: string, notes: string, queueId: string) => {
     const targetAgentName = agents.find(a => a.id === agentId)?.name || 'Agent';
 
-    const systemMsg = {
-      id: `msg-sys-${Date.now()}`,
-      sender: 'system' as const,
-      senderName: 'System',
-      text: `Liam Bennett transferred case to ${targetAgentName}. Consult details: "${notes}"`,
-      timestamp
-    };
-
-    setConversations(prev => prev.map((c) => {
-      if (c.id === activeChat.id) {
-        return {
-          ...c,
-          status: 'resolved',
-          messages: [...c.messages, systemMsg]
-        };
-      }
-      return c;
-    }));
-
-    addAuditLog(`Transferred chat ${activeChat.id} to ${targetAgentName}`, 'success');
+    useConversationStore.getState().startTransfer(activeChat.id, queueId, agentId, notes);
+    addAuditLog(`Transferred chat ${activeChat.id} to ${targetAgentName} in queue ${queueId}`, 'success');
     setShowTransferModal(false);
   };
 
@@ -955,9 +1088,14 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                         </p>
                       </div>
 
-                      <span className="shrink-0 rounded-full bg-white/70 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:bg-slate-900/70 dark:text-amber-300">
-                        {formatDuration(parkedHeldCall.duration)}
-                      </span>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className="rounded-full bg-white/70 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:bg-slate-900/70 dark:text-amber-300" title="Total Call Duration">
+                          {formatDuration(parkedHeldCall.duration)}
+                        </span>
+                        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] font-black uppercase tracking-wider text-amber-600 dark:bg-amber-500/20 dark:text-amber-400" title="Live Hold Timer">
+                          Hold: {formatDuration(holdDuration)}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -1156,7 +1294,11 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
               profile={activeCustomerProfile}
               activeChat={activeChat}
               lang={lang}
-              onApplySuggestedReply={(text) => setDraftText(text)}
+              onApplySuggestedReply={(text) => {
+                const currentDraft = useConversationStore.getState().drafts[activeChat.id] || '';
+                const merged = currentDraft ? `${currentDraft}\n${text}` : text;
+                setDraftText(merged);
+              }}
               onSummarize={handleTriggerSummary}
             />
           )}
@@ -1185,9 +1327,16 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                     : `${parkedHeldCall?.phoneNumber || '—'} · On hold`}
                 </p>
               </div>
-              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                {formatDuration(call?.duration || parkedHeldCall?.duration || 0)}
-              </span>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-300" title="Total Call Duration">
+                  {formatDuration(call?.duration || parkedHeldCall?.duration || 0)}
+                </span>
+                {(call?.status === 'held' || parkedHeldCall) && (
+                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] font-black uppercase tracking-wider text-amber-600 dark:bg-amber-500/20 dark:text-amber-400" title="Live Hold Timer">
+                    Hold: {formatDuration(holdDuration)}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="mt-3 flex items-center gap-2">
               {call && (
@@ -1253,7 +1402,9 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             activeChat={activeChat}
             lang={lang}
             onApplySuggestedReply={(text) => {
-              setDraftText(text);
+              const currentDraft = useConversationStore.getState().drafts[activeChat.id] || '';
+              const merged = currentDraft ? `${currentDraft}\n${text}` : text;
+              setDraftText(merged);
               setMobileOverlay(null);
             }}
             onSummarize={handleTriggerSummary}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { initialExecutiveKpis, ExecutiveKpis } from '@/data/seed/analyticsSeed';
 
 export interface AlertNotification {
@@ -20,6 +20,15 @@ export function useRealtimeMetrics() {
       message: 'SAP ERP webhook endpoint latency spiked to 480ms.'
     }
   ]);
+
+  // Store current metrics in a ref so the interval callback can read the latest
+  // queueSize without listing `metrics` in the dependency array.
+  // This prevents the interval from being torn down and recreated on every queue
+  // fluctuation, which was causing unnecessary timer churn.
+  const metricsRef = useRef<ExecutiveKpis>(metrics);
+  useEffect(() => {
+    metricsRef.current = metrics;
+  }, [metrics]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -58,17 +67,19 @@ export function useRealtimeMetrics() {
         };
       });
 
-      // Periodically trigger a live warning alert on queue spikes
+      // Periodically trigger a live warning alert on queue spikes.
+      // Read current queueSize from metricsRef to avoid stale closure capture.
       setAlerts((prevAlerts) => {
+        const currentQueueSize = metricsRef.current.queueSize;
         const hasQueueWarning = prevAlerts.some(a => a.source === 'queue' && a.severity === 'critical');
         
-        if (metrics.queueSize > 10 && !hasQueueWarning) {
+        if (currentQueueSize > 10 && !hasQueueWarning) {
           const newAlert: AlertNotification = {
             id: `alert-q-${Date.now()}`,
             timestamp: 'Just now',
             source: 'queue',
             severity: 'critical',
-            message: `Queue size spiked to ${metrics.queueSize} waiting sessions. Consider routing agents.`
+            message: `Queue size spiked to ${currentQueueSize} waiting sessions. Consider routing agents.`
           };
           return [newAlert, ...prevAlerts.slice(0, 4)];
         }
@@ -91,7 +102,7 @@ export function useRealtimeMetrics() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [metrics.queueSize]);
+  }, []); // Empty dep array: interval runs continuously without recreation
 
   return {
     metrics,

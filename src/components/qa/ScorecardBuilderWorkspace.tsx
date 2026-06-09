@@ -19,7 +19,8 @@ import {
   FileText,
   FileCheck,
   Zap,
-  Gauge
+  Gauge,
+  Loader2
 } from 'lucide-react';
 
 interface ScorecardSection {
@@ -171,6 +172,7 @@ export function ScorecardBuilderWorkspace() {
 
   // Simulator grades state
   const [simulatorScores, setSimulatorScores] = useState<Record<string, number>>({});
+  const [isExporting, setIsExporting] = useState(false);
 
   const filteredTemplates = templates.filter(t => 
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -195,7 +197,7 @@ export function ScorecardBuilderWorkspace() {
     });
 
     return {
-      score: Math.round(scoreAccumulator),
+      score: autoFailed ? 0 : Math.round(scoreAccumulator),
       autoFailed
     };
   };
@@ -305,8 +307,34 @@ export function ScorecardBuilderWorkspace() {
   };
 
   const handleExportPDF = () => {
+    if (isExporting) return;
+    setIsExporting(true);
     addAuditLog(`Initiated print/export schema for ${activeTemplate.name}`, 'success');
-    alert(t.pdfPreparing);
+
+    setTimeout(() => {
+      const mockPdfContent = `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`
+        + `2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n`
+        + `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R >>\nendobj\n`
+        + `4 0 obj\n<< /Length 200 >>\nstream\n`
+        + `BT\n/F1 12 Tf\n70 700 Td\n(QA Scorecard Schema: ${activeTemplate.name}) Tj\n`
+        + `0 -20 Td\n(Status: ${activeTemplate.status}) Tj\n`
+        + `0 -20 Td\n(Total Sections Configured: ${sections.length}) Tj\n`
+        + `0 -20 Td\n(Configured Weight: ${totalWeightSum}%) Tj\n`
+        + `0 -20 Td\n(Generated: ${new Date().toLocaleString()})\n`
+        + `ET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000056 00000 n\n0000000111 00000 n\n0000000202 00000 n\ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n320\n%%EOF`;
+
+      const blob = new Blob([mockPdfContent], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `scorecard_schema_${activeTemplate.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setIsExporting(false);
+    }, 1200);
   };
 
   const complianceCategories = [
@@ -365,10 +393,11 @@ export function ScorecardBuilderWorkspace() {
 
           <button
             onClick={handleExportPDF}
+            disabled={isExporting}
             title={t.exportPdf}
-            className="p-2 rounded-xl border border-slate-205 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 cursor-pointer"
+            className="p-2 rounded-xl border border-slate-205 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-950 cursor-pointer disabled:opacity-50"
           >
-            <Download className="w-4 h-4" />
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           </button>
         </div>
       </div>

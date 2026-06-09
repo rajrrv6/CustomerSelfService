@@ -1007,6 +1007,22 @@ export function SlaAnalytics() {
     ? ['9 ص', '11 ص', '1 م', '3 م', '5 م', '7 م', '9 م', '11 م']
     : ['9 AM', '11 AM', '1 PM', '3 PM', '5 PM', '7 PM', '9 PM', '11 PM'];
 
+  const getXCoordinate = (index: number) => {
+    const step = 70; // (470 - 50) / 6 = 70
+    if (isRtl) {
+      return 470 - index * step;
+    }
+    return 50 + index * step;
+  };
+
+  const getXCoordinateHourly = (index: number) => {
+    const step = 60; // (470 - 50) / 7 = 60
+    if (isRtl) {
+      return 470 - index * step;
+    }
+    return 50 + index * step;
+  };
+
   return (
     <div className="space-y-6 text-xs text-slate-800 dark:text-slate-200" dir={isRtl ? 'rtl' : 'ltr'}>
 
@@ -1729,12 +1745,12 @@ export function SlaAnalytics() {
                   })}
                   {/* Area path for 2.8, 2.5, 2.7, 2.4, 2.2, 2.6, 2.4 */}
                   <path
-                    d="M 50 100.4 L 120 110 L 190 103.6 L 260 113.2 L 330 119.6 L 400 106.8 L 470 113.2 L 470 160 L 50 160 Z"
+                    d={`M ${getXCoordinate(0)} 100.4 L ${getXCoordinate(1)} 110 L ${getXCoordinate(2)} 103.6 L ${getXCoordinate(3)} 113.2 L ${getXCoordinate(4)} 119.6 L ${getXCoordinate(5)} 106.8 L ${getXCoordinate(6)} 113.2 L ${getXCoordinate(6)} 160 L ${getXCoordinate(0)} 160 Z`}
                     fill="url(#purpleGrad)"
                   />
                   {/* Line path */}
                   <path
-                    d="M 50 100.4 L 120 110 L 190 103.6 L 260 113.2 L 330 119.6 L 400 106.8 L 470 113.2"
+                    d={`M ${getXCoordinate(0)} 100.4 L ${getXCoordinate(1)} 110 L ${getXCoordinate(2)} 103.6 L ${getXCoordinate(3)} 113.2 L ${getXCoordinate(4)} 119.6 L ${getXCoordinate(5)} 106.8 L ${getXCoordinate(6)} 113.2`}
                     fill="none"
                     stroke="#6366f1"
                     strokeWidth="2.5"
@@ -1743,13 +1759,13 @@ export function SlaAnalytics() {
                   />
                   {/* X Axis labels */}
                   {weekdayLabels.map((lbl, idx) => (
-                    <text key={idx} x={50 + idx * 70} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
+                    <text key={idx} x={getXCoordinate(idx)} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
                       {lbl}
                     </text>
                   ))}
                   {/* Points */}
                   {[100.4, 110, 103.6, 113.2, 119.6, 106.8, 113.2].map((y, idx) => (
-                    <circle key={idx} cx={50 + idx * 70} cy={y} r="3" className="fill-white stroke-[#6366f1] stroke-2" />
+                    <circle key={idx} cx={getXCoordinate(idx)} cy={y} r="3" className="fill-white stroke-[#6366f1] stroke-2" />
                   ))}
                 </>
               )}
@@ -1777,7 +1793,7 @@ export function SlaAnalytics() {
                   ].map((bar, idx) => (
                     <rect
                       key={idx}
-                      x={50 + idx * 70 - 10}
+                      x={getXCoordinate(idx) - 10}
                       y={160 - bar.h}
                       width="20"
                       height={bar.h}
@@ -1789,7 +1805,7 @@ export function SlaAnalytics() {
                   ))}
                   {/* X Axis labels */}
                   {weekdayLabels.map((lbl, idx) => (
-                    <text key={idx} x={50 + idx * 70} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
+                    <text key={idx} x={getXCoordinate(idx)} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
                       {lbl}
                     </text>
                   ))}
@@ -1813,7 +1829,7 @@ export function SlaAnalytics() {
                     return (
                       <rect
                         key={idx}
-                        x={50 + idx * 60 - 8}
+                        x={getXCoordinateHourly(idx) - 8}
                         y={160 - h}
                         width="16"
                         height={h}
@@ -1826,7 +1842,7 @@ export function SlaAnalytics() {
                   })}
                   {/* X Axis labels */}
                   {hourlyLabels.map((lbl, idx) => (
-                    <text key={idx} x={50 + idx * 60} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
+                    <text key={idx} x={getXCoordinateHourly(idx)} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
                       {lbl}
                     </text>
                   ))}
@@ -1846,12 +1862,12 @@ export function SlaAnalytics() {
                   })}
                   {/* Area path for 97.5%, 98.1%, 97.8%, 98.5%, 99.1%, 98.8%, 99.3% */}
                   <path
-                    d="M 50 70 L 120 60.4 L 190 65.2 L 260 54 L 330 44.4 L 400 49.2 L 470 41.2 L 470 160 L 50 160 Z"
+                    d={`M ${getXCoordinate(0)} 70 L ${getXCoordinate(1)} 60.4 L ${getXCoordinate(2)} 65.2 L ${getXCoordinate(3)} 54 L ${getXCoordinate(4)} 44.4 L ${getXCoordinate(5)} 49.2 L ${getXCoordinate(6)} 41.2 L ${getXCoordinate(6)} 160 L ${getXCoordinate(0)} 160 Z`}
                     fill="url(#greenGrad)"
                   />
                   {/* Line path */}
                   <path
-                    d="M 50 70 L 120 60.4 L 190 65.2 L 260 54 L 330 44.4 L 400 49.2 L 470 41.2"
+                    d={`M ${getXCoordinate(0)} 70 L ${getXCoordinate(1)} 60.4 L ${getXCoordinate(2)} 65.2 L ${getXCoordinate(3)} 54 L ${getXCoordinate(4)} 44.4 L ${getXCoordinate(5)} 49.2 L ${getXCoordinate(6)} 41.2`}
                     fill="none"
                     stroke="#10b981"
                     strokeWidth="2.5"
@@ -1860,13 +1876,13 @@ export function SlaAnalytics() {
                   />
                   {/* X Axis labels */}
                   {weekdayLabels.map((lbl, idx) => (
-                    <text key={idx} x={50 + idx * 70} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
+                    <text key={idx} x={getXCoordinate(idx)} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
                       {lbl}
                     </text>
                   ))}
                   {/* Points */}
                   {[70, 60.4, 65.2, 54, 44.4, 49.2, 41.2].map((y, idx) => (
-                    <circle key={idx} cx={50 + idx * 70} cy={y} r="3" className="fill-white stroke-[#10b981] stroke-2" />
+                    <circle key={idx} cx={getXCoordinate(idx)} cy={y} r="3" className="fill-white stroke-[#10b981] stroke-2" />
                   ))}
                 </>
               )}
@@ -1884,7 +1900,7 @@ export function SlaAnalytics() {
                   })}
                   {/* Line path for 8, 12, 15, 11, 14, 18, 14 */}
                   <path
-                    d="M 50 126 L 120 94 L 190 70 L 260 102 L 330 78 L 400 46 L 470 78"
+                    d={`M ${getXCoordinate(0)} 126 L ${getXCoordinate(1)} 94 L ${getXCoordinate(2)} 70 L ${getXCoordinate(3)} 102 L ${getXCoordinate(4)} 78 L ${getXCoordinate(5)} 46 L ${getXCoordinate(6)} 78`}
                     fill="none"
                     stroke="#3b82f6"
                     strokeWidth="2.5"
@@ -1893,13 +1909,13 @@ export function SlaAnalytics() {
                   />
                   {/* X Axis labels */}
                   {weekdayLabels.map((lbl, idx) => (
-                    <text key={idx} x={50 + idx * 70} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
+                    <text key={idx} x={getXCoordinate(idx)} y="180" textAnchor="middle" fontSize="9" className="fill-slate-400 dark:fill-slate-500 font-mono font-bold">
                       {lbl}
                     </text>
                   ))}
                   {/* Points */}
                   {[126, 94, 70, 102, 78, 46, 78].map((y, idx) => (
-                    <circle key={idx} cx={50 + idx * 70} cy={y} r="3" className="fill-white stroke-[#3b82f6] stroke-2" />
+                    <circle key={idx} cx={getXCoordinate(idx)} cy={y} r="3" className="fill-white stroke-[#3b82f6] stroke-2" />
                   ))}
                 </>
               )}

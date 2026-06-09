@@ -66,6 +66,7 @@ export function ClientAuditLogsWorkspace() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
     useNotificationsStore.getState().addAlert({
       category: 'compliance',

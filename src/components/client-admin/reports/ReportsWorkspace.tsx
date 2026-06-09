@@ -134,6 +134,7 @@ export function ReportsWorkspace() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       // Add to exported history ledger
       const newExport: ExportHistoryItem = {
@@ -481,6 +482,7 @@ export function ReportsWorkspace() {
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
+                          URL.revokeObjectURL(url);
                         }}
                         className="p-1 text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         title="Download file"

@@ -5,6 +5,7 @@ import { useWallboardFeed } from '@/hooks/useWallboardFeed';
 import { useVoiceQueue } from '@/hooks/useVoiceQueue';
 import { useRealtimeMetrics } from '@/hooks/useRealtimeMetrics';
 import { useApp } from '@/context/AppContext';
+import { useAuthStore } from '@/stores/authStore';
 import { translations } from '@/i18n/translations';
 import { StatusIndicator } from './shared/StatusIndicator';
 import { EnterpriseTable } from '@/components/shared/EnterpriseTable';
@@ -26,7 +27,11 @@ import {
 export function LiveWallboard() {
   const { lang } = useApp();
   const t = translations[lang];
-  const { agents, logs, qualityBreakdown } = useWallboardFeed();
+  const role = useAuthStore((state) => state.role);
+  const isSupervisor = role === 'supervisor' || role === 'client_admin' || role === 'super_admin';
+  const [speedMultiplier, setSpeedMultiplier] = useState(1);
+
+  const { agents, logs, qualityBreakdown } = useWallboardFeed(speedMultiplier);
   const { queue, simulateInboundQueuedCall, dequeueCall } = useVoiceQueue();
   const { metrics } = useRealtimeMetrics();
   const [lastActionMsg, setLastActionMsg] = useState<string>('');
@@ -87,14 +92,47 @@ export function LiveWallboard() {
               {t.analyticsCenter.wallboard.consoleSubtitle}
             </p>
           </div>
-          <button
-            onClick={handleSimulateCall}
-            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-2xl shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
-            aria-label="Simulate inbound VIP/high priority call"
-          >
-            <Plus className="w-4 h-4" />
-            {t.analyticsCenter.wallboard.simulateCall}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {isSupervisor && (
+              <div className="flex items-center gap-1 bg-white dark:bg-slate-950 p-1.5 border border-slate-200 dark:border-slate-850 rounded-2xl shadow-xs">
+                <span className="text-[9px] font-bold text-slate-500 uppercase font-mono tracking-wider px-1">
+                  Speed:
+                </span>
+                {[
+                  { value: 1, label: '1x' },
+                  { value: 2, label: '2x (Busy)' },
+                  { value: 5, label: '5x (Surge)' }
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setSpeedMultiplier(opt.value)}
+                    className={`px-2 py-0.5 rounded-xl text-[9.5px] font-extrabold transition-all cursor-pointer ${
+                      speedMultiplier === opt.value
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            <button
+              onClick={handleSimulateCall}
+              disabled={!isSupervisor}
+              className={`flex items-center justify-center gap-1.5 px-4 py-2 font-bold rounded-2xl shadow-sm transition-all outline-none ${
+                isSupervisor
+                  ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-850 text-white cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500'
+                  : 'bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
+              }`}
+              aria-label="Simulate inbound VIP/high priority call"
+            >
+              <Plus className="w-4 h-4" />
+              {t.analyticsCenter.wallboard.simulateCall}
+            </button>
+          </div>
         </div>
 
         {/* Aria live logs region */}
@@ -211,7 +249,12 @@ export function LiveWallboard() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleRouteCall(call.id, call.customerName)}
-                        className="flex items-center gap-1 py-1 px-2.5 bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-950/50 text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 rounded-lg transition-colors border border-slate-200/40 dark:border-slate-700 focus-visible:ring-1 focus-visible:ring-blue-500 outline-none"
+                        disabled={!isSupervisor}
+                        className={`flex items-center gap-1 py-1 px-2.5 rounded-lg transition-colors border border-slate-200/40 dark:border-slate-700 outline-none ${
+                          isSupervisor
+                            ? 'bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-950/50 text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 cursor-pointer focus-visible:ring-1 focus-visible:ring-blue-500'
+                            : 'bg-slate-50 text-slate-350 dark:bg-slate-900/60 dark:text-slate-600 cursor-not-allowed'
+                        }`}
                         aria-label={`Route ${call.customerName} to agent`}
                       >
                         <UserMinus className="w-3 h-3" />

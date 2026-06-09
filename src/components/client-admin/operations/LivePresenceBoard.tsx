@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Eye, Volume2, Clock, UserCheck, ShieldAlert, CheckCircle, RotateCcw, Info, X } from 'lucide-react';
+import { Eye, Volume2, Clock, UserCheck, ShieldAlert, CheckCircle, RotateCcw, Info, X, Ear } from 'lucide-react';
 import { OperationalCard } from '@/components/shared/OperationalCard';
 import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
+import { useApp } from '@/context/AppContext';
 
 interface AgentItem {
   id: string;
@@ -49,6 +50,7 @@ export function LivePresenceBoard({
 }: LivePresenceBoardProps) {
   const isRtl = lang === 'ar';
   const { pushToast } = useFeedbackToasts();
+  const { conversations, setConversations } = useApp();
 
   const [inspectingAgent, setInspectingAgent] = useState<AgentItem | null>(null);
   const [detailsAgent, setDetailsAgent] = useState<AgentItem | null>(null);
@@ -146,6 +148,35 @@ export function LivePresenceBoard({
     addAuditLog(`Supervisor opened live agent inspector for ${agent.name}`, 'success');
   };
 
+  const triggerSilentMonitorMode = (agent: AgentItem) => {
+    const isCurrentlyMonitoring = supervisedAgent === agent.id && activeSupervisorMode === 'silent';
+    setSupervisedAgent(isCurrentlyMonitoring ? null : agent.id);
+    setActiveSupervisorMode(isCurrentlyMonitoring ? null : 'silent');
+    
+    if (!isCurrentlyMonitoring) {
+      pushToast('success', isRtl ? 'تم تفعيل المراقبة الصامتة' : 'Silent Monitoring Engaged', isRtl ? `مراقبة الوكيل ${agent.name} قيد التشغيل حالياً بصمت.` : `Supervisor silent monitoring active for Agent: ${agent.name}`);
+      addAuditLog(`Supervisor initiated silent monitoring with Agent: ${agent.name}`, 'success');
+
+      const activeConv = conversations.find(c => c.agentId === (agent.id === 'agent-1' ? 'agent-1' : 'agent-2') && c.status === 'active');
+      if (activeConv) {
+        const systemMsg = {
+          id: `msg-sys-monitor-${Date.now()}`,
+          sender: 'system' as const,
+          senderName: 'System',
+          text: `Supervisor started silent monitoring`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          messageType: 'system' as any
+        };
+        setConversations(prev =>
+          prev.map(c => c.id === activeConv.id ? { ...c, messages: [...c.messages, systemMsg] } : c)
+        );
+      }
+    } else {
+      pushToast('info', isRtl ? 'تم إلغاء المراقبة الصامتة' : 'Silent Monitoring Terminated', isRtl ? `تم إنهاء مراقبة الوكيل ${agent.name}.` : `Supervisor silent monitoring session ended for Agent: ${agent.name}`);
+      addAuditLog(`Supervisor ended silent monitoring with Agent: ${agent.name}`, 'success');
+    }
+  };
+
   const triggerWhisperMode = (agent: AgentItem) => {
     const isCurrentlyWhispering = supervisedAgent === agent.id && activeSupervisorMode === 'whisper';
     setSupervisedAgent(isCurrentlyWhispering ? null : agent.id);
@@ -157,6 +188,21 @@ export function LivePresenceBoard({
       }
       pushToast('success', isRtl ? 'تم تفعيل التوجيه الهامس' : 'Whisper Coaching Engaged', isRtl ? `تلقين الوكيل ${agent.name} قيد التشغيل حالياً.` : `Supervisor whisper coaching active for Agent: ${agent.name}`);
       addAuditLog(`Supervisor initiated coaching whisper with Agent: ${agent.name}`, 'success');
+
+      const activeConv = conversations.find(c => c.agentId === (agent.id === 'agent-1' ? 'agent-1' : 'agent-2') && c.status === 'active');
+      if (activeConv) {
+        const systemMsg = {
+          id: `msg-sys-whisper-${Date.now()}`,
+          sender: 'system' as const,
+          senderName: 'System',
+          text: `Supervisor started whisper coaching`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          messageType: 'system' as any
+        };
+        setConversations(prev =>
+          prev.map(c => c.id === activeConv.id ? { ...c, messages: [...c.messages, systemMsg] } : c)
+        );
+      }
     } else {
       pushToast('info', isRtl ? 'تم إلغاء التوجيه الهامس' : 'Whisper Coaching Terminated', isRtl ? `تم إنهاء تلقين الوكيل ${agent.name}.` : `Supervisor whisper coaching session ended for Agent: ${agent.name}`);
       addAuditLog(`Supervisor ended coaching whisper with Agent: ${agent.name}`, 'success');
@@ -288,6 +334,20 @@ export function LivePresenceBoard({
                     title="Live Inspector"
                   >
                     <Eye className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => triggerSilentMonitorMode(agent)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-xl border transition-all cursor-pointer ${
+                      isMonitored && activeSupervisorMode === 'silent'
+                        ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
+                        : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-955/20 dark:hover:bg-emerald-900/20 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400'
+                    }`}
+                    title="Silent Monitor"
+                  >
+                    <Ear className="w-3.5 h-3.5" />
+                    <span>{isRtl ? 'مراقبة صامتة' : 'Silent Monitor'}</span>
                   </button>
 
                   <button

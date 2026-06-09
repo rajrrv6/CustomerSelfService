@@ -5,7 +5,7 @@ import { UploadCloud, FileText, AlertCircle, CheckCircle, RefreshCw, Trash2 } fr
 import { ModalWrapper } from '@/components/shared/ModalWrapper';
 import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
 
-interface FileUploadModalProps {
+interface SourceFileUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   lang: 'en' | 'ar';
@@ -22,7 +22,7 @@ interface UploadQueueItem {
   chunks?: number;
 }
 
-export function FileUploadModal({ isOpen, onClose, lang, onAddSource }: FileUploadModalProps) {
+export function SourceFileUploadModal({ isOpen, onClose, lang, onAddSource }: SourceFileUploadModalProps) {
   const isRtl = lang === 'ar';
   const { pushToast } = useFeedbackToasts();
   
@@ -181,6 +181,7 @@ export function FileUploadModal({ isOpen, onClose, lang, onAddSource }: FileUplo
             type="file"
             id="file-upload-input"
             multiple
+            aria-label={isRtl ? 'رفع ملفات المستندات' : 'Upload Document Files'}
             accept=".pdf,.docx,.csv,.txt,.html"
             className="hidden"
             onChange={handleFileInput}
@@ -215,6 +216,7 @@ export function FileUploadModal({ isOpen, onClose, lang, onAddSource }: FileUplo
           <label className="relative inline-flex items-center cursor-pointer shrink-0">
             <input
               type="checkbox"
+              aria-label="Simulate Parse Failure"
               checked={simulateFailure}
               onChange={() => setSimulateFailure(!simulateFailure)}
               className="sr-only peer"
@@ -226,7 +228,7 @@ export function FileUploadModal({ isOpen, onClose, lang, onAddSource }: FileUplo
         {/* Upload Queue */}
         {queue.length > 0 && (
           <div className="space-y-2.5">
-            <h4 className="font-mono text-[9px] font-bold text-slate-450 uppercase tracking-wide">
+            <h4 className="font-mono text-[9px] font-bold text-slate-455 uppercase tracking-wide">
               {isRtl ? 'قائمة الملفات المعالجة' : 'File Ingestion Queue'}
             </h4>
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
@@ -289,6 +291,7 @@ export function FileUploadModal({ isOpen, onClose, lang, onAddSource }: FileUplo
                   <div className="flex gap-1.5 shrink-0">
                     {item.status === 'failed' && (
                       <button
+                        type="button"
                         onClick={() => handleRetry(item.id)}
                         className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-blue-500 rounded-lg cursor-pointer"
                         title="Retry Ingestion"
@@ -297,6 +300,7 @@ export function FileUploadModal({ isOpen, onClose, lang, onAddSource }: FileUplo
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => handleRemove(item.id)}
                       className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-rose-500 rounded-lg cursor-pointer"
                       title="Remove file"

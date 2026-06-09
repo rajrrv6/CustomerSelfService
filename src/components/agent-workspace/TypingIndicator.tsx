@@ -1,6 +1,39 @@
 import React from 'react';
+import { useConversationStore } from '@/stores/conversationStore';
+import { useUIStore } from '@/stores/uiStore';
 
-export function TypingIndicator({ name }: { name: string }) {
+const presenceLabels = {
+  en: {
+    online: 'online',
+    away: 'away',
+    busy: 'busy',
+    offline: 'offline',
+  },
+  ar: {
+    online: 'متصل',
+    away: 'بالخارج',
+    busy: 'مشغول',
+    offline: 'غير متصل',
+  },
+};
+
+const typingLabels = {
+  en: 'is typing...',
+  ar: 'يكتب الآن...',
+};
+
+export function TypingIndicator({ name, conversationId }: { name: string; conversationId?: string }) {
+  const store = useConversationStore();
+  const lang = useUIStore((s) => s.lang) || 'en';
+  const activeId = conversationId ?? store.activeConversationId;
+  const isTyping = store.typingStates[activeId || ''] || false;
+  const presence = store.presenceStates[activeId || ''] || 'offline';
+
+  if (!isTyping) return null;
+
+  const presenceStr = presenceLabels[lang][presence] || presence;
+  const typingStr = typingLabels[lang] || 'is typing...';
+
   return (
     <div
       role="status"
@@ -13,7 +46,9 @@ export function TypingIndicator({ name }: { name: string }) {
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '150ms' }} />
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
-        <span className="text-slate-500 font-sans ms-1.5">{name} is typing...</span>
+        <span className="text-slate-500 font-sans ms-1.5">
+          {name} ({presenceStr}) {typingStr}
+        </span>
       </div>
     </div>
   );

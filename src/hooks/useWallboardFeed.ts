@@ -8,12 +8,13 @@ import {
 } from '@/data/seed/workforceMetricsSeed';
 import { CallQualitySample, callQualityBreakdown } from '@/data/seed/voiceMetricsSeed';
 
-export function useWallboardFeed() {
+export function useWallboardFeed(speedMultiplier: number = 1) {
   const [agents, setAgents] = useState<AgentPerformance[]>(agentPerformanceRoster);
   const [logs, setLogs] = useState<SupervisorActivityLog[]>(recentSupervisorLogs);
   const [qualityBreakdown, setQualityBreakdown] = useState<CallQualitySample[]>(callQualityBreakdown);
 
   useEffect(() => {
+    const delay = Math.round(5000 / Math.max(1, speedMultiplier));
     const interval = setInterval(() => {
       // Simulate status swapping of agents
       setAgents((prevAgents) =>
@@ -91,10 +92,10 @@ export function useWallboardFeed() {
         });
       }
 
-    }, 5000);
+    }, delay);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [speedMultiplier]);
 
   return {
     agents,

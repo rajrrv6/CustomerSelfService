@@ -39,6 +39,13 @@ interface NotificationState {
 
 const AUDIT_USER = 'active.user@mpaas.com';
 const AUDIT_IP = '192.168.10.150';
+// Temporal debounce cache for audit log deduplication.
+// Stores the last timestamp (ms) for each unique (action, status) pair.
+// If the same action+status combination is dispatched within AUDIT_DEBOUNCE_MS,
+// the duplicate entry is silently dropped to prevent log spam during rapid
+// realtime updates (e.g. repeated alert acknowledgements, monitoring events).
+const AUDIT_DEBOUNCE_MS = 1500;
+const _lastAuditCache: Map<string, number> = new Map();
 
 const initialFilters: FilterOptions = {
   category: 'all',
@@ -482,6 +489,16 @@ export const useNotificationStore = create<NotificationState>()((set, get) => ({
 
   // Audit Logs (backward compatibility implementation)
   addAuditLog: (action, status = 'success', roleOverride) => {
+    // De-duplicate: drop the entry if an identical action+status was logged recently
+    const dedupeKey = `${action}::${status}`;
+    const now = Date.now();
+    const lastTime = _lastAuditCache.get(dedupeKey);
+    if (lastTime !== undefined && now - lastTime < AUDIT_DEBOUNCE_MS) {
+      // Duplicate within debounce window — suppress silently
+      return;
+    }
+    _lastAuditCache.set(dedupeKey, now);
+
     const roleLabel = roleOverride ?? 'CLIENT ADMIN';
     const newLog: AuditLog = {
       id: `aud-${Date.now()}`,

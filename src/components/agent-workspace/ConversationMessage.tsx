@@ -1,42 +1,119 @@
 import React, { useState } from 'react';
-import { Globe, CheckCheck, FileText, Image as ImageIcon, Play, Pause, Mic, Mail, User } from 'lucide-react';
+import { Globe, CheckCheck, Play, Pause, Mic, Mail, User, Clock, AlertCircle } from 'lucide-react';
 import { Message } from '@/types';
+import { AttachmentViewer } from './AttachmentViewer';
 
 interface ConversationMessageProps {
   message: Message;
   lang: 'en' | 'ar';
   channel?: 'whatsapp' | 'web' | 'voice' | 'email' | 'instagram' | 'messenger';
   status?: 'unassigned' | 'active' | 'resolved' | 'escalated';
+  onRetry?: () => void;
+  showAvatar?: boolean;
+  showName?: boolean;
 }
 
-export function ConversationMessage({ message, lang, channel = 'web', status }: ConversationMessageProps) {
+export function ConversationMessage({
+  message,
+  lang,
+  channel = 'web',
+  status,
+  onRetry,
+  showAvatar = true,
+  showName = true,
+}: ConversationMessageProps) {
   const [showTranslation, setShowTranslation] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [emailExpanded, setEmailExpanded] = useState(false);
 
   const isUser = message.sender === 'customer';
   const isAgent = message.sender === 'agent';
   const isBot = message.sender === 'bot';
 
   // Attachment simulations
-  const hasAttachment = message.text.toLowerCase().includes('invoice') ||
-                        message.text.toLowerCase().includes('photo') ||
-                        message.text.toLowerCase().includes('file');
+  const hasAttachment =
+    message.text.toLowerCase().includes('invoice') ||
+    message.text.toLowerCase().includes('photo') ||
+    message.text.toLowerCase().includes('file');
   const isImage = message.text.toLowerCase().includes('photo');
 
-  // WhatsApp Voice Note classification
-  const isVoiceMsg = message.text.toLowerCase().includes('voice') ||
-                     message.text.toLowerCase().includes('audio') ||
-                     message.text.includes('تسجيل') ||
-                     message.id === 'ym1'; // mock fiber gateway audio clip
+  let displayAttachments = message.attachments;
+  if ((!displayAttachments || displayAttachments.length === 0) && hasAttachment) {
+    displayAttachments = [
+      {
+        id: `mock-att-${message.id}`,
+        name: isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf',
+        url: '#',
+        sizeBytes: isImage ? 1468000 : 327680,
+        type: isImage ? 'image' : 'pdf',
+      },
+    ];
+  }
+
+  // Voice Note classification
+  const isVoiceMsg =
+    channel === 'voice' ||
+    message.messageType === 'voice_note' ||
+    message.text.toLowerCase().includes('voice') ||
+    message.text.toLowerCase().includes('audio') ||
+    message.text.includes('تسجيل') ||
+    message.id === 'ym1';
+
+  // Internal Notes check
+  const isInternalNote =
+    message.messageType === 'internal_note' ||
+    message.text.startsWith('[Internal Note]:') ||
+    message.senderName.includes('Notes');
+
+  if (isInternalNote) {
+    return (
+      <div className="flex justify-end animate-in fade-in-50 duration-200 mb-2 w-full">
+        <div className="max-w-[75%] rounded-2xl px-4 py-3 border-2 border-purple-500 bg-purple-50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-300 shadow-sm relative">
+          <div className="flex justify-between items-center gap-4 text-[10px] opacity-75 mb-1.5 font-bold font-mono">
+            <span className="text-purple-700 dark:text-purple-400">🔒 [Internal Note] • {message.senderName}</span>
+            <span aria-label={lang === 'ar' ? `أُرسلت في ${message.timestamp}` : `Sent at ${message.timestamp}`}>{message.timestamp}</span>
+          </div>
+          <p className="font-semibold text-[13px] whitespace-pre-line break-words text-purple-800 dark:text-purple-200">
+            {message.text.replace(/^\[Internal Note\]:\s*/, '')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // System alert check
+  const isSystem = message.sender === 'system';
+  if (isSystem) {
+    const isEscalation =
+      message.messageType === 'escalation' ||
+      message.text.toLowerCase().includes('escalated') ||
+      message.text.includes('Escalation');
+    const bgClass = isEscalation
+      ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/20 dark:border-rose-900/50 dark:text-rose-450'
+      : 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/20 dark:border-amber-900/50 dark:text-amber-400';
+
+    return (
+      <div className="flex justify-center w-full my-2 animate-in fade-in-50 duration-200">
+        <div className={`px-4 py-2 rounded-xl border text-[11px] font-bold text-center max-w-md ${bgClass}`}>
+          <div className="font-mono text-[9px] opacity-75 mb-0.5">{message.timestamp}</div>
+          <div>{message.text}</div>
+        </div>
+      </div>
+    );
+  }
 
   // ----------------------------------------------------
   // WHATSAPP RENDER LOGIC
   // ----------------------------------------------------
   if (channel === 'whatsapp') {
+    const isSending = message.status === 'sending';
+    const isFailed = message.status === 'failed';
     return (
       <div className={`flex ${isUser ? 'justify-start' : 'justify-end'} animate-in fade-in-50 duration-200 mb-2`}>
         <div
           className={`max-w-[70%] rounded-xl px-3 py-2 leading-relaxed shadow-sm relative text-[13px] ${
+            isSending ? 'opacity-65' : ''
+          } ${isFailed ? 'border border-rose-500' : ''} ${
             isUser
               ? 'bg-white text-slate-800 dark:bg-[#202c33] dark:text-slate-100 rounded-tl-none border-none'
               : isAgent
@@ -45,23 +122,30 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
           }`}
         >
           {/* Header sender indicator */}
-          <div className="flex justify-between items-center gap-4 text-[10.5px] text-slate-400 dark:text-slate-500 font-bold mb-1">
-            <span>{message.senderName}</span>
-          </div>
+          {showName && (
+            <div className="flex justify-between items-center gap-4 text-[10.5px] text-slate-400 dark:text-slate-500 font-bold mb-1">
+              <span>{message.senderName}</span>
+            </div>
+          )}
 
           {/* Voice note simulated player */}
           {isVoiceMsg ? (
-            <div className="my-2 p-2 bg-slate-100/50 dark:bg-slate-900/40 rounded-lg flex items-center gap-3 border border-slate-200/20">
+            <div 
+              className="my-2 p-2 bg-slate-100/50 dark:bg-slate-900/40 rounded-lg flex items-center gap-3 border border-slate-200/20"
+              role="region"
+              aria-label={lang === 'ar' ? 'تشغيل الرسالة الصوتية' : 'Voice note player'}
+            >
               <button
                 type="button"
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 hover:bg-emerald-600 shadow-sm"
+                aria-label={isPlaying ? (lang === 'ar' ? 'إيقاف مؤقت' : 'Pause voice note') : (lang === 'ar' ? 'تشغيل' : 'Play voice note')}
+                className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 hover:bg-emerald-600 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
               >
                 {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
               </button>
 
               {/* Waveform graphic */}
-              <div className="flex-1 flex items-end gap-0.5 h-6 select-none">
+              <div className="flex-1 flex items-end gap-0.5 h-6 select-none" aria-hidden="true">
                 {[12, 18, 8, 24, 14, 20, 6, 16, 22, 10, 14, 8, 18, 12, 6, 20, 14, 10].map((h, i) => (
                   <span
                     key={i}
@@ -85,37 +169,19 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
             {message.text}
           </p>
 
-          {/* Simulated WhatsApp Attachment */}
-          {hasAttachment && !isVoiceMsg && (
-            <div
-              role="img"
-              aria-label={lang === 'ar' ? `مرفق: ${isImage ? 'صورة' : 'ملف'} ${isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}` : `Attachment: ${isImage ? 'image' : 'file'} ${isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}`}
-              className="mt-2.5 p-2 bg-emerald-500/10 dark:bg-slate-900/50 rounded-lg border border-emerald-500/20 flex items-center gap-2"
-            >
-              {isImage ? (
-                <ImageIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              ) : (
-                <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              )}
-              <div className="text-xs text-start min-w-0">
-                <span className="font-bold block truncate text-slate-800 dark:text-slate-200" style={{ maxWidth: '140px' }}>
-                  {isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}
-                </span>
-                <span className="opacity-75 block text-[9.5px] font-mono text-slate-500 dark:text-slate-400">
-                  {isImage ? '1.4 MB' : '320 KB'} • WhatsApp Sync
-                </span>
-              </div>
-            </div>
+          {/* Unified Attachment Previews */}
+          {displayAttachments && displayAttachments.length > 0 && (
+            <AttachmentViewer attachments={displayAttachments} lang={lang} />
           )}
 
           {/* Translation Option */}
           {message.translatedText && (
-            <div className="mt-2 pt-1 border-t border-slate-200/30 dark:border-slate-700/30 text-[10.5px] italic flex items-center gap-1">
+            <div className="mt-2 pt-1 border-t border-slate-200/30 dark:border-slate-700/30 text-[10.5px] italic flex items-center gap-1.5">
               <Globe className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
               <button
                 type="button"
                 onClick={() => setShowTranslation(!showTranslation)}
-                className="underline font-bold text-[9px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+                className="underline font-bold text-[9px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 focus:outline-none"
               >
                 {showTranslation ? 'Hide Translation' : 'View Translation'}
               </button>
@@ -132,7 +198,21 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
           <div className="text-end text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-1 flex justify-end items-center gap-0.5 select-none leading-none">
             <span aria-label={lang === 'ar' ? `أُرسلت في ${message.timestamp}` : `Sent at ${message.timestamp}`}>{message.timestamp}</span>
             {!isUser && (
-              <CheckCheck className="w-3 h-3 text-[#53bdeb]" />
+              message.status === 'sending' ? (
+                <Clock className="w-3 h-3 text-slate-400 animate-spin" />
+              ) : message.status === 'failed' ? (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  aria-label={lang === 'ar' ? 'إعادة الإرسال' : 'Retry sending message'}
+                  className="text-rose-500 text-[10px] font-bold flex items-center gap-0.5 cursor-pointer bg-transparent border-none p-0 focus:outline-none"
+                >
+                  <AlertCircle className="w-3 h-3 text-rose-500" />
+                  <span>Retry</span>
+                </button>
+              ) : (
+                <CheckCheck className="w-3 h-3 text-[#53bdeb]" />
+              )
             )}
           </div>
         </div>
@@ -155,33 +235,67 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
 
     return (
       <div className="w-full animate-in fade-in-50 duration-200 mb-4">
-        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800/80 p-5 shadow-sm text-slate-800 dark:text-slate-200">
+        <div className={`bg-white dark:bg-slate-950 rounded-xl border p-5 shadow-sm text-slate-800 dark:text-slate-200 ${
+          message.status === 'sending' ? 'opacity-65 border-slate-200 dark:border-slate-800/80' : 
+          message.status === 'failed' ? 'border-rose-500' : 'border-slate-200 dark:border-slate-800/80'
+        }`}>
           {/* Email Headers Card */}
-          <div className="space-y-1 text-[11.5px] text-slate-400 dark:text-slate-500 font-normal pb-3.5 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex justify-between items-baseline">
+          <div className="space-y-1.5 text-[11.5px] text-slate-500 dark:text-slate-400 font-normal pb-3.5 border-b border-slate-100 dark:border-slate-850">
+            <div className="flex justify-between items-baseline gap-4">
               <span className="text-[13px] font-bold text-slate-800 dark:text-slate-200 truncate">
                 From: <span className="font-normal">{emailFrom}</span>
               </span>
-              <span aria-label={lang === 'ar' ? `أُرسلت في ${message.timestamp}` : `Sent at ${message.timestamp}`} className="font-mono text-[10.5px] text-slate-400 shrink-0">{message.timestamp}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                {message.status === 'sending' && <span className="text-slate-400 flex items-center gap-1"><Clock className="w-3.5 h-3.5 animate-spin" /> Sending...</span>}
+                {message.status === 'failed' && (
+                  <button 
+                    type="button" 
+                    onClick={onRetry} 
+                    aria-label={lang === 'ar' ? 'إعادة إرسال البريد الإلكتروني' : 'Retry sending email'}
+                    className="text-rose-500 font-bold hover:underline flex items-center gap-1 bg-transparent border-none p-0 focus:outline-none"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5" /> Failed to Send (Retry)
+                  </button>
+                )}
+                <span aria-label={lang === 'ar' ? `أُرسلت في ${message.timestamp}` : `Sent at ${message.timestamp}`} className="font-mono text-[10.5px] text-slate-400">{message.timestamp}</span>
+              </div>
             </div>
-            <div>
-              To: <span>{emailTo}</span>
+
+            {/* Collapsible toggle */}
+            <div className="flex items-center justify-between mt-1">
+              <button
+                type="button"
+                aria-expanded={emailExpanded}
+                onClick={() => setEmailExpanded(!emailExpanded)}
+                className="text-blue-500 hover:underline font-bold text-[10px] uppercase tracking-wider flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-1"
+              >
+                {emailExpanded ? (lang === 'ar' ? 'إخفاء التفاصيل' : 'Hide Details') : (lang === 'ar' ? 'عرض التفاصيل' : 'Show Details')}
+              </button>
             </div>
+
+            {/* Collapsible Metadata Content */}
+            {emailExpanded && (
+              <div className="mt-2 space-y-1.5 p-2.5 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200/50 dark:border-slate-800/50 animate-in slide-in-from-top-1 duration-200">
+                <div><strong>To:</strong> {emailTo}</div>
+                <div><strong>CC:</strong> accounts-audit@vertex-logistics.com; dispatch-ops@vertex-logistics.com</div>
+                <div><strong>Subject:</strong> {message.emailHeaders?.subject || `Inquiry regarding payment audit - #${message.id}`}</div>
+              </div>
+            )}
           </div>
 
           {/* Email Body Content */}
-          <div className="mt-4 text-[13px] font-normal leading-relaxed break-words text-slate-700 dark:text-slate-300 space-y-3 whitespace-pre-line">
+          <div className="mt-4 text-[13px] font-normal leading-relaxed break-words text-slate-755 dark:text-slate-300 space-y-3 whitespace-pre-line">
             {message.text}
 
             {/* Email Signature simulator */}
-            <p className="text-[11.5px] text-slate-400 dark:text-slate-500 mt-4 border-t border-slate-100 dark:border-slate-800/50 pt-2 font-mono">
+            <p className="text-[11.5px] text-slate-400 dark:text-slate-500 mt-4 border-t border-slate-100 dark:border-slate-80/50 pt-2 font-mono">
               {isUser ? `—\nSent via Vertex CRM portal node` : `—\nBest Regards,\n${message.senderName}\nCustomer Success Tier-1`}
             </p>
           </div>
 
           {/* Threaded Quoted Email Sections */}
           {isThreadedReply && (
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500 animate-in fade-in duration-300">
+            <div className="mt-4 pt-3 border-t border-slate-105 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500 animate-in fade-in duration-300">
               <div className="border-s-2 border-slate-300 ps-3 italic space-y-1">
                 <p className="font-bold text-[10px]">On 2026-05-22 at 14:40, Juliana Carter wrote:</p>
                 <p>"Hello, our accounts department sent a bank wire transfer confirmation but our workspace says payment pending."</p>
@@ -189,26 +303,9 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
             </div>
           )}
 
-          {/* Simulated Attachment card in email */}
-          {hasAttachment && (
-            <div
-              role="img"
-              aria-label={lang === 'ar' ? 'مرفق: ملف INV-2026-7891_payment_receipt.pdf' : 'Attachment: file INV-2026-7891_payment_receipt.pdf'}
-              className="mt-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs"
-            >
-              <div className="flex items-center gap-2">
-                <FileText className="w-6 h-6 text-red-500 shrink-0" />
-                <div className="text-start min-w-0">
-                  <span className="font-bold block text-xs text-slate-800 dark:text-slate-200 truncate" style={{ maxWidth: '200px' }}>
-                    INV-2026-7891_payment_receipt.pdf
-                  </span>
-                  <span className="text-[9.5px] text-slate-400 block font-mono">320 KB • PDF Document • SAP verified</span>
-                </div>
-              </div>
-              <button type="button" className="text-xs text-blue-500 hover:underline font-bold font-mono shrink-0">
-                Download
-              </button>
-            </div>
+          {/* Unified Attachment Previews */}
+          {displayAttachments && displayAttachments.length > 0 && (
+            <AttachmentViewer attachments={displayAttachments} lang={lang} />
           )}
 
           {/* Translation Option */}
@@ -218,7 +315,7 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
               <button
                 type="button"
                 onClick={() => setShowTranslation(!showTranslation)}
-                className="underline font-bold text-[9px] uppercase tracking-wider text-slate-500 hover:text-slate-600"
+                className="underline font-bold text-[9px] uppercase tracking-wider text-slate-500 hover:text-slate-655 focus:outline-none"
               >
                 {showTranslation ? 'Hide Translation' : 'View Translation'}
               </button>
@@ -239,11 +336,15 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
   // STANDARD CHAT & ESCALATED RENDER LOGIC
   // ----------------------------------------------------
   const isEscalated = status === 'escalated';
+  const isSending = message.status === 'sending';
+  const isFailed = message.status === 'failed';
 
   return (
     <div className={`flex ${isUser ? 'justify-start' : 'justify-end'} animate-in fade-in-50 duration-200`}>
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 leading-relaxed border shadow-sm relative ${
+          isSending ? 'opacity-65' : ''
+        } ${isFailed ? 'border-rose-500' : ''} ${
           isUser
             ? isEscalated
               ? 'bg-rose-50/90 text-slate-900 dark:bg-slate-900 dark:text-slate-200 rounded-bl-none border-rose-300 dark:border-rose-900/50'
@@ -263,39 +364,16 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
       >
         {/* Sender details and timestamp */}
         <div className="flex justify-between items-center gap-4 text-[10px] opacity-60 mb-1.5 font-bold">
-          <span>{message.senderName}</span>
+          {showName ? <span>{message.senderName}</span> : <span />}
           <span aria-label={lang === 'ar' ? `أُرسلت في ${message.timestamp}` : `Sent at ${message.timestamp}`} className="font-mono">{message.timestamp}</span>
         </div>
 
         {/* Message body */}
         <p className="font-medium text-[13px] whitespace-pre-line break-words">{message.text}</p>
 
-        {/* Simulated Attachment Preview */}
-        {hasAttachment && (
-          <div
-            role="img"
-            aria-label={lang === 'ar' ? `مرفق: ${isImage ? 'صورة' : 'ملف'} ${isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}` : `Attachment: ${isImage ? 'image' : 'file'} ${isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}`}
-            className="mt-3 p-2 bg-slate-950/20 dark:bg-white/10 rounded-xl border border-slate-200/30 dark:border-white/10 flex items-center justify-between gap-2"
-          >
-            <div className="flex items-center gap-2">
-              {isImage ? (
-                <ImageIcon className="w-5 h-5 text-pink-300 shrink-0" />
-              ) : (
-                <FileText className="w-5 h-5 text-emerald-300 shrink-0" />
-              )}
-              <div className="text-xs text-start min-w-0">
-                <span className="font-bold block truncate text-white" style={{ maxWidth: '120px' }}>
-                  {isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}
-                </span>
-                <span className="opacity-75 block text-[9.5px] font-mono text-slate-200">
-                  {isImage ? '1.4 MB' : '320 KB'} • SAP Synced
-                </span>
-              </div>
-            </div>
-            <button type="button" className="text-[10px] text-white hover:underline font-bold font-mono shrink-0">
-              Open
-            </button>
-          </div>
+        {/* Unified Attachment Previews */}
+        {displayAttachments && displayAttachments.length > 0 && (
+          <AttachmentViewer attachments={displayAttachments} lang={lang} />
         )}
 
         {/* Translation Overlay */}
@@ -305,7 +383,7 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
             <button
               type="button"
               onClick={() => setShowTranslation(!showTranslation)}
-              className="underline font-bold text-[10px] uppercase tracking-wider text-white"
+              className="underline font-bold text-[10px] uppercase tracking-wider text-white focus:outline-none"
             >
               {showTranslation ? 'Hide Translate' : 'Translate Response'}
             </button>
@@ -321,9 +399,23 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
         {/* Message metadata footer: delivery status checkmarks */}
         {!isUser && (
           <div className="mt-1.5 flex justify-end items-center gap-1 select-none leading-none">
-            <CheckCheck className={`w-3.5 h-3.5 ${
-              channel === 'instagram' || channel === 'messenger' || isEscalated ? 'text-white' : 'text-blue-200'
-            }`} />
+            {message.status === 'sending' ? (
+              <Clock className="w-3.5 h-3.5 text-white/60 animate-spin" />
+            ) : message.status === 'failed' ? (
+              <button
+                type="button"
+                onClick={onRetry}
+                aria-label={lang === 'ar' ? 'إعادة المحاولة لإرسال الرسالة' : 'Retry sending message'}
+                className="text-rose-300 hover:text-rose-100 text-[10px] font-bold flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 focus:outline-none font-sans"
+              >
+                <AlertCircle className="w-3 h-3 text-rose-300" />
+                <span>Retry</span>
+              </button>
+            ) : (
+              <CheckCheck className={`w-3.5 h-3.5 ${
+                channel === 'instagram' || channel === 'messenger' || isEscalated ? 'text-white' : 'text-blue-200'
+              }`} />
+            )}
           </div>
         )}
       </div>

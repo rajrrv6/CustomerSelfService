@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Brain, RefreshCw, AlertCircle, Calendar, Sliders, Clock, Database, Save, Settings, ShieldAlert, Search, Plus, Trash2, Globe, FileText } from 'lucide-react';
+import { Brain, RefreshCw, AlertCircle, Calendar, Sliders, Clock, Database, Save, Settings, ShieldAlert, Search, Plus, Trash2, Globe, FileText, Link as LinkIcon } from 'lucide-react';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { usePermission } from '@/stores/permissionStore';
 import { OperationalCard } from '@/components/shared/OperationalCard';
@@ -13,8 +13,9 @@ import { StatusIndicator } from '@/components/shared/workflows/StatusIndicator';
 import { KnowledgeSource } from '@/types';
 
 // Import newly implemented modals
-import { FileUploadModal } from './FileUploadModal';
-import { UrlCrawlModal } from './UrlCrawlModal';
+import { SourceFileUploadModal } from './SourceFileUploadModal';
+import { SourceUrlCrawlModal } from './SourceUrlCrawlModal';
+import { SourceConnectorModal } from './SourceConnectorModal';
 import { DatabaseConnectorModal } from './DatabaseConnectorModal';
 import { ReindexConfirmationModal } from './ReindexConfirmationModal';
 import { OperationalActivityFeed } from '../shared/OperationalActivityFeed';
@@ -42,6 +43,7 @@ export function KnowledgeBaseTab() {
   // Modals visibility states
   const [showUpload, setShowUpload] = useState(false);
   const [showCrawl, setShowCrawl] = useState(false);
+  const [showCloudConnector, setShowCloudConnector] = useState(false);
   const [showDb, setShowDb] = useState(false);
   const [showReindex, setShowReindex] = useState(false);
 
@@ -341,6 +343,20 @@ export function KnowledgeBaseTab() {
       </button>
 
       <button
+        onClick={() => setShowCloudConnector(true)}
+        disabled={!canEdit}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all ${
+          !canEdit
+            ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-655 cursor-not-allowed border border-transparent'
+            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+        }`}
+        title={!canEdit ? "Requires Edit Permission" : undefined}
+      >
+        <LinkIcon className="w-3.5 h-3.5" />
+        <span>{isRtl ? 'ربط سحابي' : 'Cloud Source'}</span>
+      </button>
+
+      <button
         onClick={() => setShowDb(true)}
         disabled={!canEdit}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-wider font-bold transition-all ${
@@ -351,7 +367,7 @@ export function KnowledgeBaseTab() {
         title={!canEdit ? "Requires Edit Permission" : undefined}
       >
         <Database className="w-3.5 h-3.5" />
-        <span>{isRtl ? 'إضافة موصل' : 'Add Connector'}</span>
+        <span>{isRtl ? 'إضافة موصل' : 'Add DB Connector'}</span>
       </button>
 
       <button
@@ -908,17 +924,23 @@ export function KnowledgeBaseTab() {
       </div>
 
       {/* Modals */}
-      <FileUploadModal
+      <SourceFileUploadModal
         isOpen={showUpload}
         onClose={() => setShowUpload(false)}
         lang={lang}
         onAddSource={handleAddFileSource}
       />
-      <UrlCrawlModal
+      <SourceUrlCrawlModal
         isOpen={showCrawl}
         onClose={() => setShowCrawl(false)}
         lang={lang}
         onAddSource={handleAddUrlSource}
+      />
+      <SourceConnectorModal
+        isOpen={showCloudConnector}
+        onClose={() => setShowCloudConnector(false)}
+        lang={lang}
+        onAddSource={handleAddConnectorSource}
       />
       <DatabaseConnectorModal
         isOpen={showDb}

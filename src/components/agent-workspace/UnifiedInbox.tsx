@@ -38,41 +38,57 @@ import { SentimentBadge } from './SentimentBadge';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
 import { InboxTab, StatusFilter } from '@/hooks/useInboxFilters';
+import { useConversationStore } from '@/stores/conversationStore';
 
 interface UnifiedInboxProps {
-  conversations: Conversation[];
-  activeChatId: string;
-  onSelectChat: (id: string) => void;
-  activeTab: InboxTab;
-  onChangeTab: (tab: InboxTab) => void;
-  statusFilter: StatusFilter;
-  onChangeStatusFilter: (status: StatusFilter) => void;
-  selectedQueue: string;
-  onChangeQueue: (queueId: string) => void;
+  conversations?: Conversation[];
+  activeChatId?: string;
+  onSelectChat?: (id: string | null) => void;
+  activeTab?: InboxTab;
+  onChangeTab?: (tab: InboxTab) => void;
+  statusFilter?: StatusFilter;
+  onChangeStatusFilter?: (status: StatusFilter) => void;
+  selectedQueue?: string;
+  onChangeQueue?: (queueId: string) => void;
   queues: QueueConfig[];
-  searchQuery: string;
-  onSearchChange: (val: string) => void;
+  searchQuery?: string;
+  onSearchChange?: (val: string) => void;
   /** Override width/border when embedded in a mobile sheet */
   className?: string;
 }
 
 export function UnifiedInbox({
-  conversations,
-  activeChatId,
-  onSelectChat,
-  activeTab,
-  onChangeTab,
-  statusFilter,
-  onChangeStatusFilter,
-  selectedQueue,
-  onChangeQueue,
+  conversations: propsConversations,
+  activeChatId: propsActiveChatId,
+  onSelectChat: propsOnSelectChat,
+  activeTab: propsActiveTab,
+  onChangeTab: propsOnChangeTab,
+  statusFilter: propsStatusFilter,
+  onChangeStatusFilter: propsOnChangeStatusFilter,
+  selectedQueue: propsSelectedQueue,
+  onChangeQueue: propsOnChangeQueue,
   queues,
-  searchQuery,
-  onSearchChange,
+  searchQuery: propsSearchQuery,
+  onSearchChange: propsOnSearchChange,
   className
 }: UnifiedInboxProps) {
   const { lang } = useApp();
   const t = translations[lang];
+
+  const store = useConversationStore();
+  const activeChatId = propsActiveChatId !== undefined ? propsActiveChatId : (store.activeConversationId ?? '');
+  const onSelectChat = propsOnSelectChat !== undefined ? propsOnSelectChat : store.setActiveConversation;
+  
+  const activeTab = propsActiveTab !== undefined ? propsActiveTab : store.queueFilters.activeTab;
+  const onChangeTab = propsOnChangeTab !== undefined ? propsOnChangeTab : store.setActiveTab;
+  const statusFilter = propsStatusFilter !== undefined ? propsStatusFilter : store.queueFilters.statusFilter;
+  const onChangeStatusFilter = propsOnChangeStatusFilter !== undefined ? propsOnChangeStatusFilter : store.setStatusFilter;
+  const selectedQueue = propsSelectedQueue !== undefined ? propsSelectedQueue : store.queueFilters.selectedQueue;
+  const onChangeQueue = propsOnChangeQueue !== undefined ? propsOnChangeQueue : store.setSelectedQueue;
+  const searchQuery = propsSearchQuery !== undefined ? propsSearchQuery : store.queueFilters.searchQuery;
+  const onSearchChange = propsOnSearchChange !== undefined ? propsOnSearchChange : store.setSearchQuery;
+
+  const conversations = propsConversations !== undefined ? propsConversations : Object.values(store.conversations);
 
   // Tabs config
   const tabs = [
@@ -190,11 +206,15 @@ export function UnifiedInbox({
             const isActive = chat.id === activeChatId;
 
             // SLA Outcomes labels
+            const slaState = store.slaStates[chat.id];
+            const slaStatus = slaState ? slaState.status : chat.slaStatus;
+            const slaTimeLeft = slaState ? slaState.timeLeft : chat.slaDeadline;
+
             const slaColor = {
               within_sla: 'border-emerald-500 bg-emerald-500',
               warning: 'border-amber-500 bg-amber-500 animate-pulse',
               breached: 'border-rose-500 bg-rose-500'
-            }[chat.slaStatus] || 'bg-slate-400';
+            }[slaStatus] || 'bg-slate-400';
 
             // Channel style specifications
             const channelStyles: Record<string, { borderActive: string; borderInactive: string; bgActive: string; badgeBg: string }> = {
@@ -220,7 +240,7 @@ export function UnifiedInbox({
                 borderActive: 'border-cyan-500 dark:border-cyan-400',
                 borderInactive: 'border-cyan-500/20 dark:border-cyan-500/10',
                 bgActive: 'bg-cyan-500/10 dark:bg-cyan-500/5',
-                badgeBg: 'bg-cyan-500'
+                badgeBg: 'bg-cyan-50'
               },
               instagram: {
                 borderActive: 'border-pink-500 dark:border-pink-400',
@@ -263,6 +283,28 @@ export function UnifiedInbox({
               urgent: 'text-rose-600 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-950/20 dark:border-rose-900/30 animate-pulse'
             };
 
+            const presence = store.presenceStates[chat.id] || 'offline';
+            const presenceColor = {
+              online: 'bg-emerald-500',
+              away: 'bg-amber-500',
+              busy: 'bg-rose-500',
+              offline: 'bg-slate-400'
+            }[presence];
+
+             const unreadCount = store.unreadCounts[chat.id] !== undefined ? store.unreadCounts[chat.id] : (chat.unreadCount ?? 0);
+
+             const queueAssignment = store.queueAssignments[chat.id] || (chat.priority === 'urgent' ? 'q-vip' : 'q-default');
+             const queueLabel = {
+               'q-vip': lang === 'ar' ? 'VIP' : 'VIP',
+               'q-telco': lang === 'ar' ? 'اتصالات' : 'Telco',
+               'q-default': lang === 'ar' ? 'افتراضي' : 'Default',
+               'q-billing': lang === 'ar' ? 'فواتير' : 'Billing'
+             }[queueAssignment] || queueAssignment;
+
+             const conferenceState = store.conferenceStates[chat.id];
+             const hasActiveConference = conferenceState?.status === 'active';
+             const participantCount = conferenceState?.participants.length || 0;
+
              return (
               <button
                 key={chat.id}
@@ -283,20 +325,37 @@ export function UnifiedInbox({
                       <User className="w-5 h-5 text-slate-400" />
                     )}
                   </div>
+                  {/* Presence dot */}
+                  <span
+                    data-testid={`presence-dot-${chat.id}`}
+                    className={`absolute top-0 end-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${presenceColor}`}
+                    title={`Presence: ${presence}`}
+                  />
+                  <span className="sr-only">{`Presence: ${presence}`}</span>
+
                   {/* Channel icon badge */}
                   <span className={`absolute -bottom-1 -end-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${style.badgeBg} text-white flex items-center justify-center p-0.5 shadow-sm`}>
                     <IconComponent className="w-2.5 h-2.5 shrink-0" />
                   </span>
+                  {/* Active Conference participant counter badge */}
+                  {hasActiveConference && (
+                    <span
+                      data-testid={`conf-counter-${chat.id}`}
+                      className="absolute -bottom-2 start-1 bg-purple-650 border border-white dark:border-slate-900 text-white rounded-full px-1.5 py-0.2 text-[8px] font-black flex items-center justify-center shadow-sm select-none"
+                    >
+                      👥 {participantCount}
+                    </span>
+                  )}
                   {/* Unread indicator */}
-                  {chat.unreadCount && chat.unreadCount > 0 ? (
+                  {unreadCount > 0 ? (
                     <>
-                      <span className="absolute -top-1 -start-1 min-w-4 h-4 px-1 rounded-full bg-blue-600 text-white font-mono text-[9.5px] font-extrabold flex items-center justify-center shadow-sm select-none">
-                        {chat.unreadCount}
+                      <span className="absolute -top-1 -start-1 min-w-4 h-4 px-1 rounded-full bg-blue-600 text-white font-mono text-[9.5px] font-extrabold flex items-center justify-center shadow-sm select-none animate-pulse">
+                        {unreadCount}
                       </span>
                       <span className="sr-only">
                         {lang === 'ar'
-                          ? `${chat.unreadCount} رسائل غير مقروءة`
-                          : `${chat.unreadCount} unread messages`}
+                          ? `${unreadCount} رسائل غير مقروءة`
+                          : `${unreadCount} unread messages`}
                       </span>
                     </>
                   ) : null}
@@ -321,6 +380,10 @@ export function UnifiedInbox({
                           {chat.priority}
                         </span>
                       )}
+                      {/* Transferred queue indicator badge */}
+                      <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-slate-150 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 select-none">
+                        {queueLabel}
+                      </span>
                     </div>
 
                     {/* Assignment & SLA status indicator */}
@@ -336,7 +399,7 @@ export function UnifiedInbox({
                       )}
                       <span className={`w-2 h-2 rounded-full shrink-0 ${slaColor}`} />
                       <span className="text-slate-400">
-                        {chat.slaDeadline}
+                        {slaTimeLeft}
                       </span>
                     </div>
                   </div>
