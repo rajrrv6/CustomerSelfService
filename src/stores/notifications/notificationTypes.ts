@@ -58,6 +58,11 @@ export interface SystemAlert {
     [key: string]: any;
   };
   actions?: NotificationAction[];
+  allowedRoles?: string[];
+  allowedPersonas?: string[];
+  allowedModules?: string[];
+  tenantScope?: string;
+  visibilityType?: string;
 }
 
 export interface FilterOptions {

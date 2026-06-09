@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNotificationStore } from '@/stores/notifications/notificationStore';
+import { useAlerts, useResolveAlert } from '@/stores/notifications/notificationSelectors';
 import { 
   triggerSlaBreach, 
   triggerStaffingShortage, 
@@ -17,9 +18,9 @@ interface WfmAlertsPanelProps {
 export function WfmAlertsPanel({ lang }: WfmAlertsPanelProps) {
   const isRtl = lang === 'ar';
   
-  // Subscribe to Zustand notification alerts
-  const alerts = useNotificationStore((s) => s.alerts);
-  const resolveAlert = useNotificationStore((s) => s.resolveAlert);
+  // Subscribe to Zustand notification alerts via selectors for RBAC filtering
+  const alerts = useAlerts();
+  const resolveAlert = useResolveAlert();
 
   // Filter alerts relevant to Workforce Management & SLAs
   const activeWfmAlerts = alerts.filter(
@@ -73,7 +74,12 @@ export function WfmAlertsPanel({ lang }: WfmAlertsPanelProps) {
         agentName: name,
         shift,
         sourceSystem: 'Workforce Scheduler'
-      }
+      },
+      allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
+      allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
+      allowedModules: ['workforce', 'operations'],
+      tenantScope: 'global',
+      visibilityType: 'global'
     });
   };
 

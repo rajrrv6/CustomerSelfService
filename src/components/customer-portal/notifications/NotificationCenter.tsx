@@ -4,7 +4,12 @@ import React, { useState, useMemo } from 'react';
 import { 
   Bell, BellOff, Check, Search, Filter, AlertCircle, Info, RefreshCw
 } from 'lucide-react';
-import { useNotificationStore } from '@/stores/notifications/notificationStore';
+import { 
+  useAlerts, 
+  useAcknowledgeAlert, 
+  useAcknowledgeAll, 
+  useTogglePinAlert 
+} from '@/stores/notifications/notificationSelectors';
 import { useApp } from '@/context/AppContext';
 import { NotificationCard } from './NotificationCard';
 import { 
@@ -15,12 +20,10 @@ export function NotificationCenter() {
   const { lang, addAuditLog } = useApp();
   const isRtl = lang === 'ar';
 
-  const { 
-    alerts, 
-    acknowledgeAlert, 
-    acknowledgeAll, 
-    togglePinAlert 
-  } = useNotificationStore();
+  const alerts = useAlerts();
+  const acknowledgeAlert = useAcknowledgeAlert();
+  const acknowledgeAll = useAcknowledgeAll();
+  const togglePinAlert = useTogglePinAlert();
 
   // Local state for deleted and snoozed notifications (sandbox persistence)
   const [deletedIds, setDeletedIds] = useState<string[]>([]);

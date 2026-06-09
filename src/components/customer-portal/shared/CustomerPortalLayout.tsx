@@ -43,7 +43,7 @@ import { CsatSurveyWidget } from '../feedback/CsatSurveyWidget';
 import { NpsSurveyWidget } from '../feedback/NpsSurveyWidget';
 import { CallbackQueueCard } from '../feedback/CallbackQueueCard';
 import { AccentColorPicker } from './EnterpriseFrameworks';
-import { useNotificationStore } from '@/stores/notifications/notificationStore';
+import { useAlerts } from '@/stores/notifications/notificationSelectors';
 import { INTERACTIVE_CARD, SURFACE_PANEL, FOCUS_RING, SUPPORT_MICRO_TRANSITION } from '@/design-system/tokens';
 
 // Enterprise System Imports
@@ -87,7 +87,7 @@ export function CustomerPortalLayout({
 
   const t = translations[lang];
   const { pushToast } = useFeedbackToasts();
-  const { alerts } = useNotificationStore();
+  const alerts = useAlerts();
 
   // RBAC: Governance features visible to admin roles only
   // (super_admin and client_admin per the UserRole type definition)

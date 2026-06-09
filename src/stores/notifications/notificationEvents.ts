@@ -12,6 +12,13 @@ const dispatchAlert = (payload: {
   message: string;
   metadata?: Record<string, any>;
   actions?: NotificationAction[];
+  
+  // RBAC and Persona Metadata
+  allowedRoles?: string[];
+  allowedPersonas?: string[];
+  allowedModules?: string[];
+  tenantScope?: string;
+  visibilityType?: string;
 }) => {
   // Use store's imperative state fetching to fire alert from non-React environments
   useNotificationStore.getState().addAlert(payload);
@@ -36,7 +43,12 @@ export const triggerSlaBreach = (queueName: string, waitTime: string, threshold:
     actions: [
       { label: 'View Queue', actionType: 'navigate', payload: { screenId: 'live_queues' } },
       { label: 'Acknowledge', actionType: 'acknowledge' }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
+    allowedModules: ['billing', 'operations', 'sla'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -58,7 +70,12 @@ export const triggerWebhookFailure = (endpoint: string, url: string, waitTime: s
     actions: [
       { label: 'Retry Ping', actionType: 'retry', payload: { endpoint } },
       { label: 'View Routing', actionType: 'navigate', payload: { screenId: 'channels' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
+    allowedPersonas: ['ADMIN'],
+    allowedModules: ['bot', 'integrations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -77,7 +94,12 @@ export const triggerAiDegradation = (confidenceScore: number, sourceSystem = 'Fa
     },
     actions: [
       { label: 'Tune Intent', actionType: 'navigate', payload: { screenId: 'training' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR'],
+    allowedModules: ['bot', 'ai-copilot'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -96,7 +118,12 @@ export const triggerVectorDBIndexFailure = (partition: string) => {
     },
     actions: [
       { label: 'Retry compacting', actionType: 'retry', payload: { dbPartition: partition } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'AI_ADMIN', 'INFRA_ADMIN'],
+    allowedPersonas: ['ADMIN'],
+    allowedModules: ['ai-copilot', 'infrastructure', 'integrations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -115,7 +142,12 @@ export const triggerDialogValidationError = (nodeId: string, message: string) =>
     },
     actions: [
       { label: 'Inspect Node', actionType: 'navigate', payload: { screenId: 'dialog_flow', selectNode: nodeId } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
+    allowedPersonas: ['ADMIN'],
+    allowedModules: ['bot'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -136,7 +168,12 @@ export const triggerStaffingShortage = (queueName: string, activeCount: number, 
     },
     actions: [
       { label: 'View Roster', actionType: 'navigate', payload: { screenId: 'agent_presence' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
+    allowedModules: ['workforce', 'operations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -156,7 +193,12 @@ export const triggerSafetyIntercept = (phrase: string, policy = 'Strict PII Mask
     },
     actions: [
       { label: 'View Guardrails', actionType: 'navigate', payload: { screenId: 'guardrails' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR'],
+    allowedModules: ['bot', 'audit', 'compliance'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -176,7 +218,12 @@ export const triggerQueueOverflow = (queueName: string, size: number) => {
     },
     actions: [
       { label: 'Open Workspace', actionType: 'navigate', payload: { screenId: 'inbox' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
+    allowedModules: ['workforce', 'operations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -196,7 +243,12 @@ export const triggerApiTimeout = (apiEndpoint: string, waitTime: string) => {
     },
     actions: [
       { label: 'Retry Endpoint', actionType: 'retry', payload: { apiEndpoint } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
+    allowedPersonas: ['ADMIN'],
+    allowedModules: ['bot', 'integrations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -212,7 +264,12 @@ export const triggerSyncCompleted = (sourceSystem: string, recordsSynced: number
     metadata: {
       sourceSystem,
       recordsSynced,
-    }
+    },
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
+    allowedPersonas: ['ADMIN'],
+    allowedModules: ['rag', 'sync'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -232,7 +289,12 @@ export const triggerOmnichannelOutage = (provider: string, statusText: string) =
     },
     actions: [
       { label: 'View Channels', actionType: 'navigate', payload: { screenId: 'channels' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
+    allowedPersonas: ['ADMIN'],
+    allowedModules: ['operations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -251,7 +313,12 @@ export const triggerEscalationOverload = (unresolvedCount: number) => {
     },
     actions: [
       { label: 'View Inbox', actionType: 'navigate', payload: { screenId: 'inbox' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
+    allowedModules: ['workforce', 'operations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -271,7 +338,12 @@ export const triggerHallucinationRisk = (confidence: number, query: string) => {
     },
     actions: [
       { label: 'Manage KB', actionType: 'navigate', payload: { screenId: 'knowledge_base' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR'],
+    allowedModules: ['ai-copilot'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };
 
@@ -288,6 +360,11 @@ export const triggerIntentPublish = (intentName: string, version: string) => {
       intentName,
       version,
       sourceSystem: 'Training Intelligence Loop',
-    }
+    },
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR'],
+    allowedModules: ['bot'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   });
 };

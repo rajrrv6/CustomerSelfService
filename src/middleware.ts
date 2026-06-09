@@ -27,6 +27,7 @@ const PROTECTED_PREFIXES = [
   '/portal/chat-history',
   '/portal/profile',
   '/portal/private',
+  '/tickets',
 ];
 
 function isPublicPath(pathname: string): boolean {

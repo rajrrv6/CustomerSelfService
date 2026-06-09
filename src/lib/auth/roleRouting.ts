@@ -17,6 +17,7 @@ export const ROUTE_ROLE_ACCESS: Record<string, UserRole[]> = {
   '/tenant': ['client_admin', 'operations_manager', 'viewer'],
   '/workspace': ['support_agent', 'supervisor', 'qa_manager'],
   '/portal': ['customer'],
+  '/tickets': ['support_agent'],
 };
 
 const MOCK_STAFF_REGISTRY: Record<string, UserRole> = {
@@ -97,5 +98,6 @@ export function getDefaultScreenForPath(pathname: string): string | null {
   if (pathname.startsWith('/tenant/dashboard')) return 'bots';
   if (pathname.startsWith('/workspace/inbox')) return 'inbox';
   if (pathname.startsWith('/portal/home')) return 'customer_home';
+  if (pathname.startsWith('/tickets')) return 'tickets';
   return null;
 }

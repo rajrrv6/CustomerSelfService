@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Bell, ShieldAlert, Sparkles, Inbox, Sliders } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
-import { useNotificationStore } from '@/stores/notifications/notificationStore';
+import { useAlerts } from '@/stores/notifications/notificationSelectors';
 import { NotificationCenter } from './NotificationCenter';
 import { NotificationPreferences } from './NotificationPreferences';
 import { 
@@ -16,7 +16,7 @@ export function CustomerNotifications() {
   const t = translations[lang];
   const isRtl = lang === 'ar';
   
-  const { alerts } = useNotificationStore();
+  const alerts = useAlerts();
   const unreadCount = alerts.filter(a => !a.read).length;
 
   const [activeTab, setActiveTab] = useState<'inbox' | 'preferences'>('inbox');

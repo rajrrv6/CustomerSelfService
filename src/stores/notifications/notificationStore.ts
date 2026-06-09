@@ -74,7 +74,12 @@ const seedAlerts: SystemAlert[] = [
     actions: [
       { label: 'View Queue', actionType: 'navigate', payload: { screenId: 'live_queues' } },
       { label: 'Acknowledge', actionType: 'acknowledge' }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
+    allowedModules: ['billing', 'operations', 'sla'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   },
   {
     id: 'alert-webhook-latency',
@@ -101,7 +106,12 @@ const seedAlerts: SystemAlert[] = [
     actions: [
       { label: 'Retry Ping', actionType: 'retry', payload: { endpoint: 'whatsapp' } },
       { label: 'View Routing', actionType: 'navigate', payload: { screenId: 'channels' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
+    allowedPersonas: ['ADMIN'],
+    allowedModules: ['bot', 'integrations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   },
   {
     id: 'alert-nlu-confidence',
@@ -125,7 +135,12 @@ const seedAlerts: SystemAlert[] = [
     },
     actions: [
       { label: 'Tune Intent', actionType: 'navigate', payload: { screenId: 'training' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR'],
+    allowedModules: ['bot', 'ai-copilot'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   },
   {
     id: 'alert-vector-indexing',
@@ -148,7 +163,12 @@ const seedAlerts: SystemAlert[] = [
     },
     actions: [
       { label: 'Retry compacting', actionType: 'retry', payload: { dbPartition: 'pinecone-compact' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'AI_ADMIN', 'INFRA_ADMIN'],
+    allowedPersonas: ['ADMIN'],
+    allowedModules: ['ai-copilot', 'infrastructure', 'integrations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   },
   {
     id: 'alert-staffing',
@@ -172,7 +192,12 @@ const seedAlerts: SystemAlert[] = [
     },
     actions: [
       { label: 'View Roster', actionType: 'navigate', payload: { screenId: 'agent_presence' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
+    allowedModules: ['workforce', 'operations'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   },
   {
     id: 'alert-compliance-masking',
@@ -195,7 +220,12 @@ const seedAlerts: SystemAlert[] = [
     },
     actions: [
       { label: 'View Guardrails', actionType: 'navigate', payload: { screenId: 'guardrails' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR'],
+    allowedModules: ['bot', 'audit', 'compliance'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   },
   {
     id: 'alert-analytics-deflection',
@@ -218,7 +248,12 @@ const seedAlerts: SystemAlert[] = [
     },
     actions: [
       { label: 'View Analytics', actionType: 'navigate', payload: { screenId: 'analytics_center' } }
-    ]
+    ],
+    allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
+    allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
+    allowedModules: ['analytics'],
+    tenantScope: 'global',
+    visibilityType: 'global'
   }
 ];
 

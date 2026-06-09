@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotificationsStore } from '@/stores/notificationsStore';
@@ -85,27 +85,42 @@ function WorkspaceShellInner({
   const activeScreen = useUIStore((s) => s.activeScreen);
   const setActiveScreen = useUIStore((s) => s.setActiveScreen);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const t: TranslationKeys = translations[lang];
   const previousRoleRef = React.useRef<UserRole | null>(null);
+  const mountedRef = React.useRef(false);
+  const lastUrlRef = React.useRef('');
 
   React.useEffect(() => {
     let targetScreen = initialScreen;
 
-    if (role === 'support_agent') {
-      targetScreen = 'agent_dashboard';
-    } else if (role === 'supervisor') {
-      targetScreen = 'supervisor_monitor';
-    } else if (role === 'qa_manager') {
-      targetScreen = 'qa_queue';
-    } else if (role === 'client_admin') {
-      targetScreen = 'bots';
+    if (pathname === '/tickets') {
+      targetScreen = 'tickets';
+    } else {
+      const screenParam = searchParams?.get('screen');
+      if (screenParam && canAccessScreen(role, screenParam)) {
+        targetScreen = screenParam;
+      } else if (initialScreen && canAccessScreen(role, initialScreen)) {
+        targetScreen = initialScreen;
+      } else {
+        targetScreen = ROLE_DEFAULT_SCREEN[role];
+      }
     }
 
-    if (activeScreen !== targetScreen) {
-      setActiveScreen(targetScreen);
+    if (targetScreen && !canAccessScreen(role, targetScreen)) {
+      targetScreen = ROLE_DEFAULT_SCREEN[role];
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role]);
+
+    if (activeScreen !== targetScreen && targetScreen) {
+      const urlKey = `${pathname}?${searchParams?.toString() || ''}`;
+      if (!mountedRef.current || urlKey !== lastUrlRef.current) {
+        setActiveScreen(targetScreen);
+        lastUrlRef.current = urlKey;
+      }
+    }
+    mountedRef.current = true;
+  }, [role, pathname, searchParams, initialScreen]);
 
   const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [showPublicBotOverlay, setShowPublicBotOverlay] = useState(false);

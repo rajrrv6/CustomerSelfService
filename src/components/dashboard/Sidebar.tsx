@@ -249,7 +249,7 @@ export function Sidebar({
   const supportAgentNavSections = React.useMemo(() => [
     {
       id: 'conversations',
-      labelKey: 'caNavQueueMonitoring',
+      labelKey: 'conversations',
       items: [
         { id: 'inbox', labelKey: 'unifiedInbox', icon: Mail, permission: 'inbox', route: '/tenant/dashboard' },
         { id: 'tickets', labelKey: 'tickets', icon: FileText, permission: 'tickets', route: '/tenant/dashboard' }
@@ -257,14 +257,14 @@ export function Sidebar({
     },
     {
       id: 'productivity',
-      labelKey: 'caNavGovernance',
+      labelKey: 'dashboard',
       items: [
         { id: 'agent_dashboard', labelKey: 'agent_dashboard', icon: BarChart2, permission: 'agent_dashboard', route: '/tenant/dashboard' }
       ]
     },
     {
       id: 'ai_assist',
-      labelKey: 'caNavAIKnowledge',
+      labelKey: 'copilot',
       items: [
         { id: 'copilot', labelKey: 'copilot', icon: Brain, permission: 'copilot', route: '/tenant/dashboard' },
         { id: 'suggested_replies', labelKey: 'suggested_replies', icon: Sparkles, permission: 'suggested_replies', route: '/tenant/dashboard' },
@@ -539,7 +539,18 @@ export function Sidebar({
                             <button
                               key={item.id}
                               data-testid={`sidebar-item-${item.id}`}
-                              onClick={() => setActiveScreen(item.id)}
+                              onClick={() => {
+                                setActiveScreen(item.id);
+                                if (role === 'support_agent') {
+                                  if (item.id === 'tickets') {
+                                    router.push('/tickets');
+                                  } else if (item.id === 'inbox') {
+                                    router.push('/workspace/inbox');
+                                  } else {
+                                    router.push(`/workspace/inbox?screen=${item.id}`);
+                                  }
+                                }
+                              }}
                               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                                 isActive
                                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 translate-x-1.5 rtl:-translate-x-1.5 font-bold'

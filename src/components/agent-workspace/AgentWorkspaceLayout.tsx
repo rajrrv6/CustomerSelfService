@@ -39,7 +39,7 @@ import { queueSeed } from '@/data/seed/queueSeed';
 import { agentMetricsSeed, shiftScheduleSeed } from '@/data/seed/agentMetricsSeed';
 import { callHistorySeed } from '@/data/seed/callHistorySeed';
 
-import { Clock, Flame, PhoneCall, History, Users, MessageSquare, Shield, Inbox, UserCircle } from 'lucide-react';
+import { Clock, Flame, PhoneCall, History, Users, MessageSquare, Shield, Inbox, UserCircle, Search, Filter, User, Eye, Check } from 'lucide-react';
 import { MobileSheet } from '@/components/responsive/MobileSheet';
 import { MobileTabs } from '@/components/responsive/MobileTabs';
 
@@ -56,6 +56,19 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   // Active workspace states (local state scoped to AgentWorkspaceLayout)
   const [conversations, setConversations] = useState(conversationsSeed);
   const [activeChatId, setActiveChatId] = useState<string>('conv-102');
+
+  // Incident tickets list state
+  const [ticketSearch, setTicketSearch] = useState('');
+  const [tktStatusFilter, setTktStatusFilter] = useState('all');
+  const [tktPriorityFilter, setTktPriorityFilter] = useState('all');
+  const [ticketsList, setTicketsList] = useState([
+    { id: 'TIC-2033', customerName: 'Alex Mercer', title: 'Double charge dispute billing error', status: 'open', priority: 'high', date: '2026-05-20' },
+    { id: 'TIC-1145', customerName: 'Amina Al-Fayed', title: 'Duplicate billing verification query', status: 'open', priority: 'medium', date: '2026-05-19' },
+    { id: 'TIC-1022', customerName: 'Marcus Aurelius', title: 'Arabic STT latency spikes', status: 'pending', priority: 'urgent', date: '2026-05-19' },
+    { id: 'TIC-0881', customerName: 'Yasser Al-Shahrani', title: 'Fiber connection stability check', status: 'solved', priority: 'medium', date: '2026-05-12' },
+    { id: 'TIC-1102', customerName: 'Amina Al-Fayed', title: 'OAuth Domain Whitelist Update', status: 'solved', priority: 'high', date: '2026-04-14' },
+    { id: 'TIC-0992', customerName: 'Marcus Aurelius', title: 'Stripe API webhook failures', status: 'closed', priority: 'high', date: '2026-05-10' }
+  ]);
 
   // Inbox filters (tab, search, queue, status) — extracted hook
   const {
@@ -508,15 +521,225 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   }
 
   if (activeSubScreen === 'tickets') {
+    const isAr = lang === 'ar';
+    const statusLabels: Record<string, string> = {
+      all: isAr ? 'الكل' : 'All',
+      open: isAr ? 'مفتوح' : 'Open',
+      pending: isAr ? 'معلق' : 'Pending',
+      solved: isAr ? 'تم الحل' : 'Solved',
+      closed: isAr ? 'مغلق' : 'Closed',
+    };
+    const priorityLabels: Record<string, string> = {
+      all: isAr ? 'كل الأولويات' : 'All Priorities',
+      urgent: isAr ? 'عاجل' : 'Urgent',
+      high: isAr ? 'عالي' : 'High',
+      medium: isAr ? 'متوسط' : 'Medium',
+      low: isAr ? 'منخفض' : 'Low',
+    };
+
+    const filteredTickets = ticketsList.filter((tkt) => {
+      const matchesSearch =
+        tkt.id.toLowerCase().includes(ticketSearch.toLowerCase()) ||
+        tkt.customerName.toLowerCase().includes(ticketSearch.toLowerCase()) ||
+        tkt.title.toLowerCase().includes(ticketSearch.toLowerCase());
+      const matchesStatus = tktStatusFilter === 'all' || tkt.status === tktStatusFilter;
+      const matchesPriority = tktPriorityFilter === 'all' || tkt.priority === tktPriorityFilter;
+      return matchesSearch && matchesStatus && matchesPriority;
+    });
+
     return (
       <div className="space-y-6 animate-in fade-in-50 duration-200">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white font-mono">{t.agentWorkspace.roster.title}</h2>
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t.agentWorkspace.roster.description}</p>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white font-mono">
+              {t.agentWorkspace.dashboard.headers.activeTickets}
+            </h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              {isAr
+                ? 'مراجعة وحل تذاكر البلاغات والشكاوى المسجلة للعملاء'
+                : 'Review, assign, and resolve incident support tickets and active escalations.'}
+            </p>
+          </div>
+          {/* Quick Stats */}
+          <div className="flex gap-2">
+            <div className="px-3 py-1.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 rounded-2xl text-center">
+              <span className="text-[10px] uppercase font-bold block">{isAr ? 'عاجل' : 'Urgent'}</span>
+              <strong className="text-sm font-bold font-mono">
+                {ticketsList.filter(t => t.priority === 'urgent' && t.status !== 'closed').length}
+              </strong>
+            </div>
+            <div className="px-3 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-2xl text-center">
+              <span className="text-[10px] uppercase font-bold block">{isAr ? 'مفتوح/معلق' : 'Open/Pending'}</span>
+              <strong className="text-sm font-bold font-mono">
+                {ticketsList.filter(t => (t.status === 'open' || t.status === 'pending')).length}
+              </strong>
+            </div>
+          </div>
         </div>
 
-        <div className="max-w-3xl">
-          <ShiftSchedule schedule={shiftScheduleSeed} />
+        {/* Filters and Search toolbar */}
+        <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+          {/* Search bar */}
+          <div className="relative w-full md:max-w-xs">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={ticketSearch}
+              onChange={(e) => setTicketSearch(e.target.value)}
+              placeholder={isAr ? 'البحث بالرمز، العميل، العنوان...' : 'Search by ID, customer, title...'}
+              className="w-full pl-10 pr-4 py-2 text-xs border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+            />
+          </div>
+
+          {/* Pill Filters */}
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* Status Pills */}
+            <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200/50 dark:border-slate-800/80">
+              {['all', 'open', 'pending', 'solved', 'closed'].map((status) => {
+                const isActive = tktStatusFilter === status;
+                return (
+                  <button
+                    key={status}
+                    onClick={() => setTktStatusFilter(status)}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all ${
+                      isActive
+                        ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-white shadow-xs font-extrabold'
+                        : 'text-slate-450 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {statusLabels[status]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Priority Selector */}
+            <div className="relative">
+              <select
+                value={tktPriorityFilter}
+                onChange={(e) => setTktPriorityFilter(e.target.value)}
+                className="appearance-none pl-3 pr-8 py-2 text-[10px] font-bold border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 dark:text-slate-250 cursor-pointer"
+              >
+                {['all', 'urgent', 'high', 'medium', 'low'].map((prio) => (
+                  <option key={prio} value={prio}>
+                    {priorityLabels[prio]}
+                  </option>
+                ))}
+              </select>
+              <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        {/* Tickets Table */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono w-24">ID</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">{isAr ? 'العميل' : 'Customer'}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">{isAr ? 'العنوان / الموضوع' : 'Subject'}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center w-28">{isAr ? 'الأولوية' : 'Priority'}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center w-28">{isAr ? 'الحالة' : 'Status'}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-32">{isAr ? 'التاريخ' : 'Created At'}</th>
+                  <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 w-24 text-center">{isAr ? 'الإجراءات' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
+                {filteredTickets.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-xs text-slate-400 italic">
+                      {isAr ? 'لا توجد تذاكر تطابق معايير البحث والفرز.' : 'No incident tickets found matching the filters.'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTickets.map((tkt) => {
+                    const statusColors: Record<string, string> = {
+                      open: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+                      pending: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-455 border border-yellow-500/20',
+                      solved: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+                      closed: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20',
+                    };
+
+                    const priorityColors: Record<string, string> = {
+                      urgent: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25',
+                      high: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25',
+                      medium: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/25',
+                      low: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/25',
+                    };
+
+                    return (
+                      <tr
+                        key={tkt.id}
+                        className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-colors text-xs text-slate-600 dark:text-slate-350"
+                      >
+                        <td className="px-4 py-3.5 font-bold font-mono text-slate-900 dark:text-white select-all">
+                          {tkt.id}
+                        </td>
+                        <td className="px-4 py-3.5 font-medium text-slate-800 dark:text-white">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-950 flex items-center justify-center border border-slate-200 dark:border-slate-800">
+                              <User className="w-3.5 h-3.5 text-slate-400" />
+                            </div>
+                            <span>{tkt.customerName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 font-normal max-w-xs truncate" title={tkt.title}>
+                          {tkt.title}
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${priorityColors[tkt.priority]}`}>
+                            {priorityLabels[tkt.priority]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase inline-flex items-center gap-1 ${statusColors[tkt.status]}`}>
+                            {tkt.status === 'open' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                            {tkt.status === 'pending' && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />}
+                            <span>{statusLabels[tkt.status]}</span>
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 font-mono text-slate-400">
+                          {tkt.date}
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                addAuditLog(`Agent viewed incident details for ${tkt.id}`, 'success');
+                                alert(`${isAr ? 'عرض تفاصيل التذكرة:' : 'View details for'} ${tkt.id}\n${tkt.title}`);
+                              }}
+                              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-slate-900 dark:hover:text-white transition-colors"
+                              title={isAr ? 'عرض التفاصيل' : 'View Details'}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            {tkt.status !== 'closed' && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTicketsList(prev => prev.map(t => t.id === tkt.id ? { ...t, status: t.status === 'solved' ? 'closed' : 'solved' } : t));
+                                  const nextStatus = tkt.status === 'solved' ? 'closed' : 'solved';
+                                  addAuditLog(`Updated ticket status of ${tkt.id} to ${nextStatus.toUpperCase()}`, 'success');
+                                }}
+                                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-blue-500 transition-colors"
+                                title={tkt.status === 'solved' ? (isAr ? 'إغلاق التذكرة' : 'Close Ticket') : (isAr ? 'تحديد كمحلولة' : 'Mark Solved')}
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
