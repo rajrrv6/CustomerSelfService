@@ -33,6 +33,33 @@ export function SubmitTicketPage({
   const { lang } = useApp();
   const t = translations[lang];
 
+  React.useEffect(() => {
+    try {
+      const isEscalated = sessionStorage.getItem('mPaaS_guest_chat_escalated') === 'true';
+      if (isEscalated) {
+        const cached = sessionStorage.getItem('mPaaS_guest_chat_history');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+            const userMessages = parsed
+              .filter((msg: any) => msg.sender === 'user')
+              .map((msg: any) => msg.text);
+
+            if (userMessages.length > 0) {
+              const summary = `[Guest Session Context]: User asked about: ${userMessages.join('; ')}`;
+              if (!ticketDesc) {
+                setTicketDesc(summary);
+              }
+            }
+          }
+        }
+        sessionStorage.removeItem('mPaaS_guest_chat_escalated');
+      }
+    } catch (err) {
+      console.error('Failed to prefill guest chat context:', err);
+    }
+  }, [ticketDesc, setTicketDesc]);
+
   return (
     <div className="w-full space-y-6">
       {/* Header */}

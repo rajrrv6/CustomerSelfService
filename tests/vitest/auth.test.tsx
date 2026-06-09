@@ -4,6 +4,8 @@ import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import { LoginCard } from '@/components/auth/LoginCard';
 import { MFAInput } from '@/components/auth/MFAInput';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import * as navigation from 'next/navigation';
+import LoginPage from '@/app/login/page';
 
 // Dynamic mock setup to prevent hoisting conflicts
 const mockUseAuth = vi.fn();
@@ -89,5 +91,67 @@ describe('Auth Subsystem QA Tests', () => {
     );
 
     expect(screen.queryByText(/protected content/i)).not.toBeInTheDocument();
+  });
+
+  it('ProtectedRoute redirects unauthenticated users to login with encoded current path', () => {
+    mockUseAuth.mockReturnValue({
+      status: 'idle',
+      isAuthenticated: false,
+      user: null,
+      canAccessPath: () => false,
+      login: vi.fn(),
+      verifyMfa: vi.fn(),
+      logout: vi.fn(),
+      resendMfaCode: vi.fn(),
+    });
+
+    const mockRouter = { replace: vi.fn(), push: vi.fn(), prefetch: vi.fn(), back: vi.fn(), forward: vi.fn(), refresh: vi.fn() };
+    vi.spyOn(navigation, 'useRouter').mockReturnValue(mockRouter);
+    vi.spyOn(navigation, 'usePathname').mockReturnValue('/portal/home');
+    vi.spyOn(navigation, 'useSearchParams').mockReturnValue(new URLSearchParams('action=submit_ticket') as any);
+
+    render(
+      <ProtectedRoute>
+        <div>Protected Content</div>
+      </ProtectedRoute>
+    );
+
+    expect(mockRouter.replace).toHaveBeenCalledWith(
+      `/login?redirect=${encodeURIComponent('/portal/home?action=submit_ticket')}`
+    );
+  });
+
+  it('LoginPage redirects authenticated users to redirect query path if safe', () => {
+    mockUseAuth.mockReturnValue({
+      status: 'idle',
+      isAuthenticated: true,
+      user: { role: 'customer' },
+      canAccessPath: () => true,
+    });
+
+    const mockRouter = { replace: vi.fn(), push: vi.fn(), prefetch: vi.fn(), back: vi.fn(), forward: vi.fn(), refresh: vi.fn() };
+    vi.spyOn(navigation, 'useRouter').mockReturnValue(mockRouter);
+    vi.spyOn(navigation, 'useSearchParams').mockReturnValue(new URLSearchParams('redirect=/portal/home?action=submit_ticket') as any);
+
+    render(<LoginPage />);
+
+    expect(mockRouter.replace).toHaveBeenCalledWith('/portal/home?action=submit_ticket');
+  });
+
+  it('LoginPage redirects authenticated users to default role route if redirect query is external/unsafe', () => {
+    mockUseAuth.mockReturnValue({
+      status: 'idle',
+      isAuthenticated: true,
+      user: { role: 'customer' },
+      canAccessPath: () => true,
+    });
+
+    const mockRouter = { replace: vi.fn(), push: vi.fn(), prefetch: vi.fn(), back: vi.fn(), forward: vi.fn(), refresh: vi.fn() };
+    vi.spyOn(navigation, 'useRouter').mockReturnValue(mockRouter);
+    vi.spyOn(navigation, 'useSearchParams').mockReturnValue(new URLSearchParams('redirect=https://external-malicious-site.com') as any);
+
+    render(<LoginPage />);
+
+    expect(mockRouter.replace).toHaveBeenCalledWith('/portal/home'); // fallback to customer default route
   });
 });

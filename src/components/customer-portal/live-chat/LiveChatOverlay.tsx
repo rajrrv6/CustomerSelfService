@@ -79,6 +79,43 @@ export function LiveChatOverlay({
     return () => observer.disconnect();
   }, []);
 
+  // Merge guest chat history on mount if available
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem('mPaaS_guest_chat_history');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+          setChatMessages((prev) => {
+            const systemMsg: ChatMessage = {
+              sender: 'system',
+              text: lang === 'ar' 
+                ? '--- محادثة الزائر السابقة ---' 
+                : '--- Previous Guest Session History ---',
+              time: ''
+            };
+            
+            const filteredCached = parsed.map((msg: any) => ({
+              sender: msg.sender as 'bot' | 'user' | 'agent' | 'system',
+              text: msg.text,
+              time: msg.time || ''
+            }));
+            
+            // Prepend guest conversation logs to existing chat state, omitting the default authenticated greeting
+            return [
+              ...filteredCached,
+              systemMsg,
+              ...prev.filter(msg => msg.text !== prev[0]?.text)
+            ];
+          });
+        }
+        sessionStorage.removeItem('mPaaS_guest_chat_history');
+      }
+    } catch (err) {
+      console.error('Failed to merge guest chat history:', err);
+    }
+  }, [lang, setChatMessages]);
+
   const handleCsatComplete = (rating: number, comment: string, tags: string[]) => {
     setSurveyCsat(rating);
     addAuditLog(`LiveChat CSAT: ${rating}/5, Tags: ${tags.join(',')}`, 'success');

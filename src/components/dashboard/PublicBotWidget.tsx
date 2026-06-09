@@ -14,9 +14,42 @@ export function PublicBotWidget() {
   const t = translations[lang];
   const { pushToast } = useFeedbackToasts();
 
-  const [messages, setMessages] = useState([
-    { sender: 'bot', text: 'مرحباً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك اليوم؟\n\nHi! I am Farah. How can I help you today?', time: '14:30' }
-  ]);
+  const [messages, setMessages] = useState<Array<{ sender: string; text: string; time: string }>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem('mPaaS_guest_chat_history');
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (err) {
+        console.error('Failed to load guest chat history:', err);
+      }
+    }
+    return [
+      { sender: 'bot', text: 'مرحباً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك اليوم؟\n\nHi! I am Farah. How can I help you today?', time: '14:30' }
+    ];
+  });
+
+  // Save guest chat messages to sessionStorage on updates
+  React.useEffect(() => {
+    try {
+      sessionStorage.setItem('mPaaS_guest_chat_history', JSON.stringify(messages));
+    } catch (err) {
+      console.error('Failed to save guest chat history:', err);
+    }
+  }, [messages]);
+
+  const handleEscalateToTicket = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('mPaaS_guest_chat_escalated', 'true');
+        window.location.href = `/login?redirect=${encodeURIComponent('/portal/home?action=submit_ticket')}`;
+      } catch (err) {
+        console.error('Failed to initiate escalation:', err);
+      }
+    }
+  };
+
   const [composer, setComposer] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -147,7 +180,7 @@ export function PublicBotWidget() {
                 <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
                   msg.sender === 'user'
                     ? 'bg-blue-600 text-white rounded-br-none'
-                    : 'bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/50 text-slate-850 dark:text-slate-200 rounded-bl-none shadow-sm'
+                    : 'bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/50 text-slate-855 dark:text-slate-200 rounded-bl-none shadow-sm'
                 }`}>
                   <p className="whitespace-pre-line">{msg.text}</p>
                 </div>
@@ -207,7 +240,7 @@ export function PublicBotWidget() {
                 placeholder="Order Number (e.g. ORD-99881)"
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none text-slate-800 dark:text-slate-100 font-semibold"
+                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-855 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none text-slate-800 dark:text-slate-100 font-semibold"
               />
               <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">
                 Next
@@ -222,7 +255,7 @@ export function PublicBotWidget() {
                 placeholder="Enter 4-digit code (use 1234)"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none font-mono text-slate-850 dark:text-slate-100 font-semibold"
+                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-855 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none font-mono text-slate-850 dark:text-slate-100 font-semibold"
               />
               <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">
                 Verify
@@ -235,6 +268,12 @@ export function PublicBotWidget() {
       {/* Quick shortcuts buttons */}
       {botStatus === 'chat' && otpStep === 'none' && (
         <div className="px-5 py-2 flex gap-1.5 overflow-x-auto bg-slate-50 dark:bg-slate-950/40 shrink-0 border-t border-slate-200/50 dark:border-slate-850 select-none">
+          <button
+            onClick={handleEscalateToTicket}
+            className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-805 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] text-blue-600 dark:text-blue-400 cursor-pointer font-bold animate-pulse"
+          >
+            File Support Ticket
+          </button>
           <button
             onClick={() => setOtpStep('order')}
             className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] cursor-pointer"

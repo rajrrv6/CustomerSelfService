@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
 import {
@@ -54,6 +55,7 @@ import { ExportCenter } from '../enterprise/ExportCenter';
 import { SsoStatusPanel } from '../enterprise/SsoStatusPanel';
 import { QuotaDashboard } from '../enterprise/QuotaDashboard';
 import { kbArticles, historicalChats } from './constants';
+import { CustomerDashboardHome } from '../home/CustomerDashboardHome';
 
 interface CustomerPortalLayoutProps {
   activeSubScreen: string;
@@ -71,6 +73,17 @@ export function CustomerPortalLayout({
     lang,
     role,
   } = useApp();
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams) {
+      const action = searchParams.get('action');
+      if (action === 'submit_ticket' && activeSubScreen !== 'customer_ticket_submit') {
+        setActiveSubScreen('customer_ticket_submit');
+      }
+    }
+  }, [searchParams, activeSubScreen, setActiveSubScreen]);
 
   const t = translations[lang];
   const { pushToast } = useFeedbackToasts();
@@ -141,6 +154,7 @@ export function CustomerPortalLayout({
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [accentColor, setAccentColor] = useState('blue');
   const [callbackQueued, setCallbackQueued] = useState(false);
+  const [queueStatus, setQueueStatus] = useState<'idle' | 'queued' | 'connecting' | 'active' | 'completed'>('idle');
   const [showCsatModal, setShowCsatModal] = useState(false);
   const [showNpsModal, setShowNpsModal] = useState(false);
 
@@ -376,6 +390,7 @@ export function CustomerPortalLayout({
 
     addAuditLog(`Voice callback scheduled to line ${callbackPhone}`, 'success');
     setCallbackQueued(true);
+    setQueueStatus('queued');
     setShowCallbackModal(false);
     pushToast(
       'success',
@@ -638,430 +653,57 @@ export function CustomerPortalLayout({
       {/* Screen Routing */}
       <div className={fontClass}>
         {activeSubScreen === 'customer_home' && (
-          <div className="space-y-2.5 animate-in fade-in duration-250">
-            {/* Maintenance alert banner */}
-            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-400 p-2 rounded-xl flex items-center gap-3 text-[10.5px] font-semibold">
-              <span className="flex-1">
-                {lang === 'ar'
-                  ? 'تنبيه الصيانة: ستخضع أنظمة التخزين السحابي لصيانة مجدولة في 12 يونيو بين الساعة 02:00 و 04:00 بتوقيت مكة.'
-                  : 'Maintenance Alert: Cloud storage systems scheduled for routine optimization on June 12, 02:00 - 04:00 UTC.'}
-              </span>
-            </div>
-
-            {/* SECTION 1 — HERO AI SEARCH (PRIMARY FOCUS) */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-750 text-white rounded-3xl py-3.5 px-5 text-center space-y-1.5 shadow-md shadow-blue-500/5 relative overflow-visible">
-              <span className="inline-block px-2 py-0.5 bg-white/15 rounded-full text-[8.5px] font-bold backdrop-blur-md font-mono">
-                {t.portal.homeHero.badge}
-              </span>
-              <h2 className="text-xl font-extrabold tracking-tight leading-none">{t.portal.homeHero.heroTitle}</h2>
-              <p className="text-[10.5px] text-blue-100 max-w-md mx-auto leading-normal">
-                {t.portal.homeHero.heroDesc}
-              </p>
-
-              <div className="max-w-[340px] mx-auto relative pt-0.5" ref={searchContainerRef}>
-                <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400" />
-                <input
-                  type="text"
-                  data-testid="portal-search-input"
-                  placeholder={t.portal.homeHero.searchPlaceholder}
-                  value={searchQuery}
-                  onFocus={() => setSearchFocused(true)}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setSearchFocused(true);
-                  }}
-                  onKeyDown={handleSearchKeyDown}
-                  className="w-full pl-8.5 pr-4 py-1.5 rounded-xl bg-white text-slate-850 text-[11px] focus:outline-none shadow-sm hover:shadow-md focus:shadow-lg border border-slate-200 dark:border-slate-800/40 focus:ring-2 focus:ring-blue-400/80 font-semibold transition-all"
-                />
-
-                {/* Search suggestion dropdown */}
-                {searchFocused && (dropdownItems.length > 0 || savedSearches.length > 0) && (
-                  <div className="absolute left-0 right-0 mt-0.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl p-1.5 z-50 text-left space-y-2 animate-in fade-in slide-in-from-top-1.5 duration-100">
-                    
-                    {/* Saved Searches */}
-                    {savedSearches.length > 0 && (
-                      <div className="space-y-0.5">
-                        <span className="block text-[7.5px] uppercase font-bold text-slate-400 font-mono tracking-wider px-1">
-                          {lang === 'ar' ? 'عمليات البحث المحفوظة' : 'Saved Searches'}
-                        </span>
-                        <div className="flex flex-wrap gap-1 px-1">
-                          {savedSearches.map((search, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => {
-                                setSearchQuery(search.query);
-                                setDebouncedSearchQuery(search.query);
-                              }}
-                              className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[9px] font-semibold text-slate-700 dark:text-slate-300 rounded-md cursor-pointer transition-colors"
-                            >
-                              {search.query}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* KB Matches */}
-                    {filteredKbArticles.length > 0 && (
-                      <div className="space-y-0.5">
-                        <span className="block text-[7.5px] uppercase font-bold text-slate-400 font-mono tracking-wider px-1 mb-0.5">
-                          {lang === 'ar' ? 'مقالات المعرفة المطابقة' : 'Instant Knowledge Matches'}
-                        </span>
-                        <div className="space-y-0.5">
-                          {filteredKbArticles.map((art) => {
-                            const itemIndex = dropdownItems.findIndex(item => item.type === 'kb' && item.id === art.id);
-                            const isHighlighted = itemIndex === searchFocusIndex;
-                            return (
-                              <button
-                                key={art.id}
-                                onClick={() => {
-                                  setSelectedArticleId(art.id);
-                                  setActiveSubScreen('customer_kb_article');
-                                  setSearchFocused(false);
-                                }}
-                                className={`w-full flex items-center gap-2 px-1.5 py-0.5 rounded-lg text-left cursor-pointer transition-colors ${
-                                  isHighlighted 
-                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                                    : 'hover:bg-blue-500/5 dark:hover:bg-blue-950/40 text-slate-700 dark:text-slate-300'
-                                }`}
-                              >
-                                <BookOpen className="w-3 h-3 text-slate-400 shrink-0" />
-                                <span className="text-[10px] font-semibold truncate">
-                                  {highlightMatch(art.title, searchQuery)}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* AI Prompts */}
-                    <div className="space-y-0.5">
-                      <span className="block text-[7.5px] uppercase font-bold text-slate-400 font-mono tracking-wider px-1 mb-0.5">
-                        {lang === 'ar' ? 'اقتراحات فرح الذكية' : 'AI Assistant Suggestions'}
-                      </span>
-                      <div className="space-y-0.5">
-                        {aiPrompts.map((prompt, idx) => {
-                          const itemIndex = dropdownItems.findIndex(item => item.type === 'prompt' && item.id === `prompt-${idx}`);
-                          const isHighlighted = itemIndex === searchFocusIndex;
-                          return (
-                            <button
-                              key={idx}
-                              onClick={() => {
-                                setSearchQuery(prompt.query);
-                                setDebouncedSearchQuery(prompt.query);
-                              }}
-                              className={`w-full flex items-center gap-2 px-1.5 py-0.75 rounded-lg text-left cursor-pointer transition-colors ${
-                                isHighlighted 
-                                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                                  : 'hover:bg-blue-500/5 dark:hover:bg-blue-950/40 text-slate-700 dark:text-slate-300'
-                              }`}
-                            >
-                              <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
-                              <span className="text-[10px] font-medium truncate">{prompt.text}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Ask Farah Action */}
-                    {searchQuery.trim() !== '' && (
-                      <div className="pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                        {(() => {
-                          const itemIndex = dropdownItems.findIndex(item => item.type === 'action' && item.id === 'ask-farah');
-                          const isHighlighted = itemIndex === searchFocusIndex;
-                          return (
-                            <button
-                              onClick={() => {
-                                handleSendChatMessage(searchQuery);
-                                setChatOpen(true);
-                                setSearchFocused(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-1.5 py-0.75 rounded-lg text-left cursor-pointer transition-colors ${
-                                isHighlighted 
-                                  ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' 
-                                  : 'bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 truncate">
-                                <Bot className="w-3 h-3 shrink-0 text-blue-500" />
-                                <span className="text-[10px] font-bold truncate">
-                                  {lang === 'ar' ? `اسأل فرح الذكية عن "${searchQuery}"` : `Ask Farah AI about "${searchQuery}"`}
-                                </span>
-                              </div>
-                              <span className="text-[8px] font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded shrink-0">
-                                {lang === 'ar' ? 'تشغيل' : 'Ask'}
-                              </span>
-                            </button>
-                          );
-                        })()}
-                      </div>
-                    )}
-
-                    {/* Footer instructions hint */}
-                    <div className="pt-1 border-t border-slate-100 dark:border-slate-800/80 text-[8px] text-slate-400 dark:text-slate-500 font-mono font-bold text-center">
-                      ↑↓ {lang === 'ar' ? 'للتنقل' : 'navigate'}  •  Enter {lang === 'ar' ? 'للاختيار' : 'select'}  •  Esc {lang === 'ar' ? 'للإغلاق' : 'close'}
-                    </div>
-
-                  </div>
-                )}
-              </div>
-
-              {/* Instant Search Recommendation Chips */}
-              <div className="flex flex-wrap justify-center gap-1.5 pt-1.5 text-[9px]">
-                <span className="text-blue-200 font-semibold mt-0.5">
-                  {lang === 'ar' ? 'اقتراحات سريعة:' : 'Quick Prompts:'}
-                </span>
-                {[
-                  { label: lang === 'ar' ? 'استرجاع اشتراك' : 'Refund subscription', query: 'refund' },
-                  { label: lang === 'ar' ? 'إعداد OAuth' : 'Setup OAuth client', query: 'oauth' },
-                  { label: lang === 'ar' ? 'حساب مغلق' : 'Locked account login', query: 'login' }
-                ].map((chip, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setSearchQuery(chip.query);
-                      setDebouncedSearchQuery(chip.query);
-                      setActiveSubScreen('customer_kb_article');
-                    }}
-                    className="px-2 py-0.5 bg-white/15 hover:bg-white/25 rounded-full text-white font-medium cursor-pointer transition-colors"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* SECTION 2 — QUICK SELF-SERVICE UTILITIES */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
-              {[
-                {
-                  id: 'ticket',
-                  title: lang === 'ar' ? 'تقديم تذكرة دعم' : 'Submit Ticket',
-                  desc: lang === 'ar' ? 'إنشاء بلاغ دعم فني' : 'File a support case',
-                  icon: <Plus className="w-4 h-4 text-purple-500" />,
-                  onClick: () => setShowSubmitModal(true)
-                },
-                {
-                  id: 'chat',
-                  title: lang === 'ar' ? 'المحادثة الفورية' : 'Live Chat',
-                  desc: lang === 'ar' ? 'تواصل مع الدعم الذكي' : 'Consult Farah AI',
-                  icon: <MessageSquare className="w-4 h-4 text-blue-500" />,
-                  onClick: () => setChatOpen(true)
-                },
-                {
-                  id: 'callback',
-                  title: lang === 'ar' ? 'طلب مكالمة هاتفية' : 'Voice Callback',
-                  desc: lang === 'ar' ? 'جدولة اتصال الدعم الفني' : 'Schedule callback',
-                  icon: <PhoneCall className="w-4 h-4 text-indigo-500" />,
-                  onClick: () => setShowCallbackModal(true)
-                },
-                {
-                  id: 'cobrowse',
-                  title: lang === 'ar' ? 'تصفح مشترك' : 'Co-Browse',
-                  desc: lang === 'ar' ? 'مشاركة شاشة آمنة' : 'Secure screen share',
-                  icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />,
-                  onClick: () => setShowCobrowseModal(true)
-                },
-                {
-                  id: 'kb_hub',
-                  title: lang === 'ar' ? 'مركز المعرفة' : 'Knowledge Hub',
-                  desc: lang === 'ar' ? 'تصفح مقالات الدعم والمساعدة' : 'Browse setup guides',
-                  icon: <BookOpen className="w-4 h-4 text-amber-500" />,
-                  onClick: () => {
-                    setKbCategoryFilter('All');
-                    setSelectedArticleId('');
-                    setActiveSubScreen('customer_kb_article');
-                  }
-                },
-                {
-                  id: 'track',
-                  title: lang === 'ar' ? 'متابعة التذاكر' : 'Track Tickets',
-                  desc: lang === 'ar' ? 'حالة البلاغات النشطة' : 'View active cases',
-                  icon: <ClipboardList className="w-4 h-4 text-pink-500" />,
-                  onClick: () => setActiveSubScreen('customer_my_tickets')
-                },
-                {
-                  id: 'copilot',
-                  title: lang === 'ar' ? 'مساعد فرح الذكي' : 'AI Copilot',
-                  desc: lang === 'ar' ? 'مساحة العمل الذكية' : 'AI workspace engine',
-                  icon: <Bot className="w-4 h-4 text-teal-500" />,
-                  onClick: () => setActiveSubScreen('customer_kb')
-                },
-                {
-                  id: 'status',
-                  title: lang === 'ar' ? 'حالة النظام' : 'System Status',
-                  desc: lang === 'ar' ? 'استقرار وجودة الخدمات' : 'Monitor platform systems',
-                  icon: <Activity className="w-4 h-4 text-rose-500" />,
-                  onClick: () => setActiveSubScreen('customer_system_status')
-                }
-              ].map(item => (
-                <button
-                  key={item.id}
-                  onClick={item.onClick}
-                  className={`group flex items-center gap-2 p-1.5 rounded-xl text-left transition-all active:scale-[0.98] min-h-[50px] ${SURFACE_PANEL} ${INTERACTIVE_CARD} ${SUPPORT_MICRO_TRANSITION}`}
-                  style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}
-                >
-                  <div className="p-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 rounded-lg group-hover:scale-105 transition-transform shrink-0">
-                    {item.icon}
-                  </div>
-                  <div className="space-y-0.5 min-w-0">
-                    <h5 className="font-extrabold text-[10.5px] text-slate-805 dark:text-white leading-tight truncate">
-                      {item.title}
-                    </h5>
-                    <p className="text-[8.5px] text-slate-400 dark:text-slate-455 leading-none truncate">
-                      {item.desc}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* SECTION 3 — AI RECOMMENDATIONS */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 px-0.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500 animate-pulse" />
-                <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-wider">
-                  {lang === 'ar' ? 'توصيات فرح المخصصة لك' : 'AI Recommended Support Intel'}
-                </span>
-              </div>
-              <div className="flex sm:grid sm:grid-cols-2 overflow-x-auto sm:overflow-x-visible gap-1.5 pb-1 sm:pb-0 scrollbar-none snap-x snap-mandatory">
-                {[
-                  {
-                    id: 'art-2',
-                    title: lang === 'ar' ? 'إعداد OAuth لموصلات بوابة العميل' : 'Setting Up OAuth for Client-Gate API Connectors',
-                    reason: lang === 'ar' ? 'بناءً على نشاط "Stripe 403"' : 'Based on "Stripe 403" activity',
-                    category: 'Developer APIs'
-                  },
-                  {
-                    id: 'art-4',
-                    title: lang === 'ar' ? 'التعامل مع تأخيرات تسليم بوابة الألياف البصرية' : 'Handling Fiber Gateway Delivery Delays',
-                    reason: lang === 'ar' ? 'بناءً على تذكرة الشحن الأخيرة' : 'Based on recent shipment ticket',
-                    category: 'Returns & Refunds'
-                  }
-                ].map(rec => (
-                  <button
-                    key={rec.id}
-                    onClick={() => {
-                      setSelectedArticleId(rec.id);
-                      setActiveSubScreen('customer_kb_article');
-                    }}
-                    className={`flex items-center justify-between p-1.5 rounded-xl text-left group shrink-0 w-[85%] sm:w-auto snap-start ${SURFACE_PANEL} ${INTERACTIVE_CARD} ${SUPPORT_MICRO_TRANSITION}`}
-                    style={{ textAlign: lang === 'ar' ? 'right' : 'left' }}
-                  >
-                    <div className="flex items-center gap-2 truncate flex-1 mr-1.5">
-                      <div className="p-1 bg-blue-500/10 rounded-lg shrink-0 group-hover:scale-105 transition-transform">
-                        <BookOpen className="w-3.5 h-3.5 text-blue-600" />
-                      </div>
-                      <div className="truncate space-y-0.5">
-                        <span className="block truncate text-[10px] font-extrabold text-slate-850 dark:text-white leading-tight">
-                          {rec.title}
-                        </span>
-                        <span className="px-1 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded text-[6.5px] font-extrabold font-mono uppercase inline-block leading-none">
-                          {rec.reason}
-                        </span>
-                      </div>
-                    </div>
-                    <ArrowLeft className="w-3 h-3 text-blue-500 shrink-0 rotate-180 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* SECTION 4 — SUPPORT STATUS */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5 px-0.5">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-[9px] font-bold text-slate-400 uppercase font-mono tracking-wider">
-                  {lang === 'ar' ? 'مؤشرات الدعم النشطة' : 'Active Support Telemetry'}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
-                
-                {/* Active Alerts */}
-                <div className={`flex items-center justify-between p-1.5 rounded-xl ${SURFACE_PANEL} text-[10.5px] font-semibold min-h-[46px]`}>
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Bell className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                    <div className="truncate">
-                      <span className="block text-[7px] text-slate-400 font-bold uppercase font-mono leading-none mb-0.5">
-                        {lang === 'ar' ? 'التنبيهات' : 'Alerts'}
-                      </span>
-                      <span className="font-extrabold text-[9.5px] text-slate-850 dark:text-white leading-tight">
-                        {alerts.filter(a => !a.dismissed && a.lifecycleState === 'active').length} {lang === 'ar' ? 'نشط' : 'Active'}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActiveSubScreen('customer_notifications')}
-                    className="text-[8px] text-blue-500 hover:underline font-bold cursor-pointer shrink-0 ml-1"
-                  >
-                    {lang === 'ar' ? 'عرض' : 'View'}
-                  </button>
-                </div>
-
-                {/* Live Support */}
-                <div className={`flex items-center gap-1.5 p-1.5 rounded-xl ${SURFACE_PANEL} text-[10.5px] font-semibold truncate min-h-[46px]`}>
-                  <Activity className="w-3.5 h-3.5 text-emerald-500 shrink-0 animate-pulse" />
-                  <div className="truncate">
-                    <span className="block text-[7px] text-slate-400 font-bold uppercase font-mono leading-none mb-0.5">
-                      {lang === 'ar' ? 'الدعم المباشر' : 'Live Help'}
-                    </span>
-                    <span className="font-extrabold text-[9.5px] text-slate-850 dark:text-white leading-tight">
-                      {lang === 'ar' ? 'متصل (<2د)' : 'ONLINE (<2m Wait)'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* SLA Target */}
-                <div className={`flex items-center justify-between p-1.5 rounded-xl ${SURFACE_PANEL} text-[10.5px] font-semibold min-h-[46px]`}>
-                  <div className="flex items-center gap-1.5 truncate">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <div className="truncate">
-                      <span className="block text-[7px] text-slate-400 font-bold uppercase font-mono leading-none mb-0.5">
-                        {lang === 'ar' ? 'الالتزام بـ SLA' : 'SLA Target'}
-                      </span>
-                      <span className="font-mono font-extrabold text-[9.5px] text-emerald-600 dark:text-emerald-400 leading-tight">
-                        99.98% OK
-                      </span>
-                    </div>
-                  </div>
-                  <span className="px-1 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded text-[6.5px] font-bold shrink-0">
-                    {lang === 'ar' ? 'مستقر' : 'OK'}
-                  </span>
-                </div>
-
-                {/* Last Case */}
-                <div className={`flex items-center justify-between p-1.5 rounded-xl ${SURFACE_PANEL} text-[10.5px] font-semibold min-h-[46px]`}>
-                  <div className="flex items-center gap-1.5 truncate">
-                    <ClipboardList className="w-3.5 h-3.5 text-pink-500 shrink-0" />
-                    <div className="truncate">
-                      <span className="block text-[7px] text-slate-400 font-bold uppercase font-mono leading-none mb-0.5">
-                        {lang === 'ar' ? 'آخر تذكرة' : 'Last Case'}
-                      </span>
-                      <span className="font-extrabold text-[9.5px] text-slate-850 dark:text-white leading-tight truncate block max-w-[90px]">
-                        {tickets.filter(t => t.customerEmail === 'david.miller@yahoo.com')[0]?.title || (lang === 'ar' ? 'لا يوجد' : 'None')}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActiveSubScreen('customer_my_tickets')}
-                    className="text-[8px] text-blue-500 hover:underline font-bold shrink-0 cursor-pointer ml-1"
-                  >
-                    {lang === 'ar' ? 'الكل' : 'All'}
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-2.5">
+            <CustomerDashboardHome
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              searchFocused={searchFocused}
+              setSearchFocused={setSearchFocused}
+              kbArticles={kbArticles}
+              savedSearches={savedSearches}
+              onOpenKbArticle={(id) => {
+                setSelectedArticleId(id);
+                setActiveSubScreen(id ? 'customer_kb_article' : 'customer_kb');
+                setSearchFocused(false);
+              }}
+              onOpenAiChat={(query) => {
+                handleSendChatMessage(query);
+                setChatOpen(true);
+                setSearchFocused(false);
+              }}
+              onOpenTickets={() => setShowSubmitModal(true)}
+              onOpenChat={() => setChatOpen(true)}
+              onOpenCallback={() => setShowCallbackModal(true)}
+              onOpenCobrowse={() => setShowCobrowseModal(true)}
+              onOpenKnowledgeHub={() => {
+                setKbCategoryFilter('All');
+                setSelectedArticleId('');
+                setActiveSubScreen('customer_kb_article');
+              }}
+              onOpenMyTickets={() => setActiveSubScreen('customer_my_tickets')}
+              onOpenCopilot={() => setActiveSubScreen('customer_kb')}
+              onOpenSystemStatus={() => setActiveSubScreen('customer_system_status')}
+              onOpenNotifications={() => setActiveSubScreen('customer_notifications')}
+              recentTicket={tickets.filter(t => t.customerEmail === 'david.miller@yahoo.com')[0]}
+              alertCount={alerts.filter(a => !a.dismissed && a.lifecycleState === 'active').length}
+            />
 
             {/* Render Callback queue card in absolute overlay or custom spot if active */}
-            {callbackQueued && (
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-850">
+            {(callbackQueued || queueStatus !== 'idle') && (
+              <div className="max-w-5xl mx-auto pt-2 pb-4 px-4 md:px-0">
                 <CallbackQueueCard
                   lang={lang}
                   phoneNumber={callbackPhone}
                   onToastTrigger={pushToast}
+                  onDismiss={() => {
+                    setCallbackQueued(false);
+                    setQueueStatus('idle');
+                  }}
+                  onClose={() => {
+                    setCallbackQueued(false);
+                    setQueueStatus('idle');
+                  }}
+                  onStatusChange={(status) => setQueueStatus(status)}
                 />
               </div>
             )}
