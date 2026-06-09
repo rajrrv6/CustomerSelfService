@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useUIStore } from '@/stores/uiStore';
 
 interface DrawerWrapperProps {
   isOpen: boolean;
@@ -18,10 +19,12 @@ export function DrawerWrapper({
   onClose,
   title,
   children,
-  isRtl = false,
+  isRtl: isRtlProp,
   maxWidthClass = 'max-w-md',
   noPadding = false
 }: DrawerWrapperProps) {
+  const lang = useUIStore((s) => s.lang);
+  const isRtl = isRtlProp !== undefined ? isRtlProp : lang === 'ar';
 
   const drawerRef = useRef<HTMLDivElement>(null);
 
@@ -131,7 +134,7 @@ export function DrawerWrapper({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm animate-fade-in"
+      className={`fixed inset-0 z-50 flex ${isRtl ? 'justify-start' : 'justify-end'} bg-black/40 backdrop-blur-sm animate-fade-in`}
       role="presentation"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();

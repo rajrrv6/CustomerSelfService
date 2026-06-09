@@ -97,8 +97,10 @@ export function UnifiedInbox({
 
   return (
     <div
-      className={`flex w-64 xl:w-72 2xl:w-80 min-w-0 shrink-0 h-full flex-col justify-between border-slate-200 bg-slate-50/95 text-sm font-semibold dark:border-slate-800 dark:bg-slate-950/30 ${
-        className ?? 'border-r'
+      className={`flex min-w-0 shrink-0 h-full flex-col justify-between bg-slate-50/95 text-sm font-semibold dark:bg-slate-950/30 ${
+        className 
+          ? className 
+          : 'w-64 xl:w-72 2xl:w-80 border-r border-slate-200 dark:border-slate-800'
       }`}
     >
       {/* Search and Queue switcher top header */}
@@ -121,10 +123,16 @@ export function UnifiedInbox({
         </div>
 
         {/* Status filters pills */}
-        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none select-none">
+        <div
+          role="tablist"
+          aria-label={lang === 'ar' ? 'حالات المحادثة' : 'Conversation statuses'}
+          className="flex gap-1 overflow-x-auto pb-1 scrollbar-none select-none"
+        >
           {statusOptions.map((opt) => (
             <button
               key={opt.id}
+              role="tab"
+              aria-selected={statusFilter === opt.id}
               onClick={() => onChangeStatusFilter(opt.id)}
               className={`px-2 py-0.5 rounded-full text-[10.5px] font-extrabold border transition-all whitespace-nowrap ${
                 statusFilter === opt.id
@@ -139,7 +147,11 @@ export function UnifiedInbox({
       </div>
 
       {/* Channels Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto py-1.5 px-3 gap-1 shrink-0 bg-slate-50/80 dark:bg-slate-900/10 scrollbar-none">
+      <div
+        role="tablist"
+        aria-label={lang === 'ar' ? 'قنوات المحادثة' : 'Conversation channels'}
+        className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto py-1.5 px-3 gap-1 shrink-0 bg-slate-50/80 dark:bg-slate-900/10 scrollbar-none"
+      >
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.id === activeTab;
@@ -147,6 +159,9 @@ export function UnifiedInbox({
             <button
               key={tab.id}
               data-testid={`inbox-tab-${tab.id}`}
+              role="tab"
+              aria-selected={isActive}
+              aria-controls="inbox-conversation-list"
               onClick={() => onChangeTab(tab.id as InboxTab)}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg whitespace-nowrap text-xs font-bold transition-all ${
                 isActive
@@ -162,7 +177,10 @@ export function UnifiedInbox({
       </div>
 
       {/* Conversational sessions list */}
-      <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/40">
+      <div
+        id="inbox-conversation-list"
+        className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/40"
+      >
         {conversations.length === 0 ? (
           <div className="p-6 text-center text-slate-500 dark:text-slate-400 font-normal">
             {t.agentWorkspace.inbox.emptySearch}
@@ -266,14 +284,21 @@ export function UnifiedInbox({
                     )}
                   </div>
                   {/* Channel icon badge */}
-                  <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${style.badgeBg} text-white flex items-center justify-center p-0.5 shadow-sm`}>
+                  <span className={`absolute -bottom-1 -end-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${style.badgeBg} text-white flex items-center justify-center p-0.5 shadow-sm`}>
                     <IconComponent className="w-2.5 h-2.5 shrink-0" />
                   </span>
                   {/* Unread indicator */}
                   {chat.unreadCount && chat.unreadCount > 0 ? (
-                    <span className="absolute -top-1 -left-1 min-w-4 h-4 px-1 rounded-full bg-blue-600 text-white font-mono text-[9.5px] font-extrabold flex items-center justify-center shadow-sm select-none">
-                      {chat.unreadCount}
-                    </span>
+                    <>
+                      <span className="absolute -top-1 -start-1 min-w-4 h-4 px-1 rounded-full bg-blue-600 text-white font-mono text-[9.5px] font-extrabold flex items-center justify-center shadow-sm select-none">
+                        {chat.unreadCount}
+                      </span>
+                      <span className="sr-only">
+                        {lang === 'ar'
+                          ? `${chat.unreadCount} رسائل غير مقروءة`
+                          : `${chat.unreadCount} unread messages`}
+                      </span>
+                    </>
                   ) : null}
                 </div>
 

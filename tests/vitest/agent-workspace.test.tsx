@@ -24,7 +24,7 @@ describe('Agent Workspace Subsystem QA Tests', () => {
     
     expect(screen.queryAllByText('General Support').length).toBeGreaterThan(0);
     
-    const billingBtn = screen.getByRole('button', { name: /Billing Issues/i });
+    const billingBtn = screen.getByRole('option', { name: /Billing Issues/i });
     fireEvent.click(billingBtn);
     expect(handleSelect).toHaveBeenCalledWith('q2');
   });
@@ -56,7 +56,7 @@ describe('Agent Workspace Subsystem QA Tests', () => {
     fireEvent.click(applySuggestionBtn);
     expect(handleDraftChange).toHaveBeenCalledWith('Suggested AI response text here');
 
-    const sendBtn = screen.getByRole('button', { name: '' }); // Sparkles send button
+    const sendBtn = screen.getByRole('button', { name: /Send response/i }); // Sparkles send button
     fireEvent.click(sendBtn);
     expect(handleSend).toHaveBeenCalledWith('Draft Message', 'chat');
   });

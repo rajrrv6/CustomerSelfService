@@ -3,6 +3,7 @@ import { useApp } from '@/context/AppContext';
 import { useUIStore } from '@/stores/uiStore';
 import { useNotificationsStore } from '@/stores/notificationsStore';
 import { translations } from '@/i18n/translations';
+import { useAuthStore } from '@/stores/authStore';
 import { UnifiedInbox } from './UnifiedInbox';
 import { ConversationPanel } from './ConversationPanel';
 import { RightWorkspacePanel } from './RightWorkspacePanel';
@@ -47,6 +48,9 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   useRenderProfiler('AgentWorkspaceLayout');
   // Narrow Zustand selectors
   const lang = useUIStore((s) => s.lang);
+  const role = useAuthStore((s) => s.role);
+  const isSupportAgent = role === 'support_agent';
+  const isInboxScreen = activeSubScreen === 'inbox';
   const addAuditLog = useNotificationsStore((s) => s.addAuditLog);
 
   // Feature-scoped state still from AppContext (agents only used in TransferModal)
@@ -135,6 +139,13 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   // Voice Sub-tabs state
   const [voiceTab, setVoiceTab] = useState<'history' | 'queue' | 'voicemail' | 'supervisor'>('history');
   const [mobileOverlay, setMobileOverlay] = useState<'inbox' | 'customer360' | null>(null);
+
+  // Normalize voice tab state if it becomes supervisor when user is support agent
+  useEffect(() => {
+    if (isSupportAgent && voiceTab === 'supervisor') {
+      setVoiceTab('history');
+    }
+  }, [isSupportAgent, voiceTab]);
 
   // Simulate incoming call from queue automatically after a delay if agent is online and idle
   useEffect(() => {
@@ -500,21 +511,23 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className={isSupportAgent ? "lg:col-span-3" : "lg:col-span-2"}>
             <PerformanceScorecard metrics={agentMetricsSeed} />
           </div>
-          <div>
-            <SupervisorPanel
-              onTriggerWhisper={(w) => {
-                setActiveWhisper(w);
-                addAuditLog(`Received whisper hint: "${w}"`, 'success');
-              }}
-              onJoinSession={() => {
-                addAuditLog(`Supervisor joined the active session ${activeChatId}`, 'success');
-                alert(`Supervisor joined active session. 3-Way dialog initialized.`);
-              }}
-            />
-          </div>
+          {!isSupportAgent && (
+            <div>
+              <SupervisorPanel
+                onTriggerWhisper={(w) => {
+                  setActiveWhisper(w);
+                  addAuditLog(`Received whisper hint: "${w}"`, 'success');
+                }}
+                onJoinSession={() => {
+                  addAuditLog(`Supervisor joined the active session ${activeChatId}`, 'success');
+                  alert(`Supervisor joined active session. 3-Way dialog initialized.`);
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -847,7 +860,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
 
   // Unified support desk view
   return (
-    <div className="relative min-w-0 flex flex-col min-h-[calc(100dvh-8rem)] rounded-3xl border border-slate-200 bg-slate-50/95 shadow-sm overflow-x-hidden dark:border-slate-800 dark:bg-slate-900">
+    <div className={`relative min-w-0 flex flex-col rounded-3xl border border-slate-200 bg-slate-50/95 shadow-sm overflow-x-hidden dark:border-slate-800 dark:bg-slate-900 ${isInboxScreen ? 'h-full' : 'min-h-[calc(100dvh-8rem)]'}`}>
       
       {/* Top Auxiliary break toolbar */}
       <WorkspaceAuxToolbar
@@ -863,7 +876,10 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
       {/* Main split-pane content — desktop: 3-col; mobile: primary work + sheets */}
       <div className={`flex min-h-0 flex-1 flex-col overflow-x-hidden lg:flex-row ${showReturnToCallDock ? 'pb-28 sm:pb-32 lg:pb-24' : ''}`}>
         {/* Left pane: Unified Inbox (desktop only — mobile uses sheet) */}
-        <div className="hidden h-full min-h-0 w-64 xl:w-72 2xl:w-80 min-w-0 shrink-0 lg:block">
+        <section
+          aria-label={lang === 'ar' ? 'طوابير المحادثات' : 'Conversation queues'}
+          className="hidden h-full min-h-0 w-64 xl:w-72 2xl:w-80 min-w-0 shrink-0 lg:block"
+        >
           <UnifiedInbox
             conversations={filteredConversations}
             activeChatId={activeChatId}
@@ -878,10 +894,13 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
           />
-        </div>
+        </section>
 
         {/* Middle pane: Conversation Panel or Voice Panel */}
-        <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+        <section
+          aria-label={lang === 'ar' ? 'مساحة المحادثة النشطة' : 'Active conversation workspace'}
+          className="flex-1 min-w-0 min-h-0 flex flex-col"
+        >
           <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-slate-50/95 px-2 py-2 dark:border-slate-800 dark:bg-slate-950/40 lg:hidden">
             <button
               type="button"
@@ -1000,7 +1019,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                     { id: 'history', label: t.agentWorkspace.voice.history, icon: <History className="h-3.5 w-3.5" /> },
                     { id: 'queue', label: `${t.agentWorkspace.voice.queue} (${queue.length})`, icon: <Users className="h-3.5 w-3.5" /> },
                     { id: 'voicemail', label: t.agentWorkspace.voice.vm, icon: <MessageSquare className="h-3.5 w-3.5" /> },
-                    { id: 'supervisor', label: t.agentWorkspace.voice.supervisor, icon: <Shield className="h-3.5 w-3.5" /> },
+                    ...(!isSupportAgent ? [{ id: 'supervisor', label: t.agentWorkspace.voice.supervisor, icon: <Shield className="h-3.5 w-3.5" /> }] : []),
                   ]}
                   activeId={voiceTab}
                   onChange={(id) => setVoiceTab(id as typeof voiceTab)}
@@ -1049,18 +1068,20 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                   <span>{t.agentWorkspace.voice.voicemails}</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setVoiceTab('supervisor')}
-                  className={`flex flex-1 items-center justify-center gap-1 border-b-2 py-3 transition-colors ${
-                    voiceTab === 'supervisor'
-                      ? 'border-blue-600 bg-slate-50 font-bold text-blue-600 dark:bg-slate-900 dark:text-blue-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Shield className="h-3.5 w-3.5" />
-                  <span>{t.agentWorkspace.voice.supervisorConsole}</span>
-                </button>
+                {!isSupportAgent && (
+                  <button
+                    type="button"
+                    onClick={() => setVoiceTab('supervisor')}
+                    className={`flex flex-1 items-center justify-center gap-1 border-b-2 py-3 transition-colors ${
+                      voiceTab === 'supervisor'
+                        ? 'border-blue-600 bg-slate-50 font-bold text-blue-600 dark:bg-slate-900 dark:text-blue-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <Shield className="h-3.5 w-3.5" />
+                    <span>{t.agentWorkspace.voice.supervisorConsole}</span>
+                  </button>
+                )}
               </div>
 
               {/* Sub-tab container content */}
@@ -1086,7 +1107,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                   <VoicemailPanel />
                 )}
 
-                {voiceTab === 'supervisor' && (
+                {voiceTab === 'supervisor' && !isSupportAgent && (
                   <SupervisorVoicePanel
                     mode={supervisorMode}
                     whisperHint={whisperHint}
@@ -1123,10 +1144,13 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             onToggleRightPanel={() => setRightPanelExpanded(!rightPanelExpanded)}
           />
         )}
-        </div>
+        </section>
 
         {/* Right pane: Customer 360 & AI Copilot */}
-        <div className={`hidden h-full min-w-0 shrink-0 overflow-hidden border-slate-200 dark:border-slate-800 lg:block lg:border-s transition-all duration-300 ${rightPanelExpanded ? 'w-64 xl:w-72' : 'w-0 border-none'}`}>
+        <section
+          aria-label={lang === 'ar' ? 'تفاصيل العميل والردود الذكية بالذكاء الاصطناعي' : 'Customer 360 & AI Copilot details'}
+          className={`hidden h-full min-w-0 shrink-0 overflow-hidden border-slate-200 dark:border-slate-800 lg:block lg:border-s transition-all duration-300 ${rightPanelExpanded ? 'w-64 xl:w-72' : 'w-0 border-none'}`}
+        >
           {rightPanelExpanded && (
             <RightWorkspacePanel
               profile={activeCustomerProfile}
@@ -1136,12 +1160,14 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
               onSummarize={handleTriggerSummary}
             />
           )}
-        </div>
+        </section>
       </div>
 
       {showReturnToCallDock && (
         <div
-          className="fixed bottom-3 z-70 w-[calc(100vw-1.5rem)] max-w-md"
+          role="status"
+          aria-label={lang === 'ar' ? 'شريط المكالمة الجارية العائم' : 'Active Call Floating Dock'}
+          className="fixed bottom-3 z-[45] w-[calc(100vw-1.5rem)] max-w-md"
           style={{ [lang === 'ar' ? 'left' : 'right']: '0.75rem' }}
         >
           <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur-md transition-all duration-200 dark:border-slate-700 dark:bg-slate-900/95 sm:p-4">

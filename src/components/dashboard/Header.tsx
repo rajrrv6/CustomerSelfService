@@ -50,6 +50,7 @@ export function Header({
 }) {
   const router = useRouter();
   const role = useAuthStore((s) => s.role);
+  const isSupportAgent = role === 'support_agent';
   const setRole = useAuthStore((s) => s.setRole);
   const lang = useUIStore((s) => s.lang);
   const setLang = useUIStore((s) => s.setLang);
@@ -72,7 +73,8 @@ export function Header({
           type="button"
           onClick={onOpenMenu}
           className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0"
-          aria-label="Open navigation"
+          aria-label={lang === 'ar' ? 'فتح القائمة' : 'Open navigation'}
+          aria-haspopup="true"
         >
           <span className="flex flex-col gap-1">
             <span className="block w-4 h-0.5 rounded-full bg-current" />
@@ -96,6 +98,9 @@ export function Header({
         <div className="relative">
           <button
             onClick={() => setShowRoleMenu(!showRoleMenu)}
+            aria-haspopup="listbox"
+            aria-expanded={showRoleMenu}
+            aria-label={lang === 'ar' ? 'تبديل الدور النشط' : 'Switch active role'}
             className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 focus:outline-none max-w-[40vw] sm:max-w-none"
           >
             <Shield className="w-3.5 h-3.5 text-blue-500" />
@@ -108,11 +113,11 @@ export function Header({
           {showRoleMenu && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowRoleMenu(false)} />
-              <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in-50 slide-in-from-top-3">
+              <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in-50 slide-in-from-top-3">
                 <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {lang === 'ar' ? 'التبديل بين التطبيقات' : 'Application Switcher'}
                 </div>
-                {CENTRALIZED_PERSONAS.map((item) => {
+                {CENTRALIZED_PERSONAS.filter(item => !isSupportAgent || ['support_agent', 'customer', 'public_bot'].includes(item.value)).map((item) => {
                   const label = lang === 'ar' ? item.labelAr : item.labelEn;
                   const isCurrent = item.value === role;
                   return (
@@ -145,16 +150,18 @@ export function Header({
         </div>
 
         {/* Audit Logs Trigger */}
-        <button
-          onClick={onOpenAuditLogs}
-          title={lang === 'ar' ? 'سجلات تدقيق النظام' : 'System Audit Logs'}
-          className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all relative border border-transparent hover:border-slate-200 dark:hover:border-slate-800 shrink-0"
-        >
-          <Activity className="w-4.5 h-4.5" />
-          {auditLogs.length > 0 && (
-            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-blue-500" />
-          )}
-        </button>
+        {!isSupportAgent && (
+          <button
+            onClick={onOpenAuditLogs}
+            title={lang === 'ar' ? 'سجلات تدقيق النظام' : 'System Audit Logs'}
+            className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all relative border border-transparent hover:border-slate-200 dark:hover:border-slate-800 shrink-0"
+          >
+            <Activity className="w-4.5 h-4.5" />
+            {auditLogs.length > 0 && (
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-blue-500" />
+            )}
+          </button>
+        )}
 
         {/* Notifications */}
         <div className="relative">
@@ -162,6 +169,8 @@ export function Header({
             onClick={onOpenNotifications}
             className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all relative border border-transparent hover:border-slate-200 dark:hover:border-slate-800 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             title={lang === 'ar' ? 'التنبيهات التشغيلية' : 'Operational Alerts'}
+            aria-label={lang === 'ar' ? 'التنبيهات التشغيلية' : 'Operational Alerts'}
+            aria-haspopup="true"
           >
             <Bell className="w-4.5 h-4.5" />
             {unreadCount > 0 && (
@@ -177,6 +186,8 @@ export function Header({
           <button
             onClick={onOpenLauncher}
             title={lang === 'ar' ? 'مشغل بيئة العمل' : 'Workspace Launcher'}
+            aria-label={lang === 'ar' ? 'مشغل بيئة العمل' : 'Workspace Launcher'}
+            aria-haspopup="true"
             className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800 shrink-0 focus:outline-none"
           >
             <LayoutGrid className="w-4.5 h-4.5 text-blue-500" />
@@ -207,6 +218,7 @@ export function Header({
           onClick={onLogout}
           className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800 shrink-0"
           title={t.logout}
+          aria-label={t.logout}
         >
           <div className="w-7 h-7 rounded-lg bg-blue-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">
             U

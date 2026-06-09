@@ -11,7 +11,6 @@ import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Header } from '@/components/dashboard/Header';
 import { SuperAdminView } from '@/components/dashboard/SuperAdminView';
 import { ClientAdminView } from '@/components/dashboard/ClientAdminView';
-import { AgentWorkspaceView } from '@/components/dashboard/AgentWorkspaceView';
 import { CustomerPortalView } from '@/components/dashboard/CustomerPortalView';
 import { QAManagerView } from '@/components/dashboard/QAManagerView';
 import { SupervisorView } from '@/components/dashboard/SupervisorView';
@@ -83,6 +82,7 @@ function WorkspaceShellInner({
   onLogout: () => void;
 }) {
   const activeScreen = useUIStore((s) => s.activeScreen);
+  const isViewportLocked = activeScreen === 'inbox';
   const setActiveScreen = useUIStore((s) => s.setActiveScreen);
   const router = useRouter();
   const pathname = usePathname();
@@ -185,7 +185,10 @@ function WorkspaceShellInner({
           onOpenLauncher={() => setActiveScreen('launcher')}
         />
 
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-8 bg-slate-50 dark:bg-[#030712] transition-colors min-w-0">
+        <main
+          aria-label={lang === 'ar' ? 'مساحة العمل الرئيسية' : 'Main Workspace'}
+          className={`flex-1 min-h-0 px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-8 bg-slate-50 dark:bg-[#030712] transition-colors min-w-0 ${isViewportLocked ? 'overflow-hidden flex flex-col h-full' : 'overflow-y-auto overflow-x-hidden'}`}
+        >
           {activeScreen === 'launcher' ? (
             <WorkspaceLauncher
               lang={lang}
@@ -270,7 +273,7 @@ function WorkspaceShellInner({
         </div>
       )}
 
-      {showAuditLogs && (
+      {showAuditLogs && role !== 'support_agent' && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-xs"
@@ -475,6 +478,14 @@ function WorkspaceLauncher({ lang, currentRole, onSelectRole, onLaunchBotWidget 
     }
   ];
 
+  const isSupportAgent = currentRole === 'support_agent';
+  const visibleCards = cards.filter(card => {
+    if (isSupportAgent) {
+      return card.role === 'support_agent' || card.role === 'customer' || (card.role as string) === 'public_bot';
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-8 animate-in fade-in-50 duration-300">
       <div className="text-center md:text-left">
@@ -489,7 +500,7 @@ function WorkspaceLauncher({ lang, currentRole, onSelectRole, onLaunchBotWidget 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {cards.map((card) => {
+        {visibleCards.map((card) => {
           const isCurrent = currentRole === card.role;
           return (
             <div

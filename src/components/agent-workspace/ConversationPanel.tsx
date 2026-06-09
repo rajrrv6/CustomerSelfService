@@ -10,6 +10,7 @@ import { CoachingWidget } from './CoachingWidget';
 import { TypingIndicator } from './TypingIndicator';
 import { translations } from '@/i18n/translations';
 import { usePermission } from '@/stores/permissionStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -112,6 +113,8 @@ export function ConversationPanel({
   onToggleRightPanel
 }: ConversationPanelProps) {
   const { canEdit, canManage } = usePermission('inbox');
+  const role = useAuthStore((s) => s.role);
+  const isSupportAgent = role === 'support_agent';
   const bottomRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
   const [showCcBcc, setShowCcBcc] = useState(false);
@@ -274,6 +277,7 @@ export function ConversationPanel({
       <button
         type="button"
         onClick={() => setMenuOpen(!menuOpen)}
+        aria-label={lang === 'ar' ? 'المزيد من الإجراءات' : 'More Actions'}
         className="flex shrink-0 items-center justify-center p-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
         title="More Actions"
       >
@@ -282,7 +286,7 @@ export function ConversationPanel({
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
-          <div className={`absolute ${lang === 'ar' ? 'left-0' : 'right-0'} mt-1.5 w-36 rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-880 dark:bg-slate-900 z-40 p-1.5 space-y-1`}>
+          <div className="absolute end-0 mt-1.5 w-36 rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-880 dark:bg-slate-900 z-40 p-1.5 space-y-1">
             <button
               type="button"
               onClick={() => {
@@ -465,7 +469,7 @@ export function ConversationPanel({
             <button
               type="button"
               onClick={() => setShowCcBcc(!showCcBcc)}
-              className="text-blue-500 hover:underline font-bold text-[10px] uppercase tracking-wider ml-1 whitespace-nowrap"
+              className="text-blue-500 hover:underline font-bold text-[10px] uppercase tracking-wider ms-1 whitespace-nowrap"
             >
               {showCcBcc ? '[Hide CC/BCC]' : '[Show CC/BCC]'}
             </button>
@@ -509,7 +513,7 @@ export function ConversationPanel({
 
   const renderEscalationSidebar = () => {
     return (
-      <div className="w-full md:w-64 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 bg-rose-500/5 p-4 space-y-4 overflow-y-auto shrink-0 animate-in slide-in-from-right-5 duration-300 md:h-full">
+      <div className="w-full md:w-64 border-t md:border-t-0 md:border-s border-slate-200 dark:border-slate-800 bg-rose-500/5 p-4 space-y-4 overflow-y-auto shrink-0 animate-in slide-in-from-right-5 duration-300 md:h-full">
         <div className="space-y-1">
           <span className="text-[10.5px] font-bold uppercase tracking-wider text-rose-500 block">Incident Context</span>
           <h4 className="font-extrabold text-slate-800 dark:text-white text-[13.5px]">Incident Case INC-99881</h4>
@@ -589,6 +593,7 @@ export function ConversationPanel({
             <button
               type="button"
               onClick={onToggleRightPanel}
+              aria-label={rightPanelExpanded ? (lang === 'ar' ? 'إخفاء الشريط الجانبي' : 'Hide Sidebar') : (lang === 'ar' ? 'إظهار الشريط الجانبي' : 'Show Sidebar')}
               className={`flex shrink-0 items-center justify-center p-2 rounded-xl border transition-all ${
                 rightPanelExpanded
                   ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400'
@@ -613,7 +618,12 @@ export function ConversationPanel({
       {/* Workspace Split Pane: Timeline + Incident Sidebar */}
       <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden min-w-0">
         {/* Timeline Message Log */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 min-w-0">
+        <div
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 min-w-0"
+        >
           {/* Escalation Warning Sticky Banner */}
           {isEscalated && (
             <div className="border border-rose-300 bg-rose-50/80 dark:border-rose-900 dark:bg-rose-950/30 rounded-2xl p-4 flex items-start gap-3 text-rose-900 dark:text-rose-300 shadow-sm animate-in slide-in-from-top-2 duration-300">
@@ -675,7 +685,7 @@ export function ConversationPanel({
             </div>
           )}
 
-          {whisper && (
+          {whisper && !isSupportAgent && (
             <CoachingWidget whisper={whisper} onApplyWhisper={handleApplyWhisper} onClose={onCloseWhisper} />
           )}
 

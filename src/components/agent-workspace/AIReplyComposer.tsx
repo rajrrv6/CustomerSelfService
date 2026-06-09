@@ -163,6 +163,7 @@ export function AIReplyComposer({
             value={selectedTone}
             onChange={(e) => setSelectedTone(e.target.value as 'professional' | 'empathetic' | 'concise')}
             disabled={!canEdit}
+            aria-label={lang === 'ar' ? 'حدد نبرة الرد' : 'Select response tone'}
             className={`rounded-lg border border-slate-300 bg-slate-55 px-2 py-1 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
             title={!canEdit ? "Requires Edit Permission" : undefined}
           >
@@ -174,6 +175,7 @@ export function AIReplyComposer({
             type="button"
             onClick={handleRewriteTone}
             disabled={loadingSuggestion || !canEdit}
+            aria-label={lang === 'ar' ? 'إعادة صياغة النص' : 'Rewrite response tone'}
             className={`flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white hover:bg-blue-700 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
             title={!canEdit ? "Requires Edit Permission" : undefined}
           >
@@ -188,6 +190,7 @@ export function AIReplyComposer({
           onChange={(e) => handleApplyMacro(e.target.value)}
           defaultValue=""
           disabled={!canEdit}
+          aria-label={lang === 'ar' ? 'أدخل رداً جاهزاً' : 'Insert canned reply macro'}
           className={`max-w-full min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-55 px-3 py-2 text-[10px] text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
           title={!canEdit ? "Requires Edit Permission" : undefined}
         >
@@ -300,7 +303,7 @@ export function AIReplyComposer({
 
       {channel === 'whatsapp' && (
         <div className="flex flex-wrap gap-1.5 pb-1 select-none items-center">
-          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider font-mono mr-1">
+          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider font-mono me-1">
             {lang === 'ar' ? 'ردود سريعة:' : 'Quick Replies:'}
           </span>
           {[
@@ -361,6 +364,7 @@ export function AIReplyComposer({
                 ? t.agentWorkspace.aiComposer.writeInternalNote
                 : 'Write structured formal response back to customer...'
             }
+            aria-label={activeTab === 'note' ? (lang === 'ar' ? 'ملاحظة داخلية' : 'Internal note draft') : (lang === 'ar' ? 'رد البريد الإلكتروني' : 'Email response draft')}
             rows={5}
             className={`min-w-0 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-xs font-semibold focus:border-violet-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950/40 resize-y ${
               activeTab === 'note' ? 'text-purple-600 dark:text-purple-400' : 'text-slate-800 dark:text-slate-100'
@@ -417,6 +421,7 @@ export function AIReplyComposer({
                 ? t.agentWorkspace.aiComposer.writeInternalNote
                 : t.agentWorkspace.aiComposer.writeResponse
             }
+            aria-label={activeTab === 'note' ? (lang === 'ar' ? 'ملاحظة داخلية' : 'Internal note draft') : (lang === 'ar' ? 'رد المحادثة' : 'Chat response draft')}
             className={`min-w-0 flex-1 rounded-xl border border-slate-300 bg-slate-55 px-3 py-2.5 text-xs font-semibold focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 ${
               activeTab === 'note'
                 ? 'text-purple-600 dark:text-purple-400'
@@ -439,6 +444,7 @@ export function AIReplyComposer({
               onSend(draftText, activeTab === 'customer' ? 'chat' : 'note');
             }}
             disabled={!canEdit}
+            aria-label={activeTab === 'note' ? (lang === 'ar' ? 'حفظ الملاحظة الداخلية' : 'Save internal note') : (lang === 'ar' ? 'إرسال الرد' : 'Send response')}
             className={`shrink-0 rounded-xl p-2.5 text-white shadow-lg transition-all ${
               activeTab === 'note'
                 ? 'bg-purple-600 hover:bg-purple-700'

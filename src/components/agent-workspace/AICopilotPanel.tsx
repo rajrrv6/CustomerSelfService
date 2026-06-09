@@ -195,7 +195,7 @@ export function AICopilotPanel({
                 {lang === 'ar' ? 'معدل الرضا' : 'CSAT Predict'}
               </span>
             </div>
-            <div className="text-right">
+            <div className="text-end">
               <span className="text-[13px] font-black font-mono text-slate-800 dark:text-white">
                 {sentimentScore}%
               </span>
@@ -240,14 +240,23 @@ export function AICopilotPanel({
           {suggestedReplies.map((reply, idx) => (
             <div
               key={idx}
-              className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 hover:border-slate-350 dark:hover:border-slate-700 transition-all text-xs font-normal leading-relaxed text-slate-700 dark:text-slate-300 relative group cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onApplySuggestedReply(reply);
+                }
+              }}
+              aria-label={lang === 'ar' ? 'تطبيق هذا الرد المقترح' : 'Apply this suggested reply'}
+              className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 hover:border-slate-350 dark:hover:border-slate-700 transition-all text-xs font-normal leading-relaxed text-slate-700 dark:text-slate-300 relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
               onClick={() => onApplySuggestedReply(reply)}
             >
               <p>{reply}</p>
               <div className="flex justify-between items-center border-t border-slate-100 dark:border-slate-800/80 pt-1.5 mt-1 select-none">
                 <span className="text-[9.5px] text-slate-400 font-mono font-bold uppercase flex items-center gap-1">
                   <span>Click to Apply</span>
-                  <ArrowRight className="w-2.5 h-2.5" />
+                  <ArrowRight className="w-2.5 h-2.5 rtl:rotate-180" />
                 </span>
                 <button
                   type="button"
@@ -255,7 +264,8 @@ export function AICopilotPanel({
                     e.stopPropagation();
                     handleCopySuggestion(reply);
                   }}
-                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all text-slate-400 hover:text-slate-600"
+                  aria-label={lang === 'ar' ? 'نسخ الرد المقترح إلى الحافظة' : 'Copy suggested reply to clipboard'}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   title="Copy to Clipboard"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}

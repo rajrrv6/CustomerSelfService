@@ -87,13 +87,17 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
 
           {/* Simulated WhatsApp Attachment */}
           {hasAttachment && !isVoiceMsg && (
-            <div className="mt-2.5 p-2 bg-emerald-500/10 dark:bg-slate-900/50 rounded-lg border border-emerald-500/20 flex items-center gap-2">
+            <div
+              role="img"
+              aria-label={lang === 'ar' ? `مرفق: ${isImage ? 'صورة' : 'ملف'} ${isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}` : `Attachment: ${isImage ? 'image' : 'file'} ${isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}`}
+              className="mt-2.5 p-2 bg-emerald-500/10 dark:bg-slate-900/50 rounded-lg border border-emerald-500/20 flex items-center gap-2"
+            >
               {isImage ? (
                 <ImageIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               ) : (
                 <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               )}
-              <div className="text-xs text-left min-w-0">
+              <div className="text-xs text-start min-w-0">
                 <span className="font-bold block truncate text-slate-800 dark:text-slate-200" style={{ maxWidth: '140px' }}>
                   {isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}
                 </span>
@@ -125,8 +129,8 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
           )}
 
           {/* Inline Timestamp & Double Ticks inside the bubble */}
-          <div className="text-right text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-1 flex justify-end items-center gap-0.5 select-none leading-none">
-            <span>{message.timestamp}</span>
+          <div className="text-end text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-1 flex justify-end items-center gap-0.5 select-none leading-none">
+            <span aria-label={lang === 'ar' ? `أُرسلت في ${message.timestamp}` : `Sent at ${message.timestamp}`}>{message.timestamp}</span>
             {!isUser && (
               <CheckCheck className="w-3 h-3 text-[#53bdeb]" />
             )}
@@ -158,7 +162,7 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
               <span className="text-[13px] font-bold text-slate-800 dark:text-slate-200 truncate">
                 From: <span className="font-normal">{emailFrom}</span>
               </span>
-              <span className="font-mono text-[10.5px] text-slate-400 shrink-0">{message.timestamp}</span>
+              <span aria-label={lang === 'ar' ? `أُرسلت في ${message.timestamp}` : `Sent at ${message.timestamp}`} className="font-mono text-[10.5px] text-slate-400 shrink-0">{message.timestamp}</span>
             </div>
             <div>
               To: <span>{emailTo}</span>
@@ -178,7 +182,7 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
           {/* Threaded Quoted Email Sections */}
           {isThreadedReply && (
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400 dark:text-slate-500 animate-in fade-in duration-300">
-              <div className="border-l-2 border-slate-300 pl-3 italic space-y-1">
+              <div className="border-s-2 border-slate-300 ps-3 italic space-y-1">
                 <p className="font-bold text-[10px]">On 2026-05-22 at 14:40, Juliana Carter wrote:</p>
                 <p>"Hello, our accounts department sent a bank wire transfer confirmation but our workspace says payment pending."</p>
               </div>
@@ -187,10 +191,14 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
 
           {/* Simulated Attachment card in email */}
           {hasAttachment && (
-            <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs">
+            <div
+              role="img"
+              aria-label={lang === 'ar' ? 'مرفق: ملف INV-2026-7891_payment_receipt.pdf' : 'Attachment: file INV-2026-7891_payment_receipt.pdf'}
+              className="mt-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs"
+            >
               <div className="flex items-center gap-2">
                 <FileText className="w-6 h-6 text-red-500 shrink-0" />
-                <div className="text-left min-w-0">
+                <div className="text-start min-w-0">
                   <span className="font-bold block text-xs text-slate-800 dark:text-slate-200 truncate" style={{ maxWidth: '200px' }}>
                     INV-2026-7891_payment_receipt.pdf
                   </span>
@@ -256,7 +264,7 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
         {/* Sender details and timestamp */}
         <div className="flex justify-between items-center gap-4 text-[10px] opacity-60 mb-1.5 font-bold">
           <span>{message.senderName}</span>
-          <span className="font-mono">{message.timestamp}</span>
+          <span aria-label={lang === 'ar' ? `أُرسلت في ${message.timestamp}` : `Sent at ${message.timestamp}`} className="font-mono">{message.timestamp}</span>
         </div>
 
         {/* Message body */}
@@ -264,14 +272,18 @@ export function ConversationMessage({ message, lang, channel = 'web', status }: 
 
         {/* Simulated Attachment Preview */}
         {hasAttachment && (
-          <div className="mt-3 p-2 bg-slate-950/20 dark:bg-white/10 rounded-xl border border-slate-200/30 dark:border-white/10 flex items-center justify-between gap-2">
+          <div
+            role="img"
+            aria-label={lang === 'ar' ? `مرفق: ${isImage ? 'صورة' : 'ملف'} ${isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}` : `Attachment: ${isImage ? 'image' : 'file'} ${isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}`}
+            className="mt-3 p-2 bg-slate-950/20 dark:bg-white/10 rounded-xl border border-slate-200/30 dark:border-white/10 flex items-center justify-between gap-2"
+          >
             <div className="flex items-center gap-2">
               {isImage ? (
                 <ImageIcon className="w-5 h-5 text-pink-300 shrink-0" />
               ) : (
                 <FileText className="w-5 h-5 text-emerald-300 shrink-0" />
               )}
-              <div className="text-xs text-left min-w-0">
+              <div className="text-xs text-start min-w-0">
                 <span className="font-bold block truncate text-white" style={{ maxWidth: '120px' }}>
                   {isImage ? 'attachment_damaged_box.jpg' : 'INV-2026-7891.pdf'}
                 </span>
