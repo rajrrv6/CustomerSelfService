@@ -1,20 +1,111 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bot, Sparkles, Send, RefreshCw, KeyRound } from 'lucide-react';
+import { Bot, Sparkles, Send, RefreshCw, KeyRound, BookOpen } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
 import { CsatSurveyWidget } from '../customer-portal/feedback/CsatSurveyWidget';
 import { NpsSurveyWidget } from '../customer-portal/feedback/NpsSurveyWidget';
 import { TranscriptEmailModal } from '../customer-portal/feedback/TranscriptEmailModal';
 import { useFeedbackToasts } from '../customer-portal/feedback/PostChatToasts';
+import { kbArticles } from '../customer-portal/shared/constants';
+
+interface Suggestion {
+  type: 'kb' | 'action';
+  label: string;
+  articleId?: string;
+  actionType?: 'callback' | 'ticket' | 'live_chat' | 'pricing';
+}
+
+const getBotResponse = (lowerText: string): { reply: string; suggestions?: Suggestion[] } => {
+  if (lowerText.includes('price') || lowerText.includes('cost') || lowerText.includes('pricing') || lowerText.includes('سعر')) {
+    return {
+      reply: 'The standard SaaS package is $49/month, and the Enterprise package is $99/month. We offer standard volume discounts.',
+      suggestions: [
+        { type: 'kb', label: 'Refund Policies', articleId: 'art-1' },
+        { type: 'action', label: 'Book Voice Callback', actionType: 'callback' },
+        { type: 'action', label: 'File Support Case', actionType: 'ticket' }
+      ]
+    };
+  }
+  
+  if (lowerText.includes('refund') || lowerText.includes('return') || lowerText.includes('استرجاع')) {
+    return {
+      reply: 'Under our Return Policy (ks-1), refunds are allowed within 30 days of purchase. Please supply your Order ID to initiate the refund process.',
+      suggestions: [
+        { type: 'kb', label: 'How to Request Refund', articleId: 'art-1' },
+        { type: 'kb', label: 'Gateway Delivery Delays', articleId: 'art-4' },
+        { type: 'action', label: 'File Support Case', actionType: 'ticket' }
+      ]
+    };
+  }
+
+  if (lowerText.includes('cancel') || lowerText.includes('delete') || lowerText.includes('unsubscribe') || lowerText.includes('إلغاء')) {
+    return {
+      reply: 'To cancel your subscription, client admins can manage active subscriptions inside the settings portal. Standard subscriptions remain active until the end of the billing period.',
+      suggestions: [
+        { type: 'kb', label: 'Refund Policies', articleId: 'art-1' },
+        { type: 'action', label: 'Request Callback', actionType: 'callback' },
+        { type: 'action', label: 'Submit Ticket', actionType: 'ticket' }
+      ]
+    };
+  }
+
+  if (lowerText.includes('oauth') || lowerText.includes('api') || lowerText.includes('connector') || lowerText.includes('integration')) {
+    return {
+      reply: 'We support OAuth 2.0 client credentials flows for secure integrations with CRM and ERP hubs.',
+      suggestions: [
+        { type: 'kb', label: 'Setup API OAuth Client', articleId: 'art-2' },
+        { type: 'action', label: 'Continue with Live Support', actionType: 'live_chat' }
+      ]
+    };
+  }
+
+  if (lowerText.includes('login') || lowerText.includes('lock') || lowerText.includes('auth') || lowerText.includes('password') || lowerText.includes('دخول')) {
+    return {
+      reply: 'If your registry account access is locked, you can trigger a secure OTP code reset using your registered corporate email.',
+      suggestions: [
+        { type: 'kb', label: 'Unlock Login Credentials', articleId: 'art-3' },
+        { type: 'action', label: 'Connect to Live Agent', actionType: 'live_chat' }
+      ]
+    };
+  }
+
+  if (lowerText.includes('hi') || lowerText.includes('hello') || lowerText.includes('مرحبا')) {
+    return {
+      reply: 'Hello! I am Farah AI, your self-service assistant. Would you like to check order status, look up billing questions, or ask a product integration question?',
+      suggestions: [
+        { type: 'action', label: 'Check SaaS Pricing', actionType: 'pricing' },
+        { type: 'kb', label: 'Refund Policies', articleId: 'art-1' }
+      ]
+    };
+  }
+
+  // Default fallback:
+  return {
+    reply: 'I searched our RAG database but couldn\'t find a perfect article match. Would you like to check our direct support options below?',
+    suggestions: [
+      { type: 'action', label: 'Request Callback', actionType: 'callback' },
+      { type: 'action', label: 'File Support Case', actionType: 'ticket' },
+      { type: 'action', label: 'Connect to Live Desk', actionType: 'live_chat' }
+    ]
+  };
+};
 
 export function PublicBotWidget() {
   const { lang, addAuditLog } = useApp();
   const t = translations[lang];
   const { pushToast } = useFeedbackToasts();
 
-  const [messages, setMessages] = useState<Array<{ sender: string; text: string; time: string }>>(() => {
+  const [messages, setMessages] = useState<Array<{
+    sender: string;
+    text: string;
+    time: string;
+    suggestions?: Suggestion[];
+    isSystem?: boolean;
+    isError?: boolean;
+    isGuestHistory?: boolean;
+  }>>(() => {
     if (typeof window !== 'undefined') {
       try {
         const cached = sessionStorage.getItem('mPaaS_guest_chat_history');
@@ -26,7 +117,16 @@ export function PublicBotWidget() {
       }
     }
     return [
-      { sender: 'bot', text: 'مرحباً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك اليوم؟\n\nHi! I am Farah. How can I help you today?', time: '14:30' }
+      {
+        sender: 'bot',
+        text: 'مرحباً! أنا فرح المساعد الذكي. كيف يمكنني مساعدتك اليوم؟\n\nHi! I am Farah. How can I help you today?',
+        time: '14:30',
+        suggestions: [
+          { type: 'action', label: 'Check SaaS Pricing', actionType: 'pricing' },
+          { type: 'kb', label: 'Refund Policies', articleId: 'art-1' },
+          { type: 'action', label: 'Order Status search', actionType: 'pricing' }
+        ]
+      }
     ];
   });
 
@@ -46,6 +146,60 @@ export function PublicBotWidget() {
         window.location.href = `/login?redirect=${encodeURIComponent('/portal/home?action=submit_ticket')}`;
       } catch (err) {
         console.error('Failed to initiate escalation:', err);
+      }
+    }
+  };
+
+  const handleSuggestionClick = (sug: Suggestion) => {
+    const getCurrentTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (sug.type === 'kb' && sug.articleId) {
+      const art = kbArticles.find(a => a.id === sug.articleId);
+      if (art) {
+        addAuditLog(`Guest clicked KB deflection: ${art.title}`, 'success');
+        
+        setMessages(prev => [
+          ...prev,
+          { sender: 'user', text: `Read article: ${art.title}`, time: getCurrentTime() }
+        ]);
+        
+        setLoading(true);
+        setTimeout(() => {
+          setMessages(prev => [
+            ...prev,
+            {
+              sender: 'bot',
+              text: `Here is the article summary for **${art.title}**:\n\n${art.content.substring(0, 250)}...\n\n_Log in to read the full article._`,
+              time: getCurrentTime(),
+              suggestions: [
+                { type: 'action', label: 'File Support Case', actionType: 'ticket' },
+                { type: 'action', label: 'Connect to Live Desk', actionType: 'live_chat' }
+              ]
+            }
+          ]);
+          setLoading(false);
+        }, 600);
+      }
+    } else if (sug.type === 'action' && sug.actionType) {
+      if (sug.actionType === 'callback') {
+        setMessages(prev => [
+          ...prev,
+          { sender: 'user', text: 'Schedule Callback', time: getCurrentTime() },
+          {
+            sender: 'bot',
+            text: 'Your callback request will continue after login redirection.',
+            time: getCurrentTime()
+          }
+        ]);
+        setTimeout(() => {
+          window.location.href = '/callback';
+        }, 1200);
+      } else if (sug.actionType === 'ticket') {
+        handleEscalateToTicket();
+      } else if (sug.actionType === 'live_chat') {
+        window.location.href = `/login?redirect=${encodeURIComponent('/portal/home?action=open_chat')}`;
+      } else if (sug.actionType === 'pricing') {
+        handleSend('Check SaaS Pricing');
       }
     }
   };
@@ -72,18 +226,33 @@ export function PublicBotWidget() {
     setLoading(true);
 
     setTimeout(() => {
-      let reply = 'I have queried our RAG knowledge database, but I could not find a clear match. Let me transfer you to a live support representative.';
       const lower = text.toLowerCase();
       
-      if (lower.includes('price') || lower.includes('cost') || lower.includes('pricing') || lower.includes('سعر')) {
-        reply = 'The standard SaaS package is $49/month, and the Enterprise package is $99/month. We offer standard volume discounts.';
-      } else if (lower.includes('refund') || lower.includes('return') || lower.includes('استرجاع')) {
-        reply = 'Under our Return Policy (ks-1), refunds are allowed within 30 days of purchase. Please supply your Order ID to initiate the refund process.';
-      } else if (lower.includes('hi') || lower.includes('hello') || lower.includes('مرحبا')) {
-        reply = 'Hello! I am Farah AI, your self-service assistant. Would you like to check order status or ask a product question?';
+      if (lower.includes('offline') || lower.includes('trigger error')) {
+        setMessages(prev => [
+          ...prev,
+          {
+            sender: 'system',
+            text: '⚠️ Network connection weak. AI response failed to generate.',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isSystem: true,
+            isError: true
+          }
+        ]);
+        setLoading(false);
+        return;
       }
 
-      setMessages(prev => [...prev, { sender: 'bot', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      const result = getBotResponse(lower);
+      setMessages(prev => [
+        ...prev,
+        {
+          sender: 'bot',
+          text: result.reply,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestions: result.suggestions
+        }
+      ]);
       setLoading(false);
     }, 1000);
   };
@@ -147,49 +316,104 @@ export function PublicBotWidget() {
   };
 
   return (
-    <div className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl flex flex-col justify-between h-[520px] text-xs font-semibold">
+    <div className="max-w-md w-full mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl overflow-hidden shadow-xl flex flex-col justify-between h-[540px] text-xs font-semibold transition-all">
       {/* Widget Header */}
-      <div className="bg-blue-600 px-5 py-4 text-white flex justify-between items-center shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white">
-            <Bot className="w-4.5 h-4.5" />
+      <div className="bg-slate-900 dark:bg-slate-950 px-5 py-4 text-white flex justify-between items-center shrink-0 border-b border-slate-800/80">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+            <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-xs">Farah AI Support</h3>
-            <span className="text-[9px] opacity-75 font-semibold">Omnichannel Bot widget</span>
+            <h3 className="font-bold text-xs sm:text-sm tracking-tight">Farah AI Support</h3>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] text-slate-400 font-semibold">{lang === 'ar' ? 'نشط الآن' : 'Active Now'}</span>
+            </div>
           </div>
         </div>
         {botStatus === 'chat' ? (
           <button
             onClick={() => setBotStatus('survey')}
-            className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[9px] font-bold transition-all active:scale-95 cursor-pointer"
+            className="px-3 py-1.5 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700/50 rounded-lg text-[10px] font-bold transition-all active:scale-95 cursor-pointer"
           >
             {lang === 'ar' ? 'إنهاء الجلسة' : 'End Session'}
           </button>
         ) : (
-          <Sparkles className="w-4.5 h-4.5 text-blue-205 glow-active" />
+          <Sparkles className="w-4.5 h-4.5 text-blue-400 glow-active" />
         )}
       </div>
 
       {/* Messages area or Survey layout */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-3.5 bg-slate-50/50 dark:bg-slate-950/20">
+      <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50/30 dark:bg-slate-955/20">
         {botStatus === 'chat' && (
           <>
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
-                  msg.sender === 'user'
-                    ? 'bg-blue-600 text-white rounded-br-none'
-                    : 'bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/50 text-slate-855 dark:text-slate-200 rounded-bl-none shadow-sm'
-                }`}>
-                  <p className="whitespace-pre-line">{msg.text}</p>
+            {messages.map((msg, idx) => {
+              const isSystem = msg.isSystem;
+              const isUser = msg.sender === 'user';
+              const isEscalation = msg.text.includes('login redirection') || msg.text.includes('التحويل');
+              const isHistory = msg.isGuestHistory;
+
+              return (
+                <div key={idx} className={`flex ${isSystem ? 'justify-center w-full' : isUser ? 'justify-end' : 'justify-start'}`}>
+                  {isSystem ? (
+                    <div className={`text-center py-3 px-4 rounded-xl font-mono text-[10px] w-full max-w-[90%] ${msg.isError ? 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-450 border border-rose-200/50 dark:border-rose-900/30' : 'bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border border-slate-200/30'}`}>
+                      <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
+                      {msg.isError && (
+                        <button
+                          onClick={() => handleSend(messages[idx - 1]?.text || 'Hi')}
+                          className="mt-2 px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-slate-50 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-450 rounded-lg text-[9px] font-bold cursor-pointer transition-colors shadow-xs"
+                        >
+                          Retry Query
+                        </button>
+                      )}
+                    </div>
+                  ) : isEscalation ? (
+                    <div className="max-w-[85%] rounded-2xl px-4 py-3 leading-relaxed shadow-sm bg-amber-50 dark:bg-amber-950/15 border border-amber-200/80 dark:border-amber-900/30 text-amber-850 dark:text-amber-300 rounded-bl-none flex gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-550 shrink-0 mt-0.5 animate-pulse" />
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-600 dark:text-amber-500 block mb-0.5">
+                          {lang === 'ar' ? 'تنبيه التحويل' : 'Escalation Notice'}
+                        </span>
+                        <p className="whitespace-pre-line text-xs font-semibold">{msg.text}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 leading-relaxed shadow-sm transition-all relative ${
+                      isUser
+                        ? 'bg-blue-600 text-white rounded-br-sm shadow-blue-500/10'
+                        : 'bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-750 text-slate-850 dark:text-slate-250 rounded-bl-sm'
+                    } ${isHistory ? 'opacity-75 border-dashed border-slate-450 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/60' : ''}`}>
+                      {isHistory && (
+                        <span className="text-[8px] uppercase tracking-wider font-extrabold text-blue-500 dark:text-blue-400 block mb-1 select-none">
+                          {lang === 'ar' ? 'سجل محادثة الزائر' : 'Guest Session History'}
+                        </span>
+                      )}
+                      <p className="whitespace-pre-line text-xs font-medium">{msg.text}</p>
+                      {msg.time && <span className="text-[9px] opacity-40 block mt-1.5 text-right">{msg.time}</span>}
+                      
+                      {msg.suggestions && msg.suggestions.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-700/50">
+                          {msg.suggestions.map((sug, sIdx) => (
+                            <button
+                              key={sIdx}
+                              onClick={() => handleSuggestionClick(sug)}
+                              className="px-2.5 py-1.5 bg-slate-50 hover:bg-blue-50 dark:bg-slate-900/80 dark:hover:bg-blue-950/25 border border-slate-200 hover:border-blue-300 dark:border-slate-750 dark:hover:border-blue-800/60 text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-450 rounded-xl text-[10px] font-bold transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-xs"
+                            >
+                              {sug.type === 'kb' ? <BookOpen className="w-3 h-3 text-blue-500" /> : <Sparkles className="w-3.5 h-3.5 text-amber-500" />}
+                              <span>{sug.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white dark:bg-slate-850 border border-slate-250 dark:border-slate-800 rounded-2xl px-3 py-2 flex items-center gap-1.5 font-bold text-blue-500 font-mono text-[10px]">
+                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-2.5 flex items-center gap-2 font-bold text-blue-500 font-mono text-[10px]">
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                   <span>Typing...</span>
                 </div>
@@ -226,7 +450,7 @@ export function PublicBotWidget() {
 
       {/* OTP tracking form overlay if active */}
       {botStatus === 'chat' && otpStep !== 'none' && otpStep !== 'verified' && (
-        <form onSubmit={handleOtpLookup} className="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 p-4 space-y-3 shrink-0">
+        <form onSubmit={handleOtpLookup} className="bg-slate-50 dark:bg-slate-950 border-t border-slate-200/80 dark:border-slate-800/80 p-4 space-y-3 shrink-0">
           <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-blue-500 font-mono">
             <KeyRound className="w-3.5 h-3.5" />
             <span>Verify Order Tracking</span>
@@ -240,9 +464,9 @@ export function PublicBotWidget() {
                 placeholder="Order Number (e.g. ORD-99881)"
                 value={orderNumber}
                 onChange={(e) => setOrderNumber(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-855 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none text-slate-800 dark:text-slate-100 font-semibold"
+                className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-850 dark:text-slate-100 font-semibold"
               />
-              <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">
+              <button type="submit" className="px-4 py-2 bg-blue-650 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer shadow-sm">
                 Next
               </button>
             </div>
@@ -255,9 +479,9 @@ export function PublicBotWidget() {
                 placeholder="Enter 4-digit code (use 1234)"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-855 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none font-mono text-slate-850 dark:text-slate-100 font-semibold"
+                className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none focus:border-blue-500 font-mono text-slate-850 dark:text-slate-100 font-semibold"
               />
-              <button type="submit" className="px-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer">
+              <button type="submit" className="px-4 py-2 bg-blue-650 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer shadow-sm">
                 Verify
               </button>
             </div>
@@ -267,28 +491,28 @@ export function PublicBotWidget() {
 
       {/* Quick shortcuts buttons */}
       {botStatus === 'chat' && otpStep === 'none' && (
-        <div className="px-5 py-2 flex gap-1.5 overflow-x-auto bg-slate-50 dark:bg-slate-950/40 shrink-0 border-t border-slate-200/50 dark:border-slate-850 select-none">
+        <div className="px-5 py-2.5 flex gap-2 overflow-x-auto bg-slate-50 dark:bg-slate-950/40 shrink-0 border-t border-slate-200/60 dark:border-slate-800/60 select-none">
           <button
             onClick={handleEscalateToTicket}
-            className="px-3 py-1 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-805 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] text-blue-600 dark:text-blue-400 cursor-pointer font-bold animate-pulse"
+            className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/80 rounded-full whitespace-nowrap text-[10px] text-blue-600 dark:text-blue-450 cursor-pointer font-bold transition-all shadow-xs"
           >
             File Support Ticket
           </button>
           <button
             onClick={() => setOtpStep('order')}
-            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] cursor-pointer"
+            className="px-3.5 py-1.5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 rounded-full whitespace-nowrap text-[10px] text-slate-655 dark:text-slate-350 cursor-pointer transition-colors shadow-xs"
           >
             Order Tracking
           </button>
           <button
             onClick={() => handleSend('What is the price of standard subscription?')}
-            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] cursor-pointer"
+            className="px-3.5 py-1.5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 rounded-full whitespace-nowrap text-[10px] text-slate-655 dark:text-slate-350 cursor-pointer transition-colors shadow-xs"
           >
             Check SaaS Pricing
           </button>
           <button
             onClick={() => handleSend('What is the return policy?')}
-            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full hover:border-blue-500 whitespace-nowrap text-[10px] cursor-pointer"
+            className="px-3.5 py-1.5 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700 rounded-full whitespace-nowrap text-[10px] text-slate-655 dark:text-slate-350 cursor-pointer transition-colors shadow-xs"
           >
             Refund Policies
           </button>
@@ -297,20 +521,20 @@ export function PublicBotWidget() {
 
       {/* Composer Input */}
       {botStatus === 'chat' && otpStep === 'none' && (
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800/80 flex gap-2 bg-white dark:bg-slate-900 shrink-0">
+        <div className="p-3 border-t border-slate-200/80 dark:border-slate-800/85 flex gap-2 bg-white dark:bg-slate-900 shrink-0">
           <input
             type="text"
             placeholder="Type a message..."
             value={composer}
             onChange={(e) => setComposer(e.target.value)}
-            className="flex-1 px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-550 text-slate-850 dark:text-slate-100 font-semibold"
+            className="flex-1 px-4 py-2.5 border border-slate-200 dark:border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs text-slate-850 dark:text-slate-100 font-semibold"
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSend(composer);
             }}
           />
           <button
             onClick={() => handleSend(composer)}
-            className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md cursor-pointer"
+            className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md cursor-pointer transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>

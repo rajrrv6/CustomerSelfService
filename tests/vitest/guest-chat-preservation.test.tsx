@@ -5,6 +5,7 @@ import { PublicBotWidget } from '@/components/dashboard/PublicBotWidget';
 import { LiveChatOverlay } from '@/components/customer-portal/live-chat/LiveChatOverlay';
 import { SubmitTicketPage } from '@/components/customer-portal/tickets/SubmitTicketPage';
 import { FeedbackToastProvider } from '@/components/customer-portal/feedback/PostChatToasts';
+import { useAuth } from '@/hooks/useAuth';
 
 // Wrap tests with FeedbackToastProvider context
 const render = (ui: React.ReactElement, options?: any) => {
@@ -260,6 +261,60 @@ describe('Task 2 — Guest Chat Context Preservation Tests', () => {
       );
 
       expect(setTicketDescMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('4. Session Cleanup Validation on Logout', () => {
+    it('clears guest chat context keys from sessionStorage upon logout', () => {
+      sessionStorage.setItem('mPaaS_guest_chat_history', 'dummy-history');
+      sessionStorage.setItem('mPaaS_guest_chat_escalated', 'true');
+
+      const TestLogoutComponent = () => {
+        const { logout } = useAuth();
+        return (
+          <button onClick={logout} data-testid="logout-btn">
+            Logout
+          </button>
+        );
+      };
+
+      render(<TestLogoutComponent />);
+      const btn = screen.getByTestId('logout-btn');
+      fireEvent.click(btn);
+
+      // Verify that sessionStorage guest variables are cleared
+      expect(sessionStorage.getItem('mPaaS_guest_chat_history')).toBeNull();
+      expect(sessionStorage.getItem('mPaaS_guest_chat_escalated')).toBeNull();
+    });
+  });
+
+  describe('5. Task 4 — Public Bot deflection, suggestions and error states', () => {
+    it('displays contextual KB suggestions when a guest sends a refund query', async () => {
+      render(<PublicBotWidget />);
+
+      const input = screen.getByPlaceholderText(/Type a message.../i);
+      fireEvent.change(input, { target: { value: 'how can I request a refund?' } });
+      fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+      // Wait for AI response deflection chips
+      await waitFor(() => {
+        expect(screen.getByText(/How to Request Refund/i)).toBeInTheDocument();
+        expect(screen.getByText(/Gateway Delivery Delays/i)).toBeInTheDocument();
+      }, { timeout: 1500 });
+    });
+
+    it('renders error status message and retry button when offline is triggered', async () => {
+      render(<PublicBotWidget />);
+
+      const input = screen.getByPlaceholderText(/Type a message.../i);
+      fireEvent.change(input, { target: { value: 'trigger error' } });
+      fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+      // Wait for error system box
+      await waitFor(() => {
+        expect(screen.getByText(/Network connection weak/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Retry Query/i })).toBeInTheDocument();
+      }, { timeout: 1500 });
     });
   });
 });

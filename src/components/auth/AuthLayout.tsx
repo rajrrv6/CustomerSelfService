@@ -23,6 +23,12 @@ export function AuthLayout({
   const { lang, theme, setLang, setTheme } = useApp();
   const isRtl = lang === 'ar';
 
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div
       className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#030712] transition-colors"
@@ -68,36 +74,40 @@ export function AuthLayout({
             ))}
           </div>
 
-          <div
-            className="flex bg-slate-200/80 dark:bg-slate-800/80 rounded-lg p-0.5 border border-slate-300/80 dark:border-slate-700"
-            role="group"
-            aria-label={isRtl ? 'المظهر' : 'Theme'}
-          >
-            {(['light', 'dark', 'system'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTheme(t)}
-                className={`px-2.5 py-1.5 rounded-md transition-all ${
-                  theme === t
-                    ? 'bg-white dark:bg-slate-900 shadow-sm text-blue-600 dark:text-blue-400'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                }`}
-              >
-                {t === 'light'
-                  ? isRtl
-                    ? 'فاتح'
-                    : 'Light'
-                  : t === 'dark'
+          {mounted ? (
+            <div
+              className="flex bg-slate-200/80 dark:bg-slate-800/80 rounded-lg p-0.5 border border-slate-300/80 dark:border-slate-700"
+              role="group"
+              aria-label={isRtl ? 'المظهر' : 'Theme'}
+            >
+              {(['light', 'dark', 'system'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTheme(t)}
+                  className={`px-2.5 py-1.5 rounded-md transition-all ${
+                    theme === t
+                      ? 'bg-white dark:bg-slate-900 shadow-sm text-blue-600 dark:text-blue-400'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {t === 'light'
                     ? isRtl
-                      ? 'داكن'
-                      : 'Dark'
-                    : isRtl
-                      ? 'نظام'
-                      : 'Auto'}
-              </button>
-            ))}
-          </div>
+                      ? 'فاتح'
+                      : 'Light'
+                    : t === 'dark'
+                      ? isRtl
+                        ? 'داكن'
+                        : 'Dark'
+                      : isRtl
+                        ? 'نظام'
+                        : 'Auto'}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="h-9 w-[140px]" />
+          )}
         </div>
       </header>
 

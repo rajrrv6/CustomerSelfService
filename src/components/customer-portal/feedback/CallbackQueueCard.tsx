@@ -25,14 +25,63 @@ export function CallbackQueueCard({
 }: CallbackQueueCardProps) {
   const isRtl = lang === 'ar';
   
-  const [position, setPosition] = useState(initialPosition);
-  const [waitTimeMins, setWaitTimeMins] = useState(initialPosition * 1.5);
-  const [callbackStatus, setCallbackStatus] = useState<'queued' | 'connecting' | 'active' | 'completed'>('queued');
-  const [isEscalated, setIsEscalated] = useState(false);
+  const [position, setPosition] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('mPaaS_active_callback');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.phoneNumber === phoneNumber && typeof parsed.position === 'number') {
+            return parsed.position;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading initial position:', err);
+      }
+    }
+    return initialPosition;
+  });
+
+  const [waitTimeMins, setWaitTimeMins] = useState(position * 1.5);
+
+  const [callbackStatus, setCallbackStatus] = useState<'queued' | 'connecting' | 'active' | 'completed'>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('mPaaS_active_callback');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.phoneNumber === phoneNumber && parsed.callbackStatus) {
+            return parsed.callbackStatus;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading initial status:', err);
+      }
+    }
+    return 'queued';
+  });
+
+  const [isEscalated, setIsEscalated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('mPaaS_active_callback');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.phoneNumber === phoneNumber && typeof parsed.isEscalated === 'boolean') {
+            return parsed.isEscalated;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading initial escalation:', err);
+      }
+    }
+    return false;
+  });
+
   const [escalating, setEscalating] = useState(false);
   const [countdown, setCountdown] = useState(10);
 
-  const lastNotifiedPos = useRef<number>(initialPosition);
+  const lastNotifiedPos = useRef<number>(position);
   const activeToastTriggered = useRef(false);
   const onDismissRef = useRef(onDismiss);
   const onCloseRef = useRef(onClose);
@@ -46,6 +95,46 @@ export function CallbackQueueCard({
   useEffect(() => {
     setWaitTimeMins(position * 1.5);
   }, [position]);
+
+  // Synchronize queue status and details with localStorage active callback session
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('mPaaS_active_callback');
+        let createdTimestamp = Date.now();
+        let callbackId = `CB-${Math.floor(10000 + Math.random() * 90000)}`;
+
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.phoneNumber === phoneNumber) {
+            createdTimestamp = parsed.createdTimestamp || createdTimestamp;
+            callbackId = parsed.id || callbackId;
+          }
+        }
+
+        const isExpired = Date.now() - createdTimestamp > 2 * 60 * 60 * 1000;
+        if (isExpired || callbackStatus === 'completed') {
+          localStorage.removeItem('mPaaS_active_callback');
+          if (isExpired) {
+            onCloseRef.current?.();
+            onDismissRef.current?.();
+          }
+        } else {
+          localStorage.setItem('mPaaS_active_callback', JSON.stringify({
+            id: callbackId,
+            phoneNumber,
+            position,
+            waitTimeMins: position * 1.5,
+            callbackStatus,
+            isEscalated,
+            createdTimestamp
+          }));
+        }
+      } catch (err) {
+        console.error('Error updating localStorage callback session:', err);
+      }
+    }
+  }, [phoneNumber, position, callbackStatus, isEscalated]);
 
   // Notify parent of status changes
   useEffect(() => {
@@ -232,54 +321,54 @@ export function CallbackQueueCard({
   };
 
   return (
-    <OperationalCard className={`w-full max-w-3xl mx-auto !p-3.5 !space-y-3 border-l-4 ${getBorderColor()} bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 text-[11px] font-semibold`}>
+    <OperationalCard className={`w-full max-w-3xl mx-auto !p-4 !space-y-4 border-l-4 ${getBorderColor()} bg-white dark:bg-[#111827] border border-slate-205 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 text-xs font-semibold`}>
       <div className="flex justify-between items-center transition-all duration-300">
-        <div className="flex items-center gap-2.5">
-          <div className={`w-8 h-8 rounded-full bg-gradient-to-tr transition-all duration-300 ${
-            callbackStatus === 'queued' ? 'from-blue-500/10 to-indigo-500/10 text-blue-600 dark:text-blue-400' :
-            callbackStatus === 'connecting' ? 'from-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-400 animate-pulse' :
-            'from-emerald-500/10 to-teal-500/10 text-emerald-600 dark:text-emerald-400'
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-tr transition-all duration-300 ${
+            callbackStatus === 'queued' ? 'from-blue-500/10 to-indigo-500/10 text-blue-600 dark:text-blue-450' :
+            callbackStatus === 'connecting' ? 'from-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-450 animate-pulse' :
+            'from-emerald-500/10 to-teal-500/10 text-emerald-600 dark:text-emerald-450'
           } flex items-center justify-center shrink-0`}>
             {callbackStatus === 'completed' ? (
-              <CheckCircle className="w-4 h-4 transition-all duration-300" />
+              <CheckCircle className="w-5 h-5 transition-all duration-300" />
             ) : (
-              <PhoneCall className="w-4 h-4 transition-all duration-300" />
+              <PhoneCall className="w-5 h-5 transition-all duration-300" />
             )}
           </div>
           <div>
-            <h4 className="font-extrabold text-[11px] text-slate-855 dark:text-white leading-tight transition-all duration-300">
+            <h4 className="font-extrabold text-xs sm:text-sm text-slate-850 dark:text-white leading-tight transition-all duration-300">
               {callbackStatus === 'completed'
                 ? (isRtl ? 'تم الاتصال بالدعم' : 'Support Session Connected')
                 : (isRtl ? 'حالة حجز الاتصال الصوتي' : 'Callback Queue Status')}
             </h4>
-            <span className="text-[8px] text-slate-400 dark:text-slate-500 font-mono block mt-0.5">LINE: {phoneNumber}</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono block mt-1">LINE: {phoneNumber}</span>
           </div>
         </div>
         {getStatusBadge()}
       </div>
 
       {callbackStatus !== 'completed' ? (
-        <div className="space-y-3 transition-all duration-300 opacity-100">
-          <div className="bg-slate-50/50 dark:bg-slate-950/40 p-2 rounded-xl border border-slate-100 dark:border-slate-850/80 grid grid-cols-2 gap-2 text-center font-mono transition-all duration-300">
-            <div className="space-y-0.5">
-              <span className="text-[8px] text-slate-400 dark:text-slate-500 uppercase tracking-wider block select-none">
+        <div className="space-y-4 transition-all duration-300 opacity-100">
+          <div className="bg-slate-50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-850/80 grid grid-cols-2 gap-3 text-center font-mono transition-all duration-300 shadow-xs">
+            <div className="space-y-1">
+              <span className="text-[9px] text-slate-450 dark:text-slate-500 uppercase tracking-wider block select-none font-bold">
                 {isRtl ? 'الترتيب في الطابور' : 'Queue Position'}
               </span>
-              <span className="text-xs font-extrabold text-slate-850 dark:text-white transition-all duration-300">
+              <span className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white transition-all duration-300">
                 {position > 0 ? `#${position}` : (isRtl ? 'الحالي' : 'Next Up')}
               </span>
             </div>
-            <div className="space-y-0.5 border-l border-slate-200 dark:border-slate-850">
-              <span className="text-[8px] text-slate-400 dark:text-slate-500 uppercase tracking-wider block select-none">
+            <div className="space-y-1 border-l border-slate-200 dark:border-slate-800">
+              <span className="text-[9px] text-slate-450 dark:text-slate-500 uppercase tracking-wider block select-none font-bold">
                 {isRtl ? 'الانتظار المتوقع' : 'Est. Wait'}
               </span>
-              <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 transition-all duration-300">
+              <span className="text-sm sm:text-base font-extrabold text-blue-600 dark:text-blue-400 transition-all duration-300">
                 {position > 0 ? `${waitTimeMins.toFixed(1)}m` : (isRtl ? 'فوري' : 'Instant')}
               </span>
             </div>
           </div>
 
-          <p className="text-[9px] text-slate-450 dark:text-slate-400 leading-relaxed font-normal transition-all duration-300">
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal transition-all duration-300">
             {callbackStatus === 'queued' && (
               isRtl
                 ? `جميع الوكلاء منشغلون بالرد على المكالمات حالياً. سيتصل بك وكيلنا المتاح التالي على الرقم ${phoneNumber}. يرجى إبقاء خط الهاتف الخاص بك مفتوحاً.`
@@ -298,26 +387,26 @@ export function CallbackQueueCard({
           </p>
 
           {callbackStatus === 'queued' && (
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 flex justify-between items-center gap-2 transition-all duration-300">
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/60 flex justify-between items-center gap-2 transition-all duration-300">
               {isEscalated ? (
-                <div className="w-full flex justify-center items-center gap-1 text-[8.5px] font-extrabold text-amber-600 dark:text-amber-400 font-mono select-none tracking-wide transition-all duration-300">
-                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                  <span>✓ PRIORITY ESCALATED TO LEVEL-2</span>
+                <div className="w-full py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex justify-center items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400 font-mono select-none tracking-wider transition-all duration-300 animate-pulse">
+                  <Sparkles className="w-4 h-4" />
+                  <span>✓ PRIORITY ESCALATED (LEVEL-2)</span>
                 </div>
               ) : (
                 <button
                   onClick={handleEscalate}
                   disabled={escalating}
-                  className="w-full py-1 border border-slate-200 dark:border-slate-800 hover:border-amber-400/40 hover:bg-amber-500/5 hover:text-amber-650 rounded-xl text-[9px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  className="w-full py-2 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 text-amber-700 dark:text-amber-450 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.99]"
                 >
                   {escalating ? (
                     <>
-                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       <span>{isRtl ? 'جاري المعالجة...' : 'Processing Handoff...'}</span>
                     </>
                   ) : (
                     <>
-                      <ShieldAlert className="w-3 h-3 text-amber-550" />
+                      <ShieldAlert className="w-3.5 h-3.5 text-amber-550" />
                       <span>{isRtl ? 'تصعيد الاستحقاق الفوري' : 'Request Premium Escalation'}</span>
                     </>
                   )}
@@ -327,13 +416,13 @@ export function CallbackQueueCard({
           )}
         </div>
       ) : (
-        <div className="space-y-2.5 transition-all duration-300 opacity-100 animate-in fade-in">
-          <p className="text-[9.5px] text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
+        <div className="space-y-3 transition-all duration-300 opacity-100 animate-in fade-in">
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
             {isRtl
               ? `الوكيل في انتظارك الآن. تم إنشاء جلسة الدعم الصوتي بنجاح. سيتم إغلاق هذه النافذة تلقائياً خلال ${countdown} ثوانٍ.`
               : `Our support agent is now ready to assist you. Voice callback session established. This widget will close automatically in ${countdown} seconds.`}
           </p>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full overflow-hidden">
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden shadow-inner">
             <div
               className="bg-emerald-500 h-full transition-all duration-1000 ease-linear"
               style={{ width: `${(countdown / 10) * 100}%` }}

@@ -13,6 +13,7 @@ interface ChatMessage {
   sender: 'bot' | 'user' | 'agent' | 'system';
   text: string;
   time: string;
+  isGuestHistory?: boolean;
 }
 
 interface LiveChatOverlayProps {
@@ -98,7 +99,8 @@ export function LiveChatOverlay({
             const filteredCached = parsed.map((msg: any) => ({
               sender: msg.sender as 'bot' | 'user' | 'agent' | 'system',
               text: msg.text,
-              time: msg.time || ''
+              time: msg.time || '',
+              isGuestHistory: true
             }));
             
             // Prepend guest conversation logs to existing chat state, omitting the default authenticated greeting
@@ -145,26 +147,29 @@ export function LiveChatOverlay({
     <div className={`fixed bottom-6 ${lang === 'ar' ? 'left-6' : 'right-6'} z-40`}>
       {chatOpen ? (
         /* Opened chat screen */
-        <div className="bg-[#0b0f19] text-white rounded-3xl w-80 max-w-[calc(100vw-2rem)] shadow-2xl flex flex-col justify-between border border-slate-800 animate-in zoom-in-95 text-xs font-semibold" style={{ height: '450px' }}>
+        <div className="bg-[#0b0f19] text-white rounded-3xl w-80 max-w-[calc(100vw-2rem)] shadow-2xl flex flex-col justify-between border border-slate-800/80 animate-in zoom-in-95 text-xs font-semibold" style={{ height: '460px' }}>
           {/* Chat header */}
-          <div className="bg-blue-600 px-4 py-3 text-white flex justify-between items-center rounded-t-3xl shrink-0">
-            <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-blue-250 animate-pulse" />
+          <div className="bg-slate-900 px-4 py-3.5 text-white flex justify-between items-center rounded-t-3xl shrink-0 border-b border-slate-800/80">
+            <div className="flex items-center gap-2.5">
+              <Brain className="w-5 h-5 text-blue-400 animate-pulse" />
               <div>
-                <h4 className="font-bold text-xs">{t.portal.liveChat.botName}</h4>
-                <span className="text-[9px] opacity-75 block font-mono">{t.portal.liveChat.botSubtitle}</span>
+                <h4 className="font-bold text-xs tracking-tight">{t.portal.liveChat.botName}</h4>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[9px] text-slate-400 font-semibold">{t.portal.liveChat.botSubtitle}</span>
+                </div>
               </div>
             </div>
             
-            <div className="flex gap-1">
+            <div className="flex gap-1.5 items-center">
               <button
                 onClick={() => setChatLanguage(chatLanguage === 'en' ? 'ar' : 'en')}
-                className="text-[9px] px-1.5 py-0.5 bg-white/20 rounded font-mono font-bold cursor-pointer"
+                className="text-[9px] px-2 py-0.5 bg-slate-800 hover:bg-slate-750 border border-slate-700/50 rounded font-mono font-bold cursor-pointer transition-colors"
                 title="Toggle translation locale"
               >
                 {chatLanguage.toUpperCase()}
               </button>
-              <button onClick={() => setChatOpen(false)} className="text-white hover:text-slate-250 text-sm cursor-pointer">
+              <button onClick={() => setChatOpen(false)} className="text-slate-400 hover:text-white transition-colors cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -172,7 +177,7 @@ export function LiveChatOverlay({
 
           {/* Chat messages */}
           <div 
-            className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-950/20"
+            className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950/20"
             aria-live="polite"
             aria-atomic="false"
           >
@@ -181,16 +186,21 @@ export function LiveChatOverlay({
                 {chatMessages.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
-                      className={`max-w-[85%] rounded-2xl px-3 py-2 leading-relaxed ${
+                      className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed transition-all duration-200 relative ${
                         msg.sender === 'user'
-                          ? 'bg-blue-600 text-white rounded-br-none'
+                          ? 'bg-blue-600 text-white rounded-br-sm shadow-blue-500/10'
                           : msg.sender === 'system'
-                          ? 'bg-purple-900/40 text-purple-200 font-mono text-[9px] text-center mx-auto rounded-lg'
-                          : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700/50'
-                      }`}
+                          ? 'bg-purple-950/40 text-purple-300 border border-purple-900/35 font-mono text-[9.5px] text-center mx-auto rounded-lg px-3 py-1.5'
+                          : 'bg-slate-805 text-slate-200 rounded-bl-sm border border-slate-700/60'
+                      } ${msg.isGuestHistory ? 'opacity-75 border border-dashed border-slate-600 bg-slate-800/80' : ''}`}
                     >
-                      <p className="whitespace-pre-line">{msg.text}</p>
-                      {msg.time && <span className="text-[8px] opacity-50 block mt-1 text-right">{msg.time}</span>}
+                      {msg.isGuestHistory && msg.sender !== 'system' && (
+                        <span className="text-[8px] uppercase tracking-wider font-extrabold text-blue-400 block mb-1 select-none">
+                          Guest Session History
+                        </span>
+                      )}
+                      <p className="whitespace-pre-line text-xs font-medium">{msg.text}</p>
+                      {msg.time && <span className="text-[9px] opacity-40 block mt-1.5 text-right">{msg.time}</span>}
                     </div>
                   </div>
                 ))}
@@ -198,7 +208,7 @@ export function LiveChatOverlay({
                 {/* Bot typing state simulation */}
                 {chatStatus === 'typing' && (
                   <div className="flex justify-start">
-                    <div className="bg-slate-800 border border-slate-700/50 rounded-2xl px-3 py-2 flex items-center gap-1.5 text-blue-400 font-mono text-[9px]">
+                    <div className="bg-slate-800 border border-slate-700/50 rounded-2xl px-3.5 py-2 flex items-center gap-2 text-blue-400 font-mono text-[10px]">
                       <Clock className="w-3.5 h-3.5 animate-spin" />
                       <span>{t.portal.liveChat.farahTyping}</span>
                     </div>
@@ -207,9 +217,9 @@ export function LiveChatOverlay({
 
                 {/* Handoff queue intermediate position state */}
                 {chatStatus === 'queue' && (
-                  <div className="text-center py-4 bg-slate-900/50 border border-slate-800 rounded-xl space-y-2">
-                    <span className="text-amber-500 font-bold block animate-pulse">{t.portal.liveChat.routingToAgent}</span>
-                    <div className="text-[10px] text-slate-400">
+                  <div className="text-center py-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3 shadow-inner">
+                    <span className="text-amber-500 font-bold block animate-pulse text-xs">{t.portal.liveChat.routingToAgent}</span>
+                    <div className="text-[10px] text-slate-400 font-mono space-y-0.5">
                       <p>{t.portal.liveChat.queuePosition} <strong>{queuePos}</strong></p>
                       <p>{t.portal.liveChat.estimatedWait} <strong>{queuePos * 1.5} {t.portal.liveChat.mins}</strong></p>
                     </div>
@@ -254,7 +264,7 @@ export function LiveChatOverlay({
                 placeholder={t.portal.liveChat.inputPlaceholder}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-800 bg-transparent rounded-xl focus:outline-none text-xs text-white font-semibold"
+                className="flex-1 px-3.5 py-2 border border-slate-800 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-xs text-white font-semibold"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSendChatMessage(chatInput);
                 }}
@@ -264,7 +274,7 @@ export function LiveChatOverlay({
                 <button
                   type="button"
                   onClick={() => setChatStatus('survey')}
-                  className="px-2 bg-rose-600 hover:bg-rose-700 rounded-xl text-[9px] font-bold cursor-pointer"
+                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm"
                   title="End Conversation and Survey"
                 >
                   {t.portal.liveChat.closeChat}
@@ -276,7 +286,7 @@ export function LiveChatOverlay({
                     setChatStatus('queue');
                     setQueuePos(3);
                   }}
-                  className="px-2 bg-slate-800 hover:bg-slate-700 border border-slate-700/60 rounded-xl text-[9px] font-bold cursor-pointer"
+                  className="px-3.5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-750 text-slate-200 rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm animate-pulse"
                   title="Consult Human Desk"
                 >
                   {t.portal.liveChat.agentButton}
@@ -285,7 +295,7 @@ export function LiveChatOverlay({
 
               <button
                 onClick={() => handleSendChatMessage(chatInput)}
-                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer"
+                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer transition-colors shadow-md"
               >
                 <Send className="w-4 h-4" />
               </button>

@@ -157,6 +157,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('role');
       localStorage.removeItem('mpaas_registered_roles');
+      localStorage.removeItem('mPaaS_active_callback');
+      sessionStorage.removeItem('mPaaS_guest_chat_history');
+      sessionStorage.removeItem('mPaaS_guest_chat_escalated');
     }
     setSession(null);
     setPendingLogin(null);

@@ -18,6 +18,25 @@ export default function PublicCallbackPage() {
   const [callbackTime, setCallbackTime] = useState('As soon as possible');
   const [submittedPhone, setSubmittedPhone] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('mPaaS_active_callback');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.phoneNumber && parsed.createdTimestamp) {
+          const isExpired = Date.now() - parsed.createdTimestamp > 2 * 60 * 60 * 1000;
+          if (isExpired) {
+            localStorage.removeItem('mPaaS_active_callback');
+          } else {
+            setSubmittedPhone(parsed.phoneNumber);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load active callback from localStorage:', err);
+    }
+  }, []);
+
   const handleScheduleCallback = (e: React.FormEvent) => {
     e.preventDefault();
     if (!callbackPhone) return;
@@ -86,6 +105,14 @@ export default function PublicCallbackPage() {
               lang={lang}
               phoneNumber={submittedPhone}
               onToastTrigger={pushToast}
+              onDismiss={() => {
+                setSubmittedPhone(null);
+                localStorage.removeItem('mPaaS_active_callback');
+              }}
+              onClose={() => {
+                setSubmittedPhone(null);
+                localStorage.removeItem('mPaaS_active_callback');
+              }}
             />
           </div>
         ) : (

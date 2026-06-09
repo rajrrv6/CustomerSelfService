@@ -348,6 +348,30 @@ export function CustomerPortalLayout({
   const [surveyNps, setSurveyNps] = useState(0);
   const [transcriptEmail, setTranscriptEmail] = useState('');
 
+  // Load active callback queue state from localStorage on mount (Sprint 10A Task 3)
+  useEffect(() => {
+    if (role !== 'customer') return;
+
+    try {
+      const stored = localStorage.getItem('mPaaS_active_callback');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.phoneNumber && parsed.createdTimestamp) {
+          const isExpired = Date.now() - parsed.createdTimestamp > 2 * 60 * 60 * 1000;
+          if (isExpired) {
+            localStorage.removeItem('mPaaS_active_callback');
+          } else {
+            setCallbackPhone(parsed.phoneNumber);
+            setCallbackQueued(true);
+            setQueueStatus(parsed.callbackStatus || 'queued');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to restore active callback session on mount:', err);
+    }
+  }, [role]);
+
   // ----------------------------------------------------
   // Handlers
   // ----------------------------------------------------
@@ -698,10 +722,12 @@ export function CustomerPortalLayout({
                   onDismiss={() => {
                     setCallbackQueued(false);
                     setQueueStatus('idle');
+                    localStorage.removeItem('mPaaS_active_callback');
                   }}
                   onClose={() => {
                     setCallbackQueued(false);
                     setQueueStatus('idle');
+                    localStorage.removeItem('mPaaS_active_callback');
                   }}
                   onStatusChange={(status) => setQueueStatus(status)}
                 />
