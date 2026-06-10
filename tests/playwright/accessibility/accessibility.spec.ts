@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 async function loginAs(page: any, email: string) {
-  await page.goto('/login');
+  await page.goto('/signin');
   await page.locator('input#email').fill(email);
   await page.locator('input#password').fill('password123');
   await page.getByRole('button', { name: /continue to verification/i }).click();
-  await page.waitForURL(/\/login\/mfa/);
+  await page.waitForURL(/\/signin\/mfa/);
 
   const mfaInputs = page.locator('input[inputmode="numeric"]');
   await expect(mfaInputs.first()).toBeVisible({ timeout: 15000 });
@@ -49,7 +49,7 @@ test.describe('CustomerSelfService Accessibility Audits', () => {
   });
 
   test('Keyboard Navigation & Visible Focus Outlines', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/signin');
 
     // 1. Focus the email input directly
     await page.focus('input[id="email"]');

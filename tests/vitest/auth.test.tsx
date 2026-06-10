@@ -1,11 +1,23 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@/test-utils';
+import { render as baseRender, screen, fireEvent, waitFor } from '@/test-utils';
 import { LoginCard } from '@/components/auth/LoginCard';
 import { MFAInput } from '@/components/auth/MFAInput';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { FeedbackToastProvider } from '@/components/customer-portal/feedback/PostChatToasts';
 import * as navigation from 'next/navigation';
-import LoginPage from '@/app/login/page';
+import LoginPage from '@/app/signin/page';
+import { readSession, clearSession } from '@/lib/auth/authStorage';
+import { AuthProvider, useAuthContext } from '@/context/AuthContext';
+
+const render = (ui: React.ReactElement, options?: any) => {
+  return baseRender(
+    <FeedbackToastProvider>
+      {ui}
+    </FeedbackToastProvider>,
+    options
+  );
+};
 
 // Dynamic mock setup to prevent hoisting conflicts
 const mockUseAuth = vi.fn();
@@ -117,7 +129,7 @@ describe('Auth Subsystem QA Tests', () => {
     );
 
     expect(mockRouter.replace).toHaveBeenCalledWith(
-      `/login?redirect=${encodeURIComponent('/portal/home?action=submit_ticket')}`
+      `/signin?redirect=${encodeURIComponent('/portal/home?action=submit_ticket')}`
     );
   });
 
@@ -153,5 +165,84 @@ describe('Auth Subsystem QA Tests', () => {
     render(<LoginPage />);
 
     expect(mockRouter.replace).toHaveBeenCalledWith('/portal/home'); // fallback to customer default route
+  });
+
+  it('blocks empty credential submission and displays error toast in the DOM', async () => {
+    mockUseAuth.mockReturnValue({
+      status: 'idle',
+      isAuthenticated: false,
+      user: null,
+      canAccessPath: () => false,
+      login: vi.fn(),
+    });
+
+    render(<LoginCard />);
+
+    const submitBtn = screen.getByRole('button', { name: /continue to verification/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Email and password are required')).toBeInTheDocument();
+    });
+  });
+
+  it('readSession rejects partial or corrupted session cache', () => {
+    // Set cookie helper manually for jsdom environment
+    document.cookie = 'mpaas_authenticated=1; SameSite=Lax';
+    document.cookie = 'mpaas_role=customer; SameSite=Lax';
+
+    // 1. Partial/missing fields session
+    localStorage.setItem('mpaas_auth_session', JSON.stringify({
+      user: { email: 'customer@company.com' } // missing role and displayName
+    }));
+
+    expect(readSession()).toBeNull();
+
+    // 2. Expired session
+    localStorage.setItem('mpaas_auth_session', JSON.stringify({
+      user: { email: 'customer@company.com', displayName: 'customer', role: 'customer' },
+      expiresAt: new Date(Date.now() - 1000).toISOString() // past expiry
+    }));
+
+    expect(readSession()).toBeNull();
+  });
+
+  it('logout purges unsafe storage and resets active screen memory', async () => {
+    // Set some unsafe storage keys
+    localStorage.setItem('role', 'super_admin');
+    localStorage.setItem('mpaas_registered_roles', 'some-roles');
+    localStorage.setItem('current_tenant_id', 'tenant-123');
+    sessionStorage.setItem('mPaaS_guest_chat_history', 'chat-history');
+
+    // Safe keys should be retained
+    localStorage.setItem('theme', 'dark');
+    localStorage.setItem('lang', 'en');
+
+    const TestComponent = () => {
+      const { logout } = useAuthContext();
+      return <button onClick={logout}>Logout</button>;
+    };
+
+    const mockRouter = { replace: vi.fn(), push: vi.fn(), prefetch: vi.fn(), back: vi.fn(), forward: vi.fn(), refresh: vi.fn() };
+    vi.spyOn(navigation, 'useRouter').mockReturnValue(mockRouter);
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    fireEvent.click(screen.getByText('Logout'));
+
+    await waitFor(() => {
+      expect(localStorage.getItem('role')).toBeNull();
+      expect(localStorage.getItem('mpaas_registered_roles')).toBeNull();
+      expect(localStorage.getItem('current_tenant_id')).toBeNull();
+      expect(sessionStorage.getItem('mPaaS_guest_chat_history')).toBeNull();
+      
+      // Theme and lang should be preserved
+      expect(localStorage.getItem('theme')).toBe('dark');
+      expect(localStorage.getItem('lang')).toBe('en');
+    });
   });
 });

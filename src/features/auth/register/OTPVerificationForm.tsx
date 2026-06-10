@@ -199,7 +199,7 @@ export function OTPVerificationForm() {
               <ArrowLeft className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} aria-hidden />
               <span>{t.auth.register.backToRegister}</span>
             </Link>
-            <Link href="/login" className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs font-medium">
+            <Link href="/signin" className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs font-medium">
               {t.auth.register.backToLogin}
             </Link>
           </div>

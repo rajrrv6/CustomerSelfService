@@ -6,14 +6,13 @@ import { canRoleAccessPath, getHomeRouteForRole } from '@/lib/auth/roleRouting';
 
 const PUBLIC_PATHS = [
   '/',
-  '/login',
-  '/login/mfa',
+  '/signin',
+  '/signin/mfa',
+  '/signin/forgot-password',
+  '/signin/reset-password',
   '/register',
   '/demo-sandbox',
   '/access-denied',
-  '/super-admin/login',
-  '/client-admin/login',
-  '/end-user/login'
 ];
 
 const PUBLIC_PREFIXES = ['/kb', '/bot', '/callback', '/portal/public'];
@@ -28,6 +27,9 @@ const PROTECTED_PREFIXES = [
   '/portal/profile',
   '/portal/private',
   '/tickets',
+  '/super-admin',
+  '/client-admin',
+  '/end-user'
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -52,6 +54,24 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Redirect legacy login endpoints to /signin
+  if (
+    pathname === '/login' ||
+    pathname.startsWith('/login/') ||
+    pathname === '/end-user/login' ||
+    pathname === '/client-admin/login' ||
+    pathname === '/super-admin/login' ||
+    pathname === '/operations/login' ||
+    pathname === '/operations-login'
+  ) {
+    const target = pathname.startsWith('/login/')
+      ? pathname.replace('/login/', '/signin/')
+      : '/signin';
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = target;
+    return NextResponse.redirect(redirectUrl);
+  }
+
   if (pathname === '/portal') {
     const homeUrl = request.nextUrl.clone();
     homeUrl.pathname = '/portal/home';
@@ -64,13 +84,7 @@ export function middleware(request: NextRequest) {
   if (isProtectedPath(pathname)) {
     if (!isAuthenticated || !role) {
       const loginUrl = request.nextUrl.clone();
-      if (pathname.startsWith('/admin')) {
-        loginUrl.pathname = '/super-admin/login';
-      } else if (pathname.startsWith('/portal')) {
-        loginUrl.pathname = '/end-user/login';
-      } else {
-        loginUrl.pathname = '/client-admin/login';
-      }
+      loginUrl.pathname = '/signin';
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -92,7 +106,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(homeUrl);
   }
 
-  if (isAuthenticated && role && pathname.startsWith('/login')) {
+  // Redirect already-authenticated users away from /signin
+  if (isAuthenticated && role && pathname.startsWith('/signin')) {
     const homeUrl = request.nextUrl.clone();
     homeUrl.pathname = getHomeRouteForRole(role);
     return NextResponse.redirect(homeUrl);

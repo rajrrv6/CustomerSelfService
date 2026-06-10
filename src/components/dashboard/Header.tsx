@@ -39,7 +39,8 @@ export function Header({
   onOpenAuditLogs,
   onOpenMenu,
   onOpenNotifications,
-  onOpenLauncher
+  onOpenLauncher,
+  onSwitchRole,
 }: {
   activeScreenTitle: string;
   onLogout: () => void;
@@ -47,6 +48,7 @@ export function Header({
   onOpenMenu: () => void;
   onOpenNotifications: () => void;
   onOpenLauncher?: () => void;
+  onSwitchRole?: (role: UserRole) => void;
 }) {
   const router = useRouter();
   const role = useAuthStore((s) => s.role);
@@ -127,6 +129,8 @@ export function Header({
                         setShowRoleMenu(false);
                         if (item.value === 'public_bot') {
                           router.push('/portal/public');
+                        } else if (onSwitchRole) {
+                          onSwitchRole(item.value as UserRole);
                         } else {
                           setRole(item.value as UserRole);
                           setActiveScreen(item.defaultScreen);

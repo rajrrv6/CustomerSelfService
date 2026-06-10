@@ -4,7 +4,7 @@ test.describe('Customer Self Service Portal Smoke Tests', () => {
   test('renders the login page, performs redirect on unauthorized access', async ({ page }) => {
     // Navigating to workspace page should redirect to login page
     await page.goto('/workspace');
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/signin/);
 
     // Verify login form is present
     await expect(page.locator('input[type="email"]')).toBeVisible();

@@ -7,12 +7,14 @@ import { Loader2, Lock, Mail } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { translations } from '@/i18n/translations';
 import { useAuth } from '@/hooks/useAuth';
+import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
 import type { ValidationResult } from '@/types/auth';
 
 export function LoginCard() {
   const router = useRouter();
   const { login, status } = useAuth();
   const { lang } = useApp();
+  const { pushToast } = useFeedbackToasts();
   const t = translations[lang];
   const isRtl = lang === 'ar';
   const isLoading = status === 'loading';
@@ -22,10 +24,23 @@ export function LoginCard() {
   const [errors, setErrors] = useState<ValidationResult['errors']>({});
   const [formError, setFormError] = useState<string | null>(null);
 
+  const showToast = (msg: string) => {
+    pushToast('error', 'Authentication Error', msg);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     setErrors({});
+
+    if (!email?.trim() || !password?.trim()) {
+      showToast("Email and password are required");
+      const newErrors: ValidationResult['errors'] = {};
+      if (!email?.trim()) newErrors.email = 'Email is required';
+      if (!password?.trim()) newErrors.password = 'Password is required';
+      setErrors(newErrors);
+      return;
+    }
 
     const result = await login({ email, password });
 
@@ -38,7 +53,7 @@ export function LoginCard() {
       return;
     }
 
-    router.push('/login/mfa');
+    router.push('/signin/mfa');
   };
 
   return (
@@ -81,7 +96,7 @@ export function LoginCard() {
               {t.auth.password}
             </label>
             <Link
-              href="/login/forgot-password"
+              href="/signin/forgot-password"
               className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
             >
               {t.auth.forgotPassword}

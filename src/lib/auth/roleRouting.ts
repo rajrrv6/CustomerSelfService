@@ -1,13 +1,14 @@
 import type { UserRole } from '@/types';
 
 /** Centralized post-auth landing routes per primary persona */
-export const ROLE_HOME_ROUTES: Record<
-  'super_admin' | 'client_admin' | 'support_agent' | 'customer',
-  string
-> = {
+export const ROLE_HOME_ROUTES: Record<UserRole, string> = {
   super_admin: '/admin/infrastructure',
   client_admin: '/tenant/dashboard',
+  operations_manager: '/tenant/dashboard',
+  viewer: '/tenant/dashboard',
   support_agent: '/workspace/inbox',
+  qa_manager: '/workspace/inbox',
+  supervisor: '/workspace/inbox',
   customer: '/portal/home',
 };
 
@@ -18,6 +19,9 @@ export const ROUTE_ROLE_ACCESS: Record<string, UserRole[]> = {
   '/workspace': ['support_agent', 'supervisor', 'qa_manager'],
   '/portal': ['customer'],
   '/tickets': ['support_agent'],
+  '/super-admin': ['super_admin'],
+  '/client-admin': ['client_admin', 'operations_manager', 'viewer'],
+  '/end-user': ['customer', 'support_agent'],
 };
 
 const MOCK_STAFF_REGISTRY: Record<string, UserRole> = {
@@ -68,18 +72,7 @@ export function inferRoleFromEmail(email: string): UserRole {
 }
 
 export function getHomeRouteForRole(role: UserRole): string {
-  if (role in ROLE_HOME_ROUTES) {
-    return ROLE_HOME_ROUTES[role as keyof typeof ROLE_HOME_ROUTES];
-  }
-
-  const extendedDefaults: Partial<Record<UserRole, string>> = {
-    operations_manager: '/tenant/dashboard',
-    qa_manager: '/workspace/inbox',
-    supervisor: '/workspace/inbox',
-    viewer: '/tenant/dashboard',
-  };
-
-  return extendedDefaults[role] ?? '/tenant/dashboard';
+  return ROLE_HOME_ROUTES[role] ?? '/tenant/dashboard';
 }
 
 export function getRoutePrefix(pathname: string): string | null {

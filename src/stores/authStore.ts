@@ -25,17 +25,10 @@ interface AuthState {
   setRole: (role: UserRole) => void;
 }
 
-/** Read persisted role from localStorage (SSR-safe) */
-function getInitialRole(): UserRole {
-  if (typeof window === 'undefined') return 'client_admin';
-  return (localStorage.getItem('role') as UserRole) ?? 'client_admin';
-}
-
 export const useAuthStore = create<AuthState>()((set) => ({
-  role: getInitialRole(),
+  role: 'client_admin',
 
   setRole: (role) => {
-    localStorage.setItem('role', role);
     set({ role });
   },
 }));

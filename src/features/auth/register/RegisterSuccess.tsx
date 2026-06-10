@@ -70,7 +70,7 @@ export function RegisterSuccess() {
             {t.auth.register.loginNow}
           </Link>
           <Link
-            href="/login"
+            href="/signin"
             className="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-5 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900"
           >
             {t.auth.register.backToLogin}

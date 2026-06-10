@@ -69,7 +69,7 @@ export function LandingPage() {
               )}
             </button>
             <Link
-              href="/login"
+              href="/signin"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-500/20 transition-colors"
             >
               {isRtl ? 'تسجيل الدخول' : 'Sign In'}
@@ -111,7 +111,7 @@ export function LandingPage() {
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <Link
-                href="/login"
+                href="/signin"
                 className="inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xl shadow-blue-500/25 transition-all"
               >
                 {isRtl ? 'تسجيل دخول الموظفين' : 'Staff Secure Workspace'}
@@ -186,7 +186,7 @@ export function LandingPage() {
                 : 'Sign in with your organization account. MFA and role-based routing are built into the platform experience.'}
             </p>
             <Link
-              href="/login"
+              href="/signin"
               className="relative inline-flex mt-8 items-center gap-2 px-6 py-3 rounded-xl bg-white text-slate-900 font-bold hover:bg-slate-100 transition-colors"
             >
               {isRtl ? 'ابدأ الآن' : 'Get started'}

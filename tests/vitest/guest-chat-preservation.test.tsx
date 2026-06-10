@@ -87,7 +87,7 @@ describe('Task 2 — Guest Chat Context Preservation Tests', () => {
       expect(sessionStorage.getItem('mPaaS_guest_chat_escalated')).toBe('true');
 
       // Verify redirection target includes safety redirect parameters
-      expect(window.location.href).toContain('/login?redirect=');
+      expect(window.location.href).toContain('/signin?redirect=');
       expect(window.location.href).toContain(encodeURIComponent('/portal/home?action=submit_ticket'));
     });
   });

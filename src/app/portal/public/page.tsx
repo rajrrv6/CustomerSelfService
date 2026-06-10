@@ -66,7 +66,7 @@ export default function PublicPortalPage() {
               )}
             </button>
             <Link
-              href="/login"
+              href="/signin"
               className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-850 text-xs font-bold transition-all"
             >
               {isRtl ? 'تسجيل الدخول' : 'Sign In'}
@@ -173,7 +173,7 @@ export default function PublicPortalPage() {
           </p>
           <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
             <Link
-              href="/login"
+              href="/signin"
               className="px-5 py-2.5 bg-blue-650 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold shadow-md shadow-blue-500/10 transition-all active:scale-95"
             >
               {isRtl ? 'تسجيل الدخول الدعم' : 'Sign In to Helpdesk'}

@@ -199,11 +199,22 @@ function WorkspaceShellInner({
     return () => window.removeEventListener('navigate-to-screen', handler as EventListener);
   }, []);
 
+  const [roleToSwitch, setRoleToSwitch] = useState<UserRole | null>(null);
+
+  const handleSwitchRole = (targetRole: UserRole) => {
+    if (targetRole === role) return;
+    setRoleToSwitch(targetRole);
+  };
+
+  const confirmRoleSwitch = async () => {
+    setRoleToSwitch(null);
+    await logout();
+  };
+
   const authorized = canAccessScreen(role, activeScreen);
 
-  const handleLogout = () => {
-    onLogout();
-    router.push('/login');
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -226,13 +237,14 @@ function WorkspaceShellInner({
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header
+         <Header
           activeScreenTitle={getScreenTitle(activeScreen, t)}
           onLogout={handleLogout}
           onOpenAuditLogs={() => setShowAuditLogs(true)}
           onOpenMenu={() => setIsSidebarOpen(true)}
           onOpenNotifications={() => setIsDrawerOpen(true)}
           onOpenLauncher={() => setActiveScreen('launcher')}
+          onSwitchRole={handleSwitchRole}
         />
 
         <main
@@ -243,9 +255,8 @@ function WorkspaceShellInner({
             <WorkspaceLauncher
               lang={lang}
               currentRole={role}
-              onSelectRole={(selectedRole, defaultScreen) => {
-                useAuthStore.getState().setRole(selectedRole);
-                setActiveScreen(defaultScreen);
+              onSelectRole={(selectedRole) => {
+                handleSwitchRole(selectedRole);
               }}
               onLaunchBotWidget={() => setShowPublicBotOverlay(true)}
             />
@@ -404,6 +415,47 @@ function WorkspaceShellInner({
         isOpen={isCenterOpen}
         onClose={() => setIsCenterOpen(false)}
       />
+
+      {roleToSwitch && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-6 animate-in fade-in-50 zoom-in-95 duration-200 text-left rtl:text-right">
+            <div className="flex items-center gap-4 text-rose-600 dark:text-rose-455">
+              <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-slate-800 dark:text-white text-base">
+                  {lang === 'ar' ? 'تأكيد تبديل بيئة العمل' : 'Confirm Workspace Switch'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  {lang === 'ar' ? 'يتطلب إعادة المصادقة' : 'Re-authentication required'}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed font-medium">
+              {lang === 'ar' 
+                ? 'تبديل بيئات العمل يتطلب منك تسجيل الخروج من جلستك الحالية وإعادة التحقق. هل ترغب في المتابعة؟'
+                : 'Switching workspaces requires you to sign out of your current session and re-authenticate. Would you like to proceed?'}
+            </p>
+            <div className="flex justify-end items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setRoleToSwitch(null)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950 transition-colors cursor-pointer"
+              >
+                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={confirmRoleSwitch}
+                className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-lg shadow-rose-500/25 transition-all cursor-pointer"
+              >
+                {lang === 'ar' ? 'تأكيد التبديل وتسجيل الخروج' : 'Confirm Switch & Logout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </ToastProvider>
   );
@@ -412,7 +464,7 @@ function WorkspaceShellInner({
 interface WorkspaceLauncherProps {
   lang: 'en' | 'ar';
   currentRole: UserRole;
-  onSelectRole: (role: UserRole, defaultScreen: string) => void;
+  onSelectRole: (role: UserRole) => void;
   onLaunchBotWidget: () => void;
 }
 
@@ -559,7 +611,7 @@ function WorkspaceLauncher({ lang, currentRole, onSelectRole, onLaunchBotWidget 
                 if (card.isSpecialAction) {
                   onLaunchBotWidget();
                 } else {
-                  onSelectRole(card.role, card.defaultScreen);
+                  onSelectRole(card.role);
                 }
               }}
               className={`group relative flex flex-col justify-between p-6 border border-slate-200 dark:border-slate-800/80 rounded-2xl bg-gradient-to-br ${card.bgClass} cursor-pointer transition-all duration-300 transform hover:-translate-y-1.5 hover:shadow-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:outline-none`}
@@ -570,7 +622,7 @@ function WorkspaceLauncher({ lang, currentRole, onSelectRole, onLaunchBotWidget 
                   if (card.isSpecialAction) {
                     onLaunchBotWidget();
                   } else {
-                    onSelectRole(card.role, card.defaultScreen);
+                    onSelectRole(card.role);
                   }
                 }
               }}

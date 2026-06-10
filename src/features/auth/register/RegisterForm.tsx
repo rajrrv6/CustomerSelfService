@@ -431,7 +431,7 @@ export function RegisterForm() {
             <div className="flex items-center justify-between gap-4 pt-1 text-sm">
               <div className="text-slate-500 dark:text-slate-400">
                 {t.auth.register.loginLinkText}{' '}
-                <Link href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                <Link href="/signin" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                   {t.auth.register.backToLogin}
                 </Link>
               </div>

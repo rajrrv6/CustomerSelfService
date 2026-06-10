@@ -29,7 +29,7 @@ function ProtectedRouteContent({ children }: ProtectedRouteProps) {
     if (!isAuthenticated) {
       const queryStr = searchParams ? searchParams.toString() : '';
       const targetPath = queryStr ? `${pathname}?${queryStr}` : pathname;
-      router.replace(`/login?redirect=${encodeURIComponent(targetPath)}`);
+      router.replace(`/signin?redirect=${encodeURIComponent(targetPath)}`);
       return;
     }
 

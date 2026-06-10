@@ -68,13 +68,13 @@ export function ForgotPasswordCard() {
         <div className="flex flex-col gap-3 pt-2">
           <button
             type="button"
-            onClick={() => router.push('/login/reset-password')}
+            onClick={() => router.push('/signin/reset-password')}
             className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-500/25 transition-all"
           >
             {t.auth.setNewPassword}
           </button>
           <Link
-            href="/login"
+            href="/signin"
             className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
           >
             {t.auth.backToSignIn}
@@ -134,7 +134,7 @@ export function ForgotPasswordCard() {
         </button>
 
         <p className="text-center">
-          <Link href="/login" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+          <Link href="/signin" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
             {t.auth.backToSignIn}
           </Link>
         </p>

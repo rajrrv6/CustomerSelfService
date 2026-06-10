@@ -17,6 +17,7 @@ import type {
   ValidationResult,
 } from '@/types/auth';
 import type { UserRole } from '@/types';
+import { useRouter } from 'next/navigation';
 import {
   clearPendingLogin,
   clearSession,
@@ -33,6 +34,7 @@ import {
   inferRoleFromEmail,
 } from '@/lib/auth/roleRouting';
 import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 
 const MOCK_API_DELAY_MS = 900;
 const MOCK_MFA_DELAY_MS = 700;
@@ -59,6 +61,7 @@ function delay(ms: number) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [session, setSession] = useState<AuthSession | null>(null);
   const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(null);
@@ -69,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(existing);
       setStatus('authenticated');
     } else {
+      clearSession(); // Clean invalid/stale auth state during app bootstrap
       const pending = readPendingLogin();
       if (pending) {
         setPendingLogin(pending);
@@ -147,25 +151,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [pendingLogin]
   );
 
+function clearUnsafeLocalStorage() {
+  if (typeof window === 'undefined') return;
+  const safeKeys = [
+    'theme',
+    'lang',
+    'accessibility-font-size',
+    'accessibility-reduced-motion',
+    'accessibility-sepia-mode',
+    'appearance-accent-color',
+    'appearance-display-density',
+    'user-notification-preferences',
+  ];
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && !safeKeys.includes(key)) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
+}
+
   const resendMfaCode = useCallback(async () => {
     await delay(500);
   }, []);
 
   const logout = useCallback(() => {
-    clearSession();
-    clearPendingLogin();
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('role');
-      localStorage.removeItem('mpaas_registered_roles');
-      localStorage.removeItem('mPaaS_active_callback');
-      sessionStorage.removeItem('mPaaS_guest_chat_history');
-      sessionStorage.removeItem('mPaaS_guest_chat_escalated');
+    setStatus('loading');
+
+    const forceResetLogoutState = () => {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/signin';
+      }
+    };
+
+    const fallbackTimeout = setTimeout(forceResetLogoutState, 5000);
+
+    try {
+      clearSession();
+      clearPendingLogin();
+      clearUnsafeLocalStorage();
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+      }
+
+      setSession(null);
+      setPendingLogin(null);
+
+      useAuthStore.getState().setRole('client_admin');
+      useUIStore.getState().setActiveScreen('');
+
+      router.replace('/signin');
+      router.refresh();
+
+      clearTimeout(fallbackTimeout);
+    } catch (err) {
+      console.error('Logout error:', err);
+      forceResetLogoutState();
+    } finally {
+      setStatus('idle');
     }
-    setSession(null);
-    setPendingLogin(null);
-    setStatus('idle');
-    useAuthStore.getState().setRole('client_admin');
-  }, []);
+  }, [router]);
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // Cross-tab logout synchronization: if session is removed in another tab, log out here.
+      if (e.key === 'mpaas_auth_session' && !e.newValue) {
+        logout();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [logout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -173,7 +233,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: session?.user ?? null,
       session,
       pendingLogin,
-      isAuthenticated: status === 'authenticated' && !!session,
+      isAuthenticated:
+        status === 'authenticated' &&
+        !!session &&
+        !!session.user &&
+        !!session.user.role &&
+        !!session.user.email &&
+        new Date(session.expiresAt).getTime() > Date.now(),
       login,
       verifyMfa,
       logout,

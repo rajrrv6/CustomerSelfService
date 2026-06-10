@@ -38,6 +38,12 @@ function writeRegisteredRoles(roles: Record<string, UserRole>) {
   localStorage.setItem(REGISTERED_ROLE_KEY, JSON.stringify(roles));
 }
 
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
 export function persistSession(session: AuthSession): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
@@ -51,10 +57,39 @@ export function readSession(): AuthSession | null {
   if (!raw) return null;
   try {
     const session = JSON.parse(raw) as AuthSession;
-    if (new Date(session.expiresAt).getTime() < Date.now()) {
+    
+    // 1. token exists
+    const token = getCookie(AUTH_COOKIE);
+    if (!token) {
       clearSession();
       return null;
     }
+
+    // 2. user exists
+    if (!session || !session.user || !session.user.email) {
+      clearSession();
+      return null;
+    }
+
+    // 3. role exists
+    if (!session.user.role) {
+      clearSession();
+      return null;
+    }
+
+    // 4. expiry valid
+    if (!session.expiresAt || new Date(session.expiresAt).getTime() < Date.now()) {
+      clearSession();
+      return null;
+    }
+
+    // 5. persisted role matches session role
+    const cookieRole = getCookie(ROLE_COOKIE);
+    if (!cookieRole || cookieRole !== session.user.role) {
+      clearSession();
+      return null;
+    }
+
     return session;
   } catch {
     clearSession();

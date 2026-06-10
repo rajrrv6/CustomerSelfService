@@ -70,11 +70,13 @@ describe('Super Admin Subsystem QA Tests', () => {
     useUIStore.getState().setLang('en');
     vi.useFakeTimers();
     
-    // Stub global URL methods for download tests
-    vi.stubGlobal('URL', {
-      createObjectURL: createObjectURLMock,
-      revokeObjectURL: revokeObjectURLMock,
-    });
+    // Stub global URL methods for download tests while preserving constructor
+    const OriginalURL = globalThis.URL;
+    class MockedURL extends OriginalURL {
+      static createObjectURL = createObjectURLMock;
+      static revokeObjectURL = revokeObjectURLMock;
+    }
+    vi.stubGlobal('URL', MockedURL);
   });
 
   afterEach(() => {

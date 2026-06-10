@@ -106,7 +106,7 @@ export function ResetPasswordCard() {
   useEffect(() => {
     if (phase !== 'success') return;
     const timeout = setTimeout(() => {
-      router.replace('/login');
+      router.replace('/signin');
     }, REDIRECT_MS);
     return () => clearTimeout(timeout);
   }, [phase, router]);
@@ -118,12 +118,12 @@ export function ResetPasswordCard() {
           {t.auth.sessionExpired}
         </p>
         <Link
-          href="/login/forgot-password"
+          href="/signin/forgot-password"
           className="inline-block w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold text-center"
         >
           {t.auth.requestPasswordReset}
         </Link>
-        <Link href="/login" className="block text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+        <Link href="/signin" className="block text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
           {t.auth.backToSignIn}
         </Link>
       </div>
@@ -246,7 +246,7 @@ export function ResetPasswordCard() {
         </button>
 
         <p className="text-center">
-          <Link href="/login" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+          <Link href="/signin" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
             {t.auth.backToSignIn}
           </Link>
         </p>

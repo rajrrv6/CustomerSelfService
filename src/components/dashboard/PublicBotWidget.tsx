@@ -143,7 +143,7 @@ export function PublicBotWidget() {
     if (typeof window !== 'undefined') {
       try {
         sessionStorage.setItem('mPaaS_guest_chat_escalated', 'true');
-        window.location.href = `/login?redirect=${encodeURIComponent('/portal/home?action=submit_ticket')}`;
+        window.location.href = `/signin?redirect=${encodeURIComponent('/portal/home?action=submit_ticket')}`;
       } catch (err) {
         console.error('Failed to initiate escalation:', err);
       }
@@ -197,7 +197,7 @@ export function PublicBotWidget() {
       } else if (sug.actionType === 'ticket') {
         handleEscalateToTicket();
       } else if (sug.actionType === 'live_chat') {
-        window.location.href = `/login?redirect=${encodeURIComponent('/portal/home?action=open_chat')}`;
+        window.location.href = `/signin?redirect=${encodeURIComponent('/portal/home?action=open_chat')}`;
       } else if (sug.actionType === 'pricing') {
         handleSend('Check SaaS Pricing');
       }

@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 async function loginAs(page: any, email: string) {
-  await page.goto('/login');
+  await page.goto('/signin');
   await page.locator('input#email').fill(email);
   await page.locator('input#password').fill('password123');
   await page.getByRole('button', { name: /continue to verification/i }).click();
-  await page.waitForURL(/\/login\/mfa/);
+  await page.waitForURL(/\/signin\/mfa/);
 
   const mfaInputs = page.locator('input[inputmode="numeric"]');
   await expect(mfaInputs.first()).toBeVisible({ timeout: 15000 });
@@ -120,7 +120,7 @@ test.describe('CustomerSelfService Enterprise Journeys', () => {
   });
 
   test('Localization bilingual translations & RTL switches', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/signin');
     
     // Switch translation to Arabic (AR)
     await page.click('button:has-text("ع")');
