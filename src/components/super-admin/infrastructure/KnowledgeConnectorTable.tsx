@@ -178,7 +178,7 @@ export function KnowledgeConnectorTable({
         );
       }
     }
-  ], [isRtl]);
+  ], [isRtl, syncProgress, onEdit, onDelete, onSync, onToggle]);
 
   const filterOptions = [
     {

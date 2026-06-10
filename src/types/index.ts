@@ -298,5 +298,59 @@ export interface SupervisorRecommendation {
   confidence: number;
 }
 
+export interface CopilotVariantCitation {
+  source: string;
+  kbId: string;
+  similarity: number;
+  chunk: string;
+}
 
+export interface CopilotVariant {
+  tone: 'professional' | 'empathetic' | 'executive' | 'concise' | 'escalation-safe';
+  text: string;
+  confidence: number;
+  hallucinationRisk: 'low' | 'medium' | 'high';
+  complianceConfidence: number;
+  toneAlignmentScore: number;
+  readability: string;
+  empathyScore: number;
+  professionalismScore: number;
+  resolutionLikelihood: number;
+  citations: CopilotVariantCitation[];
+}
 
+export interface OrchestrationEvent {
+  id: string;
+  event: string;
+  timestamp: string;
+  status: 'pending' | 'completed';
+}
+export interface ResolutionWorkflow {
+  notes: string;
+  summary: string;
+  explanation: string;
+  checklist: {
+    customerVerified: boolean;
+    complianceReviewed: boolean;
+    refundConfirmed: boolean;
+    supervisorApproved: boolean;
+    kbAttached: boolean;
+  };
+  state: 'Pending' | 'Resolved' | 'Escalated' | 'Requires Callback';
+}
+
+export interface ComplianceValidation {
+  pciStatus: 'passed' | 'failed';
+  slaBreachWarning: boolean;
+  escalationWarning: boolean;
+  missingFields: string[];
+  validationStatus: 'passed' | 'failed' | 'warning';
+}
+
+export interface WrapupAnalytics {
+  avgResolutionTime: string;
+  resolutionConfidence: number;
+  escalationProbability: number;
+  slaCompliance: number;
+  repeatContactRisk: number;
+}

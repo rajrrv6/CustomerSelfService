@@ -37,6 +37,18 @@ export function KnowledgeConnectorRegistry() {
   const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
   const [syncProgress, setSyncProgress] = useState<Record<string, string>>({});
 
+  // Refs for tracking timers
+  const syncTimeoutsRef = React.useRef<NodeJS.Timeout[]>([]);
+  const maintIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      syncTimeoutsRef.current.forEach(clearTimeout);
+      syncTimeoutsRef.current = [];
+      if (maintIntervalRef.current) clearInterval(maintIntervalRef.current);
+    };
+  }, []);
+
   const handleCreateClick = () => {
     setEditingConnector(null);
     setIsFormOpen(true);
@@ -135,6 +147,17 @@ export function KnowledgeConnectorRegistry() {
       return next;
     });
 
+    setConnectors((prev) =>
+      prev.map((c) =>
+        c.id === connector.id
+          ? {
+              ...c,
+              status: 'synchronizing'
+            }
+          : c
+      )
+    );
+
     const steps = [
       { msg: isRtl ? 'بدء الاتصال بالخادم...' : 'Handshaking...', time: 0 },
       { msg: isRtl ? 'جاري فحص التغييرات...' : 'Checking changes...', time: 800 },
@@ -144,7 +167,8 @@ export function KnowledgeConnectorRegistry() {
     ];
 
     steps.forEach((step) => {
-      setTimeout(() => {
+      const delay = step.time;
+      const timeout = setTimeout(() => {
         if (step.time === 3200) {
           setSyncingIds((prev) => {
             const next = new Set(prev);
@@ -191,7 +215,8 @@ export function KnowledgeConnectorRegistry() {
             [connector.id]: step.msg
           }));
         }
-      }, step.time);
+      }, delay);
+      syncTimeoutsRef.current.push(timeout);
     });
   };
 
@@ -203,6 +228,8 @@ export function KnowledgeConnectorRegistry() {
   const handleTriggerMaint = () => {
     setMaintStep('running');
     setMaintProgress(0);
+
+    if (maintIntervalRef.current) clearInterval(maintIntervalRef.current);
 
     const interval = setInterval(() => {
       setMaintProgress((p) => {
@@ -221,6 +248,7 @@ export function KnowledgeConnectorRegistry() {
         return p + 10;
       });
     }, 250);
+    maintIntervalRef.current = interval;
   };
 
   if (connectors.length === 0) {

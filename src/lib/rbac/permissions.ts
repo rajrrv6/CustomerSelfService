@@ -98,6 +98,22 @@ export const ROLE_DEFAULT_SCREEN: Record<UserRole, string> = {
   viewer: 'surveys',
 };
 
+export const ALL_VALID_SCREENS = [
+  'launcher',
+  'sa_dashboard', 'sa_master_data', 'sa_analytics', 'sa_infra', 'sa_telephony', 'sa_billing', 'sa_audit', 'sa_notifications', 'sa_settings', 'sa_help', 'sa_tenant_management', 'sa_system_ops',
+  'llm_registry', 'asr_tts_registry', 'nlu_governance', 'cost_benchmarks', 'cross_tenant_analytics', 'vector_db', 'sip_trunk', 'channels', 'analytics_center',
+  'bots', 'intents', 'dialog_flow', 'knowledge_base', 'guardrails', 'surveys', 'deployments', 'integrations', 'training', 'billing', 'rbac', 'campaigns', 'voice_ivr', 'automation_rules', 'reports', 'audit_logs', 'notifications', 'settings',
+  'inbox', 'agents', 'workforce', 'supervisor_monitor', 'sla', 'live_queues', 'shift_planning', 'occupancy', 'agent_presence', 'queue_distribution', 'escalations',
+  'qa_queue', 'scorecard_builder', 'evaluations', 'coaching', 'qa_analytics', 'agent_performance',
+  'agent_dashboard', 'tickets', 'copilot', 'suggested_replies', 'wrapup_codes',
+  'customer_home', 'customer_kb', 'customer_ticket_submit', 'customer_my_tickets', 'customer_kb_article', 'customer_ticket_detail', 'customer_order_refund', 'customer_chat_history', 'customer_feedback_hub', 'customer_notifications', 'customer_live_support', 'customer_recent_activity', 'customer_favorites', 'customer_system_status', 'customer_settings',
+  'customer_system_403', 'customer_system_404', 'customer_system_500', 'customer_system_maintenance'
+];
+
+export function isValidScreen(screenId: string): boolean {
+  return ALL_VALID_SCREENS.includes(screenId);
+}
+
 import { canView } from '@/stores/permissionStore';
 
 export const SUPER_ADMIN_SCREENS = [

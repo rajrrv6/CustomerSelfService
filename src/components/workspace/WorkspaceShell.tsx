@@ -27,6 +27,7 @@ import {
   getScreenTitle,
   ROLE_DEFAULT_SCREEN,
   ROLE_PERMISSIONS,
+  isValidScreen,
 } from '@/lib/rbac/permissions';
 import {
   usePermissionStore,
@@ -91,36 +92,85 @@ function WorkspaceShellInner({
   const previousRoleRef = React.useRef<UserRole | null>(null);
   const mountedRef = React.useRef(false);
   const lastUrlRef = React.useRef('');
+  const isSyncingRef = React.useRef(false);
+  const { logout, user, status } = useAuth();
+
+  const currentScreenParam = searchParams?.get('screen');
+  const isAuthHydrating = status === 'loading' || (user && role !== user.role);
 
   React.useEffect(() => {
+    if (isAuthHydrating) return;
+    if (isSyncingRef.current) return;
+
     let targetScreen = initialScreen;
 
     if (pathname === '/tickets') {
       targetScreen = 'tickets';
     } else {
-      const screenParam = searchParams?.get('screen');
-      if (screenParam && canAccessScreen(role, screenParam)) {
-        targetScreen = screenParam;
-      } else if (initialScreen && canAccessScreen(role, initialScreen)) {
+      if (currentScreenParam && isValidScreen(currentScreenParam)) {
+        targetScreen = currentScreenParam;
+      } else if (initialScreen && isValidScreen(initialScreen)) {
         targetScreen = initialScreen;
       } else {
         targetScreen = ROLE_DEFAULT_SCREEN[role];
       }
     }
 
-    if (targetScreen && !canAccessScreen(role, targetScreen)) {
+    if (targetScreen && !isValidScreen(targetScreen)) {
       targetScreen = ROLE_DEFAULT_SCREEN[role];
     }
 
     if (activeScreen !== targetScreen && targetScreen) {
       const urlKey = `${pathname}?${searchParams?.toString() || ''}`;
       if (!mountedRef.current || urlKey !== lastUrlRef.current) {
+        isSyncingRef.current = true;
         setActiveScreen(targetScreen);
         lastUrlRef.current = urlKey;
+        setTimeout(() => {
+          isSyncingRef.current = false;
+        }, 0);
       }
     }
     mountedRef.current = true;
-  }, [role, pathname, searchParams, initialScreen]);
+  }, [role, pathname, currentScreenParam, initialScreen, isAuthHydrating]);
+
+  // Synchronize activeScreen state back to the URL screen query param or route pathname
+  React.useEffect(() => {
+    if (!mountedRef.current || isAuthHydrating) return;
+    if (isSyncingRef.current) return;
+
+    // Determine target path based on activeScreen/role
+    let targetPath = pathname;
+    if (role === 'support_agent') {
+      if (activeScreen === 'tickets' && pathname !== '/tickets') {
+        targetPath = '/tickets';
+      } else if (activeScreen !== 'tickets' && pathname === '/tickets') {
+        targetPath = '/workspace/inbox';
+      }
+    }
+
+    const needsParamSync = (activeScreen !== currentScreenParam) && !(activeScreen === initialScreen && !currentScreenParam);
+    const needsPathSync = (targetPath !== pathname);
+
+    if (needsParamSync || needsPathSync) {
+      const params = new URLSearchParams(searchParams?.toString() || '');
+      if (activeScreen === initialScreen || activeScreen === 'tickets') {
+        params.delete('screen');
+      } else {
+        params.set('screen', activeScreen);
+      }
+      
+      const newQuery = params.toString();
+      const newUrl = newQuery ? `${targetPath}?${newQuery}` : targetPath;
+      
+      isSyncingRef.current = true;
+      router.replace(newUrl, { scroll: false });
+      
+      setTimeout(() => {
+        isSyncingRef.current = false;
+      }, 0);
+    }
+  }, [activeScreen, pathname, currentScreenParam, router, initialScreen, role, isAuthHydrating]);
 
   const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [showPublicBotOverlay, setShowPublicBotOverlay] = useState(false);

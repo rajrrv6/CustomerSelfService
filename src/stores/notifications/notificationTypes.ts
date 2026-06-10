@@ -61,6 +61,9 @@ export interface SystemAlert {
   allowedRoles?: string[];
   allowedPersonas?: string[];
   allowedModules?: string[];
+  allowedScreens?: string[];
+  targetModule?: string;
+  targetScreen?: string;
   tenantScope?: string;
   visibilityType?: string;
 }

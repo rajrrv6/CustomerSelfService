@@ -15,8 +15,13 @@ import { PerformanceScorecard } from './PerformanceScorecard';
 import { TransferModal } from './TransferModal';
 import { ConferenceModal } from './ConferenceModal';
 import { WrapupModal } from './WrapupModal';
+import { WrapupCodesWorkspace } from './WrapupCodesWorkspace';
+import { ConsultDrawer } from './ConsultDrawer';
+import { NotesRosterDrawer } from './NotesRosterDrawer';
 import { AICopilotPanel } from './AICopilotPanel';
 import { AIReplyComposer } from './AIReplyComposer';
+import { ModalWrapper } from '../shared/ModalWrapper';
+import { useFeedbackToasts } from '@/components/customer-portal/feedback/PostChatToasts';
 
 // Composed hooks
 import { useVoiceState, type PendingCallIntent, type ActiveCall } from '@/hooks/useVoiceState';
@@ -41,10 +46,23 @@ import { customer360Seed } from '@/data/seed/customer360Seed';
 import { queueSeed } from '@/data/seed/queueSeed';
 import { agentMetricsSeed, shiftScheduleSeed } from '@/data/seed/agentMetricsSeed';
 import { callHistorySeed } from '@/data/seed/callHistorySeed';
-
 import { Clock, Flame, PhoneCall, History, Users, MessageSquare, Shield, Inbox, UserCircle, Search, Filter, User, Eye, Check } from 'lucide-react';
 import { MobileSheet } from '@/components/responsive/MobileSheet';
 import { MobileTabs } from '@/components/responsive/MobileTabs';
+
+const TICKET_STATUS_COLORS: Record<string, string> = {
+  open: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+  pending: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-455 border border-yellow-500/20',
+  solved: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+  closed: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20',
+};
+
+const TICKET_PRIORITY_COLORS: Record<string, string> = {
+  urgent: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25',
+  high: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25',
+  medium: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/25',
+  low: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/25',
+};
 
 export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScreen: string }) {
   useRenderProfiler('AgentWorkspaceLayout');
@@ -54,10 +72,14 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   const isSupportAgent = role === 'support_agent';
   const isInboxScreen = activeSubScreen === 'inbox';
   const addAuditLog = useNotificationsStore((s) => s.addAuditLog);
+  const { pushToast } = useFeedbackToasts();
 
   // Feature-scoped state still from AppContext (agents only used in TransferModal)
   const { agents } = useApp();
   const t = translations[lang];
+
+  // Selected ticket for modal details view
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
 
   // Active workspace states (bound to centralized store)
   const conversationsMap = useConversationStore((s) => s.conversations);
@@ -418,6 +440,8 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showConferenceModal, setShowConferenceModal] = useState(false);
   const [showWrapupModal, setShowWrapupModal] = useState(false);
+  const [showConsultDrawer, setShowConsultDrawer] = useState(false);
+  const [showNotesRosterDrawer, setShowNotesRosterDrawer] = useState(false);
   const [showCallConflictModal, setShowCallConflictModal] = useState(false);
   const [pendingCallIntent, setPendingCallIntent] = useState<PendingCallIntent | null>(null);
   const [summaryText, setSummaryText] = useState<string | null>(null);
@@ -656,7 +680,14 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                 }}
                 onJoinSession={() => {
                   addAuditLog(`Supervisor joined the active session ${activeChatId}`, 'success');
-                  alert(`Supervisor joined active session. 3-Way dialog initialized.`);
+                  const isAr = lang === 'ar';
+                  pushToast(
+                    'success',
+                    isAr ? 'انضم المشرف للمحادثة' : 'Supervisor Joined',
+                    isAr 
+                      ? 'انضم المشرف إلى الجلسة النشطة. تم بدء حوار ثلاثي الأطراف.' 
+                      : 'Supervisor joined active session. 3-Way dialog initialized.'
+                  );
                 }}
               />
             </div>
@@ -802,19 +833,8 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                   </tr>
                 ) : (
                   filteredTickets.map((tkt) => {
-                    const statusColors: Record<string, string> = {
-                      open: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
-                      pending: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-455 border border-yellow-500/20',
-                      solved: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
-                      closed: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20',
-                    };
-
-                    const priorityColors: Record<string, string> = {
-                      urgent: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25',
-                      high: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25',
-                      medium: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/25',
-                      low: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/25',
-                    };
+                    const statusColors = TICKET_STATUS_COLORS;
+                    const priorityColors = TICKET_PRIORITY_COLORS;
 
                     return (
                       <tr
@@ -856,7 +876,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
                               type="button"
                               onClick={() => {
                                 addAuditLog(`Agent viewed incident details for ${tkt.id}`, 'success');
-                                alert(`${isAr ? 'عرض تفاصيل التذكرة:' : 'View details for'} ${tkt.id}\n${tkt.title}`);
+                                setSelectedTicket(tkt);
                               }}
                               className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-450 hover:text-slate-900 dark:hover:text-white transition-colors"
                               title={isAr ? 'عرض التفاصيل' : 'View Details'}
@@ -887,6 +907,85 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             </table>
           </div>
         </div>
+
+        {selectedTicket && (
+          <ModalWrapper
+            isOpen={!!selectedTicket}
+            onClose={() => setSelectedTicket(null)}
+            title={
+              <div className="flex items-center gap-2">
+                <Eye className="w-5 h-5 text-blue-500" />
+                <h3 id="ticket-detail-title-sub" className="text-sm font-extrabold text-slate-900 dark:text-white">
+                  {lang === 'ar' ? 'تفاصيل التذكرة' : 'Ticket Details'}
+                </h3>
+              </div>
+            }
+            maxWidthClass="max-w-md"
+          >
+            <div className="space-y-4 text-xs font-semibold text-slate-700 dark:text-slate-350">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-slate-400 font-mono">{selectedTicket.id}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${TICKET_PRIORITY_COLORS[selectedTicket.priority] || ''}`}>
+                  {(() => {
+                    const isAr = lang === 'ar';
+                    const priorityLabels: Record<string, string> = {
+                      urgent: isAr ? 'عاجل' : 'Urgent',
+                      high: isAr ? 'عالي' : 'High',
+                      medium: isAr ? 'متوسط' : 'Medium',
+                      low: isAr ? 'منخفض' : 'Low',
+                    };
+                    return priorityLabels[selectedTicket.priority] || selectedTicket.priority;
+                  })()}
+                </span>
+              </div>
+              
+              <div>
+                <label className="text-[10px] text-slate-400 block mb-1 uppercase font-bold tracking-wider">
+                  {lang === 'ar' ? 'العنوان' : 'Title'}
+                </label>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{selectedTicket.title}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1 uppercase font-bold tracking-wider">
+                    {lang === 'ar' ? 'الحالة' : 'Status'}
+                  </label>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase inline-flex items-center gap-1 ${TICKET_STATUS_COLORS[selectedTicket.status] || ''}`}>
+                    <span>
+                      {(() => {
+                        const isAr = lang === 'ar';
+                        const statusLabels: Record<string, string> = {
+                          open: isAr ? 'مفتوح' : 'Open',
+                          pending: isAr ? 'معلق' : 'Pending',
+                          solved: isAr ? 'تم الحل' : 'Solved',
+                          closed: isAr ? 'مغلق' : 'Closed',
+                        };
+                        return statusLabels[selectedTicket.status] || selectedTicket.status;
+                      })()}
+                    </span>
+                  </span>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1 uppercase font-bold tracking-wider">
+                    {lang === 'ar' ? 'التاريخ' : 'Date'}
+                  </label>
+                  <p className="font-mono text-slate-650 dark:text-slate-400">{selectedTicket.date}</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTicket(null)}
+                  className="rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-4 py-2 text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                >
+                  {lang === 'ar' ? 'إغلاق' : 'Close'}
+                </button>
+              </div>
+            </div>
+          </ModalWrapper>
+        )}
       </div>
     );
   }
@@ -904,7 +1003,13 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             lang={lang}
             onApplySuggestedReply={(text) => {
               addAuditLog(`Applied suggestion: "${text}"`, 'success');
-              alert(`Applied reply: ${text}`);
+              pushToast(
+                'success',
+                lang === 'ar' ? 'تم تطبيق الرد المقترح' : 'Reply Applied',
+                lang === 'ar' 
+                  ? `تم نقل الرد المقترح إلى مسودة الرسالة: "${text.substring(0, 40)}${text.length > 40 ? '...' : ''}"`
+                  : `Suggested reply copied to draft: "${text.substring(0, 40)}${text.length > 40 ? '...' : ''}"`
+              );
             }}
             onSummarize={() => addAuditLog('Manual RAG summary requested via Copilot screen', 'success')}
           />
@@ -930,7 +1035,13 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             onChangeDraft={setDraftText}
             onSend={(txt, type) => {
               addAuditLog(`Sent sandbox response: "${txt}" (${type})`, 'success');
-              alert(`Sent: ${txt} as ${type}`);
+              pushToast(
+                'success',
+                lang === 'ar' ? 'تم إرسال الرد' : 'Response Sent',
+                lang === 'ar'
+                  ? `تم إرسال الرسالة بنجاح عبر قناة ${type}`
+                  : `Message successfully sent via ${type} channel`
+              );
             }}
             suggestedReplyText="Under standard return policy checks (ks-1), refunds are allowed within 30 days. Let me process a manual exemption."
             lang={lang}
@@ -942,53 +1053,7 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
   }
 
   if (activeSubScreen === 'wrapup_codes') {
-    const wrapupCodes = [
-      { code: 'SAP-CRM-101', category: 'Billing Mismatch', severity: 'low', slaAction: 'Auto-Credit' },
-      { code: 'SAP-CRM-204', category: 'SIP Trunk Dropout', severity: 'critical', slaAction: 'Escalate to Telecom' },
-      { code: 'SAP-CRM-305', category: 'Vector Compaction Lockout', severity: 'high', slaAction: 'Trigger compaction' },
-      { code: 'SAP-CRM-401', category: 'Authentication Mismatch', severity: 'medium', slaAction: 'Regenerate token' }
-    ];
-
-    return (
-      <div className="space-y-6 animate-in fade-in-50 duration-200 max-w-4xl mx-auto">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white">{lang === 'ar' ? 'رموز إنهاء الحالات (SAP CRM)' : 'SAP CRM Wrap-up & Dispositions'}</h2>
-          <p className="text-xs text-slate-400 dark:text-slate-500">Configure standard wrap-up codes and resolution compliance actions</p>
-        </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-          <h3 className="font-bold text-xs text-slate-650 dark:text-slate-400 uppercase font-mono">Dispositions Registry</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-bold">
-                  <th className="pb-3">CRM Diagnostic Code</th>
-                  <th className="pb-3">Category Name</th>
-                  <th className="pb-3">Severity Level</th>
-                  <th className="pb-3">Compliance Route Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-600 dark:text-slate-350">
-                {wrapupCodes.map((row) => (
-                  <tr key={row.code}>
-                    <td className="py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{row.code}</td>
-                    <td className="py-3 font-semibold text-slate-900 dark:text-white">{row.category}</td>
-                    <td className="py-3">
-                      <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase ${
-                        row.severity === 'critical' ? 'bg-rose-100 text-rose-800' :
-                        row.severity === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800'
-                      }`}>
-                        {row.severity}
-                      </span>
-                    </td>
-                    <td className="py-3 font-mono text-slate-500">{row.slaAction}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
+    return <WrapupCodesWorkspace />;
   }
 
   // Unified support desk view
@@ -1280,6 +1345,8 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
             onAssignClick={handleAssignToggle}
             rightPanelExpanded={rightPanelExpanded}
             onToggleRightPanel={() => setRightPanelExpanded(!rightPanelExpanded)}
+            onConsultClick={() => setShowConsultDrawer(true)}
+            onNotesClick={() => setShowNotesRosterDrawer(true)}
           />
         )}
         </section>
@@ -1441,52 +1508,47 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
         activeCallStatus={call?.status}
       />
 
-      {showCallConflictModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="call-conflict-title"
-            aria-describedby="call-conflict-description"
-            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-              <h3 id="call-conflict-title" className="text-sm font-extrabold text-slate-900 dark:text-white">
-                Active Call In Progress
-              </h3>
-              <p id="call-conflict-description" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                You already have an active voice session.
-              </p>
-            </div>
-
-            <div className="space-y-2 p-5 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={handleHoldCurrentAndContinue}
-                className="flex w-full items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-amber-700 transition-all hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500/40 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50"
-              >
-                Hold Current Call &amp; Continue
-              </button>
-
-              <button
-                type="button"
-                onClick={handleEndCurrentAndContinue}
-                className="flex w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-rose-700 transition-all hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50"
-              >
-                End Current Call &amp; Continue
-              </button>
-
-              <button
-                type="button"
-                onClick={handleConflictCancel}
-                className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-slate-700 transition-all hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              >
-                Cancel
-              </button>
-            </div>
+      <ModalWrapper
+        isOpen={showCallConflictModal}
+        onClose={handleConflictCancel}
+        title={
+          <div>
+            <h3 id="call-conflict-title" className="text-sm font-extrabold text-slate-900 dark:text-white">
+              Active Call In Progress
+            </h3>
+            <p id="call-conflict-description" className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              You already have an active voice session.
+            </p>
           </div>
+        }
+        maxWidthClass="max-w-md"
+      >
+        <div className="space-y-2 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={handleHoldCurrentAndContinue}
+            className="flex w-full items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-amber-700 transition-all hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500/40 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50 cursor-pointer"
+          >
+            Hold Current Call &amp; Continue
+          </button>
+
+          <button
+            type="button"
+            onClick={handleEndCurrentAndContinue}
+            className="flex w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-rose-700 transition-all hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50 cursor-pointer"
+          >
+            End Current Call &amp; Continue
+          </button>
+
+          <button
+            type="button"
+            onClick={handleConflictCancel}
+            className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-slate-700 transition-all hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400/40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+          >
+            Cancel
+          </button>
         </div>
-      )}
+      </ModalWrapper>
 
       {/* Modals overlay */}
       <TransferModal
@@ -1508,6 +1570,98 @@ export default function AgentWorkspaceLayout({ activeSubScreen }: { activeSubScr
         onResolve={handleResolveCase}
         slaStatus={activeChat.slaStatus}
       />
+
+      <ConsultDrawer
+        isOpen={showConsultDrawer}
+        onClose={() => setShowConsultDrawer(false)}
+        lang={lang}
+        onTransferSuccess={(agentName, queueId) => handleTransferAgentSubmit('agent-4', 'Warm consult transfer complete.', queueId)}
+      />
+
+      <NotesRosterDrawer
+        isOpen={showNotesRosterDrawer}
+        onClose={() => setShowNotesRosterDrawer(false)}
+        lang={lang}
+      />
+
+      {selectedTicket && (
+        <ModalWrapper
+          isOpen={!!selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+          title={
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-blue-500" />
+              <h3 id="ticket-detail-title" className="text-sm font-extrabold text-slate-900 dark:text-white">
+                {lang === 'ar' ? 'تفاصيل التذكرة' : 'Ticket Details'}
+              </h3>
+            </div>
+          }
+          maxWidthClass="max-w-md"
+        >
+          <div className="space-y-4 text-xs font-semibold text-slate-700 dark:text-slate-350">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-400 font-mono">{selectedTicket.id}</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${TICKET_PRIORITY_COLORS[selectedTicket.priority] || ''}`}>
+                {(() => {
+                  const isAr = lang === 'ar';
+                  const priorityLabels: Record<string, string> = {
+                    urgent: isAr ? 'عاجل' : 'Urgent',
+                    high: isAr ? 'عالي' : 'High',
+                    medium: isAr ? 'متوسط' : 'Medium',
+                    low: isAr ? 'منخفض' : 'Low',
+                  };
+                  return priorityLabels[selectedTicket.priority] || selectedTicket.priority;
+                })()}
+              </span>
+            </div>
+            
+            <div>
+              <label className="text-[10px] text-slate-400 block mb-1 uppercase font-bold tracking-wider">
+                {lang === 'ar' ? 'العنوان' : 'Title'}
+              </label>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{selectedTicket.title}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] text-slate-400 block mb-1 uppercase font-bold tracking-wider">
+                  {lang === 'ar' ? 'الحالة' : 'Status'}
+                </label>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase inline-flex items-center gap-1 ${TICKET_STATUS_COLORS[selectedTicket.status] || ''}`}>
+                  <span>
+                    {(() => {
+                      const isAr = lang === 'ar';
+                      const statusLabels: Record<string, string> = {
+                        open: isAr ? 'مفتوح' : 'Open',
+                        pending: isAr ? 'معلق' : 'Pending',
+                        solved: isAr ? 'تم الحل' : 'Solved',
+                        closed: isAr ? 'مغلق' : 'Closed',
+                      };
+                      return statusLabels[selectedTicket.status] || selectedTicket.status;
+                    })()}
+                  </span>
+                </span>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-400 block mb-1 uppercase font-bold tracking-wider">
+                  {lang === 'ar' ? 'التاريخ' : 'Date'}
+                </label>
+                <p className="font-mono text-slate-650 dark:text-slate-400">{selectedTicket.date}</p>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedTicket(null)}
+                className="rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 px-4 py-2 text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+              >
+                {lang === 'ar' ? 'إغلاق' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </ModalWrapper>
+      )}
 
       {/* Summary Output popup */}
       {summaryText && (

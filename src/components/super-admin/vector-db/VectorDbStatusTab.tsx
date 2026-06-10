@@ -19,45 +19,104 @@ export function VectorDbStatusTab() {
   const [rebalanceState, setRebalanceState] = useState<'idle' | 'analyzing' | 'shifting' | 'compacting' | 'failed' | 'success'>('idle');
   const [rebalanceProgress, setRebalanceProgress] = useState(0);
 
+  // Search Simulator states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedNamespace, setSelectedNamespace] = useState('kb-customer-portal');
+  const [searchResult, setSearchResult] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isCachedHit, setIsCachedHit] = useState(false);
+
+  // Refs for timers & caches
+  const rebalanceTimeoutsRef = React.useRef<NodeJS.Timeout[]>([]);
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const queryCacheRef = React.useRef<Record<string, string>>({});
+
+  const clearRebalanceTimeouts = () => {
+    rebalanceTimeoutsRef.current.forEach(clearTimeout);
+    rebalanceTimeoutsRef.current = [];
+  };
+
+  React.useEffect(() => {
+    return () => {
+      clearRebalanceTimeouts();
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, []);
+
   const startRebalance = () => {
+    clearRebalanceTimeouts();
     addAuditLog('Triggered vector DB nodes rebalance sequence', 'success');
     setRebalanceState('analyzing');
     setRebalanceProgress(10);
     
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       setRebalanceState('shifting');
       setRebalanceProgress(40);
       
-      setTimeout(() => {
+      const t2 = setTimeout(() => {
         setRebalanceState('compacting');
         setRebalanceProgress(70);
         
-        setTimeout(() => {
+        const t3 = setTimeout(() => {
           // Simulate a partial compaction timeout/failure to test retry
           setRebalanceState('failed');
           addAuditLog('Rebalance compaction stage failed on pinecone-us-east-1: ShardLockException', 'failed');
           triggerVectorDBIndexFailure('pinecone-us-east-1-shard-3');
         }, 1200);
+        rebalanceTimeoutsRef.current.push(t3);
       }, 1205);
+      rebalanceTimeoutsRef.current.push(t2);
     }, 1205);
+    rebalanceTimeoutsRef.current.push(t1);
   };
 
   const retryRebalance = () => {
+    clearRebalanceTimeouts();
     setRebalanceState('compacting');
     setRebalanceProgress(85);
     addAuditLog('Retrying vector DB compaction sequence', 'success');
     
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       setRebalanceState('success');
       setRebalanceProgress(100);
       addAuditLog('Vector DB nodes rebalanced successfully', 'success');
       triggerSyncCompleted('Pinecone DB Shard Relocator', 4120);
     }, 1205);
+    rebalanceTimeoutsRef.current.push(t1);
   };
 
   const closeRebalanceBanner = () => {
     setRebalanceState('idle');
     setRebalanceProgress(0);
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    
+    const cacheKey = `${selectedNamespace}::${searchQuery.trim().toLowerCase()}`;
+    
+    if (queryCacheRef.current[cacheKey]) {
+      setIsCachedHit(true);
+      setSearchResult(queryCacheRef.current[cacheKey]);
+      return;
+    }
+    
+    setIsSearching(true);
+    setIsCachedHit(false);
+    setSearchResult(null);
+    
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      let simulatedResult = `Mock search results for namespace ${selectedNamespace} and query "${searchQuery}"`;
+      if (searchQuery.trim().toLowerCase().includes('refund')) {
+        simulatedResult = `[Score: 0.98] Refund operations policy dictates that payments for customer self-service should be parsed and processed through billing middleware.`;
+      }
+      
+      queryCacheRef.current[cacheKey] = simulatedResult;
+      setSearchResult(simulatedResult);
+      setIsSearching(false);
+    }, 600);
   };
 
   const headerAction = (
@@ -311,6 +370,64 @@ export function VectorDbStatusTab() {
           </div>
         </OperationalCard>
       </div>
+
+      {/* Vector Search Query Simulator panel */}
+      <OperationalCard hoverEffect={false} className="p-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-xs uppercase tracking-wider font-mono text-slate-800 dark:text-white">
+            {isRtl ? 'محاكي الاستعلام عن متجهات قاعدة البيانات' : 'Vector Database Query Simulator'}
+          </h3>
+          {isCachedHit && (
+            <span className="px-2 py-0.5 text-[9px] font-mono font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-955/20 border border-emerald-250 rounded">
+              CACHED HIT
+            </span>
+          )}
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder={isRtl ? 'أدخل جملة الاستعلام بحثاً عن المتجهات...' : 'Enter query phrase...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-slate-850 bg-transparent rounded-xl focus:outline-none focus:border-blue-500 text-xs font-semibold text-slate-905 dark:text-white"
+            />
+          </div>
+          <div className="w-full sm:w-48">
+            <select
+              role="combobox"
+              value={selectedNamespace}
+              onChange={(e) => setSelectedNamespace(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-slate-205 dark:border-slate-850 bg-white dark:bg-slate-900 rounded-xl focus:outline-none focus:border-blue-500 text-xs font-bold text-slate-805 dark:text-slate-100"
+            >
+              <option value="kb-customer-portal">kb-customer-portal</option>
+              <option value="kb-billing-docs">kb-billing-docs</option>
+              <option value="kb-agent-handbook">kb-agent-handbook</option>
+            </select>
+          </div>
+          <button
+            onClick={handleSearch}
+            disabled={isSearching}
+            className="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            {isSearching ? (
+              <div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+            ) : null}
+            <span>{isRtl ? 'بحث في الفهرس' : 'Query Index'}</span>
+          </button>
+        </div>
+
+        {searchResult && (
+          <div className="p-4 bg-slate-950 text-emerald-400 rounded-xl border border-slate-900 font-mono text-[11px] leading-relaxed animate-in fade-in duration-200">
+            <div className="text-slate-500 border-b border-slate-900 pb-1.5 mb-1.5 flex justify-between">
+              <span>NAMESPACE: {selectedNamespace}</span>
+              {isCachedHit && <span className="text-emerald-500 font-bold">CACHE HIT</span>}
+            </div>
+            <p className="text-slate-200 whitespace-normal">{searchResult}</p>
+          </div>
+        )}
+      </OperationalCard>
     </div>
   );
 }

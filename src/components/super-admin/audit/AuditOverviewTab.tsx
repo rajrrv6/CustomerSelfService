@@ -53,9 +53,20 @@ export function AuditOverviewTab() {
   const [siemStep, setSiemStep] = useState<'idle' | 'running' | 'done'>('idle');
   const [siemProgress, setSiemProgress] = useState(0);
 
+  const siemIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (siemIntervalRef.current) clearInterval(siemIntervalRef.current);
+    };
+  }, []);
+
   const runSiemSync = () => {
     setSiemStep('running');
     setSiemProgress(0);
+
+    if (siemIntervalRef.current) clearInterval(siemIntervalRef.current);
+
     const interval = setInterval(() => {
       setSiemProgress(p => {
         if (p >= 100) {
@@ -72,6 +83,7 @@ export function AuditOverviewTab() {
         return p + 20;
       });
     }, 250);
+    siemIntervalRef.current = interval;
   };
 
   // Create Policy Modal state

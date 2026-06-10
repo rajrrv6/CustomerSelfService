@@ -544,15 +544,6 @@ export function Sidebar({
                               data-testid={`sidebar-item-${item.id}`}
                               onClick={() => {
                                 setActiveScreen(item.id);
-                                if (role === 'support_agent') {
-                                  if (item.id === 'tickets') {
-                                    router.push('/tickets');
-                                  } else if (item.id === 'inbox') {
-                                    router.push('/workspace/inbox');
-                                  } else {
-                                    router.push(`/workspace/inbox?screen=${item.id}`);
-                                  }
-                                }
                               }}
                               aria-current={isActive ? 'page' : undefined}
                               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 text-start cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${

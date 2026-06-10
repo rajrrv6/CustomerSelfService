@@ -48,6 +48,14 @@ export function HealthDashboardTab() {
     setShowRestartConfirm(true);
   };
 
+  const restartTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+    };
+  }, []);
+
   const confirmRestart = () => {
     setShowRestartConfirm(false);
     setIsRestarting(true);
@@ -61,7 +69,7 @@ export function HealthDashboardTab() {
         setRestartProgress((prev) => {
           if (prev >= 100) {
             clearInterval(interval);
-            setTimeout(() => {
+            restartTimeoutRef.current = setTimeout(() => {
               // Update services state to healthy/rebooted
               setServices(prevSvcs => prevSvcs.map(s => 
                 s.id === selectedSvc.id ? { ...s, status: 'healthy', latencyMs: 12 } : s
@@ -82,7 +90,10 @@ export function HealthDashboardTab() {
           return prev + 25;
         });
       }, 300);
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+      };
     }
   }, [isRestarting, selectedSvc, isRtl, pushToast]);
 

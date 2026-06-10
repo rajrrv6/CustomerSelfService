@@ -65,6 +65,20 @@ export function SuperAdminDashboardOverview() {
   const [dialLogs, setDialLogs] = useState<string[]>([]);
   const [dialNumber, setDialNumber] = useState('');
 
+  // Refs for timers
+  const dialIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const compactIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const compactTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Unmount cleanup
+  useEffect(() => {
+    return () => {
+      if (dialIntervalRef.current) clearInterval(dialIntervalRef.current);
+      if (compactIntervalRef.current) clearInterval(compactIntervalRef.current);
+      if (compactTimeoutRef.current) clearTimeout(compactTimeoutRef.current);
+    };
+  }, []);
+
   const startCompaction = () => {
     setCompactProgress(0);
     setShowCompactingModal(true);
@@ -77,7 +91,7 @@ export function SuperAdminDashboardOverview() {
         setCompactProgress((prev) => {
           if (prev >= 100) {
             clearInterval(interval);
-            setTimeout(() => {
+            compactTimeoutRef.current = setTimeout(() => {
               setShowCompactingModal(false);
               pushToast(
                 'success',
@@ -90,9 +104,13 @@ export function SuperAdminDashboardOverview() {
           return prev + 10;
         });
       }, 150);
-      return () => clearInterval(interval);
+      compactIntervalRef.current = interval;
+      return () => {
+        clearInterval(interval);
+        if (compactTimeoutRef.current) clearTimeout(compactTimeoutRef.current);
+      };
     }
-  }, [showCompactingModal]);
+  }, [showCompactingModal, isRtl]);
 
   const startDialTest = () => {
     if (!dialNumber.trim()) return;
@@ -110,6 +128,8 @@ export function SuperAdminDashboardOverview() {
     ];
 
     let currentLogIndex = 0;
+    if (dialIntervalRef.current) clearInterval(dialIntervalRef.current);
+    
     const interval = setInterval(() => {
       if (currentLogIndex >= logs.length) {
         clearInterval(interval);
@@ -120,11 +140,14 @@ export function SuperAdminDashboardOverview() {
           isRtl ? `تم التحقق من مسار التوجيه بنجاح مع MOS 4.4` : `Voice path loopback test completed successfully with MOS 4.4`
         );
       } else {
-        setDialLogs((prev) => [...prev, logs[currentLogIndex]]);
+        const logToAppend = logs[currentLogIndex];
+        setDialLogs((prev) => [...prev, logToAppend]);
         currentLogIndex++;
       }
     }, 600);
+    dialIntervalRef.current = interval;
   };
+
 
   const handleExportComplianceReport = () => {
     const csvContent = "data:text/csv;charset=utf-8,Compliance Report,Date,Status\nHIPAA Audits,2026-06-04,Pass\nPCI-DSS Controls,2026-06-04,Pass\nVector DB Masking,2026-06-04,Pass";

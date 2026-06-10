@@ -27,19 +27,49 @@ export function SuperAdminAnalyticsTab({ activeSubScreen }: SuperAdminAnalyticsT
   const [exportStep, setExportStep] = useState<'idle' | 'running' | 'done'>('idle');
   const [exportProgress, setExportProgress] = useState(0);
 
+  const exportIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (exportIntervalRef.current) clearInterval(exportIntervalRef.current);
+    };
+  }, []);
+
   const handleStartExport = () => {
     setExportStep('running');
     setExportProgress(0);
+
+    if (exportIntervalRef.current) clearInterval(exportIntervalRef.current);
+
     const interval = setInterval(() => {
       setExportProgress((p) => {
         if (p >= 100) {
           clearInterval(interval);
+          
+          // Generate actual mock data and download it
+          const mockData = exportFormat === 'json' 
+            ? JSON.stringify(tenantRows, null, 2)
+            : "Client ID,Tokens,Bots,SLA,Containment,Cost,Load\n" + 
+              tenantRows.map(r => `${r.id},${r.tokens},${r.bots},${r.sla},${r.containment},${r.cost},"${r.load}"`).join("\n");
+          
+          const mimeType = exportFormat === 'json' ? 'application/json' : 'text/csv';
+          const blob = new Blob([mockData], { type: mimeType });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `super_admin_analytics.${exportFormat}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
           setExportStep('done');
           return 100;
         }
         return p + 20;
       });
     }, 200);
+    exportIntervalRef.current = interval;
   };
 
   if (activeSubScreen === 'cost_benchmarks') {

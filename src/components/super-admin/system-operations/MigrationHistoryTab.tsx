@@ -37,6 +37,14 @@ export function MigrationHistoryTab() {
   const [isRollingBack, setIsRollingBack] = useState(false);
   const [targetRollbackMig, setTargetRollbackMig] = useState<any | null>(null);
 
+  const rollbackTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (rollbackTimeoutRef.current) clearTimeout(rollbackTimeoutRef.current);
+    };
+  }, []);
+
   const startRollback = (mig: any) => {
     setTargetRollbackMig(mig);
     setRollbackProgress(0);
@@ -55,7 +63,7 @@ export function MigrationHistoryTab() {
         setRollbackProgress((prev) => {
           if (prev >= 100) {
             clearInterval(interval);
-            setTimeout(() => {
+            rollbackTimeoutRef.current = setTimeout(() => {
               setMigrations(prevMigs => prevMigs.map(m => 
                 m.id === targetRollbackMig.id ? { ...m, status: 'rolled_back' } : m
               ));
@@ -74,7 +82,10 @@ export function MigrationHistoryTab() {
           return prev + 20;
         });
       }, 200);
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        if (rollbackTimeoutRef.current) clearTimeout(rollbackTimeoutRef.current);
+      };
     }
   }, [isRollingBack, showRollbackModal, targetRollbackMig, isRtl, pushToast]);
 

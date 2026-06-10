@@ -3,28 +3,64 @@ import { useNotificationStore } from './notificationStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useClientAdminStore } from '@/stores/clientAdminPersistenceStore';
 import { getPermissionLevel } from '@/stores/permissionStore';
-import { SystemAlert } from './notificationTypes';
+import { SystemAlert, NotificationAction } from './notificationTypes';
+import { canAccessScreen, isValidScreen } from '@/lib/rbac/permissions';
+
+export function getAllowedNotificationActions(alert: SystemAlert, role: string): NotificationAction[] {
+  if (!alert.actions) return [];
+  return alert.actions.filter((act) => {
+    if (act.actionType === 'navigate') {
+      const screenId = act.payload?.screenId;
+      return screenId && isValidScreen(screenId) && canAccessScreen(role as any, screenId);
+    }
+    return true;
+  });
+}
 
 /**
  * Centered filtering helper that executes RBAC, Persona, Module Access, and Tenant-level gates.
  */
 export function filterAlertsForUser(alerts: SystemAlert[], role: string, activeTenant?: string): SystemAlert[] {
-  const roleUpper = role.toUpperCase();
-  const rolesToMatch = [roleUpper];
-  if (role === 'support_agent') {
-    rolesToMatch.push('AGENT', 'SUPPORT_AGENT');
-  } else if (role === 'customer') {
-    rolesToMatch.push('CUSTOMER', 'END_USER', 'USER');
-  } else if (role === 'operations_manager') {
-    rolesToMatch.push('OPERATIONS', 'OPERATIONS_MANAGER');
-  } else if (role === 'qa_manager') {
-    rolesToMatch.push('QA', 'QA_MANAGER');
-  } else if (role === 'super_admin' || role === 'client_admin') {
-    rolesToMatch.push('ADMIN');
-  }
+  const accessCache: Record<string, boolean> = {};
+  const checkAccess = (screenId: string) => {
+    if (accessCache[screenId] === undefined) {
+      accessCache[screenId] = canAccessScreen(role as any, screenId);
+    }
+    return accessCache[screenId];
+  };
 
   return alerts.filter((alert) => {
-    // 1. Role Gating
+    // 1. Tenant Gating
+    if (alert.tenantScope && alert.tenantScope !== 'global') {
+      if (activeTenant && alert.tenantScope !== activeTenant) {
+        return false;
+      }
+    }
+
+    // 2. Canonical Target Screen Gating
+    if (alert.targetScreen) {
+      if (!isValidScreen(alert.targetScreen) || !checkAccess(alert.targetScreen)) {
+        return false;
+      }
+      return true;
+    }
+
+    // 3. Fallback Legacy Gating (only if no targetScreen is defined)
+    const roleUpper = role.toUpperCase();
+    const rolesToMatch = [roleUpper];
+    if (role === 'support_agent') {
+      rolesToMatch.push('AGENT', 'SUPPORT_AGENT');
+    } else if (role === 'customer') {
+      rolesToMatch.push('CUSTOMER', 'END_USER', 'USER');
+    } else if (role === 'operations_manager') {
+      rolesToMatch.push('OPERATIONS', 'OPERATIONS_MANAGER');
+    } else if (role === 'qa_manager') {
+      rolesToMatch.push('QA', 'QA_MANAGER');
+    } else if (role === 'super_admin' || role === 'client_admin') {
+      rolesToMatch.push('ADMIN');
+    }
+
+    // 3a. Role Gating
     if (alert.allowedRoles && alert.allowedRoles.length > 0) {
       const allowedRolesUpper = alert.allowedRoles.map((r) => r.toUpperCase());
       const hasRoleMatch = rolesToMatch.some((r) => allowedRolesUpper.includes(r));
@@ -53,14 +89,14 @@ export function filterAlertsForUser(alerts: SystemAlert[], role: string, activeT
       }
     }
 
-    // 2. Persona Gating
+    // 3b. Persona Gating
     if (alert.allowedPersonas && alert.allowedPersonas.length > 0) {
       const allowedPersonasUpper = alert.allowedPersonas.map((p) => p.toUpperCase());
       const hasPersonaMatch = rolesToMatch.some((p) => allowedPersonasUpper.includes(p));
       if (!hasPersonaMatch) return false;
     }
 
-    // 3. Module Access / Permission Scope Gating
+    // 3c. Module Access / Permission Scope Gating
     if (alert.allowedModules && alert.allowedModules.length > 0) {
       // Admins bypass module checking as they have admin access on everything
       if (role !== 'super_admin' && role !== 'client_admin') {
@@ -77,13 +113,6 @@ export function filterAlertsForUser(alerts: SystemAlert[], role: string, activeT
           return permissionLevel !== 'none';
         });
         if (!hasModuleAccess) return false;
-      }
-    }
-
-    // 4. Tenant Gating
-    if (alert.tenantScope && alert.tenantScope !== 'global') {
-      if (activeTenant && alert.tenantScope !== activeTenant) {
-        return false;
       }
     }
 

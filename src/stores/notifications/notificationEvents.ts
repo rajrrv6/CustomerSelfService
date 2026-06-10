@@ -17,6 +17,9 @@ const dispatchAlert = (payload: {
   allowedRoles?: string[];
   allowedPersonas?: string[];
   allowedModules?: string[];
+  allowedScreens?: string[];
+  targetScreen?: string;
+  targetModule?: string;
   tenantScope?: string;
   visibilityType?: string;
 }) => {
@@ -47,6 +50,9 @@ export const triggerSlaBreach = (queueName: string, waitTime: string, threshold:
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
     allowedModules: ['billing', 'operations', 'sla'],
+    targetScreen: 'live_queues',
+    allowedScreens: ['live_queues'],
+    targetModule: 'operations',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -74,6 +80,9 @@ export const triggerWebhookFailure = (endpoint: string, url: string, waitTime: s
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
     allowedPersonas: ['ADMIN'],
     allowedModules: ['bot', 'integrations'],
+    targetScreen: 'channels',
+    allowedScreens: ['channels'],
+    targetModule: 'integrations',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -98,6 +107,9 @@ export const triggerAiDegradation = (confidenceScore: number, sourceSystem = 'Fa
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR'],
     allowedModules: ['bot', 'ai-copilot'],
+    targetScreen: 'training',
+    allowedScreens: ['training'],
+    targetModule: 'bot',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -122,6 +134,9 @@ export const triggerVectorDBIndexFailure = (partition: string) => {
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'AI_ADMIN', 'INFRA_ADMIN'],
     allowedPersonas: ['ADMIN'],
     allowedModules: ['ai-copilot', 'infrastructure', 'integrations'],
+    targetScreen: 'vector_db',
+    allowedScreens: ['vector_db'],
+    targetModule: 'infrastructure',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -146,6 +161,9 @@ export const triggerDialogValidationError = (nodeId: string, message: string) =>
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
     allowedPersonas: ['ADMIN'],
     allowedModules: ['bot'],
+    targetScreen: 'dialog_flow',
+    allowedScreens: ['dialog_flow'],
+    targetModule: 'bot',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -172,6 +190,9 @@ export const triggerStaffingShortage = (queueName: string, activeCount: number, 
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
     allowedModules: ['workforce', 'operations'],
+    targetScreen: 'agent_presence',
+    allowedScreens: ['agent_presence'],
+    targetModule: 'workforce',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -197,6 +218,9 @@ export const triggerSafetyIntercept = (phrase: string, policy = 'Strict PII Mask
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR'],
     allowedModules: ['bot', 'audit', 'compliance'],
+    targetScreen: 'guardrails',
+    allowedScreens: ['guardrails'],
+    targetModule: 'bot',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -222,6 +246,9 @@ export const triggerQueueOverflow = (queueName: string, size: number) => {
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
     allowedModules: ['workforce', 'operations'],
+    targetScreen: 'inbox',
+    allowedScreens: ['inbox'],
+    targetModule: 'workforce',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -247,6 +274,9 @@ export const triggerApiTimeout = (apiEndpoint: string, waitTime: string) => {
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
     allowedPersonas: ['ADMIN'],
     allowedModules: ['bot', 'integrations'],
+    targetScreen: 'integrations',
+    allowedScreens: ['integrations'],
+    targetModule: 'integrations',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -293,6 +323,9 @@ export const triggerOmnichannelOutage = (provider: string, statusText: string) =
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
     allowedPersonas: ['ADMIN'],
     allowedModules: ['operations'],
+    targetScreen: 'channels',
+    allowedScreens: ['channels'],
+    targetModule: 'operations',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -317,6 +350,9 @@ export const triggerEscalationOverload = (unresolvedCount: number) => {
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
     allowedModules: ['workforce', 'operations'],
+    targetScreen: 'inbox',
+    allowedScreens: ['inbox'],
+    targetModule: 'workforce',
     tenantScope: 'global',
     visibilityType: 'global'
   });
@@ -342,6 +378,9 @@ export const triggerHallucinationRisk = (confidence: number, query: string) => {
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR'],
     allowedModules: ['ai-copilot'],
+    targetScreen: 'knowledge_base',
+    allowedScreens: ['knowledge_base'],
+    targetModule: 'ai-copilot',
     tenantScope: 'global',
     visibilityType: 'global'
   });

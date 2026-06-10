@@ -85,6 +85,9 @@ const seedAlerts: SystemAlert[] = [
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
     allowedModules: ['billing', 'operations', 'sla'],
+    targetScreen: 'live_queues',
+    allowedScreens: ['live_queues'],
+    targetModule: 'operations',
     tenantScope: 'global',
     visibilityType: 'global'
   },
@@ -117,6 +120,9 @@ const seedAlerts: SystemAlert[] = [
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN'],
     allowedPersonas: ['ADMIN'],
     allowedModules: ['bot', 'integrations'],
+    targetScreen: 'channels',
+    allowedScreens: ['channels'],
+    targetModule: 'integrations',
     tenantScope: 'global',
     visibilityType: 'global'
   },
@@ -146,6 +152,9 @@ const seedAlerts: SystemAlert[] = [
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR'],
     allowedModules: ['bot', 'ai-copilot'],
+    targetScreen: 'training',
+    allowedScreens: ['training'],
+    targetModule: 'bot',
     tenantScope: 'global',
     visibilityType: 'global'
   },
@@ -174,6 +183,9 @@ const seedAlerts: SystemAlert[] = [
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'AI_ADMIN', 'INFRA_ADMIN'],
     allowedPersonas: ['ADMIN'],
     allowedModules: ['ai-copilot', 'infrastructure', 'integrations'],
+    targetScreen: 'vector_db',
+    allowedScreens: ['vector_db'],
+    targetModule: 'infrastructure',
     tenantScope: 'global',
     visibilityType: 'global'
   },
@@ -203,6 +215,9 @@ const seedAlerts: SystemAlert[] = [
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
     allowedModules: ['workforce', 'operations'],
+    targetScreen: 'agent_presence',
+    allowedScreens: ['agent_presence'],
+    targetModule: 'workforce',
     tenantScope: 'global',
     visibilityType: 'global'
   },
@@ -231,6 +246,9 @@ const seedAlerts: SystemAlert[] = [
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR'],
     allowedModules: ['bot', 'audit', 'compliance'],
+    targetScreen: 'guardrails',
+    allowedScreens: ['guardrails'],
+    targetModule: 'bot',
     tenantScope: 'global',
     visibilityType: 'global'
   },
@@ -259,6 +277,9 @@ const seedAlerts: SystemAlert[] = [
     allowedRoles: ['SUPER_ADMIN', 'CLIENT_ADMIN', 'SUPERVISOR', 'OPERATIONS_MANAGER'],
     allowedPersonas: ['ADMIN', 'SUPERVISOR', 'OPERATIONS'],
     allowedModules: ['analytics'],
+    targetScreen: 'analytics_center',
+    allowedScreens: ['analytics_center'],
+    targetModule: 'analytics',
     tenantScope: 'global',
     visibilityType: 'global'
   }

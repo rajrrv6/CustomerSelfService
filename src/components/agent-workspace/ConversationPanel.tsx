@@ -15,6 +15,7 @@ import { useConversationStore } from '@/stores/conversationStore';
 import { groupMessages } from './timelineGrouping';
 import { EscalationBanner } from './EscalationBanner';
 import { ConferencePanel } from './ConferencePanel';
+import { HoldMusicSelector } from './HoldMusicSelector';
 
 const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -77,6 +78,8 @@ const MoreVertical = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const EMPTY_ARRAY: any[] = [];
+
 interface ConversationPanelProps {
   activeChat: Conversation;
   draftText: string;
@@ -95,6 +98,8 @@ interface ConversationPanelProps {
   onAssignClick?: () => void;
   rightPanelExpanded?: boolean;
   onToggleRightPanel?: () => void;
+  onConsultClick?: () => void;
+  onNotesClick?: () => void;
 }
 
 export function ConversationPanel({
@@ -114,7 +119,9 @@ export function ConversationPanel({
   onEscalateClick,
   onAssignClick,
   rightPanelExpanded,
-  onToggleRightPanel
+  onToggleRightPanel,
+  onConsultClick,
+  onNotesClick
 }: ConversationPanelProps) {
   const { canEdit, canManage } = usePermission('inbox');
   const role = useAuthStore((s) => s.role);
@@ -124,8 +131,8 @@ export function ConversationPanel({
   const [showCcBcc, setShowCcBcc] = useState(false);
   const isCustomerTyping = useConversationStore((s) => s.typingStates[activeChat.id] || false);
   const isIdle = useConversationStore((s) => s.idleStates[activeChat.id] || false);
-  const escalations = useConversationStore((s) => s.escalationRecommendations[activeChat.id] || []);
-  const wrapup = useConversationStore((s) => s.wrapupRecommendations[activeChat.id] || []);
+  const escalations = useConversationStore((s) => s.escalationRecommendations[activeChat.id]) || EMPTY_ARRAY;
+  const wrapup = useConversationStore((s) => s.wrapupRecommendations[activeChat.id]) || EMPTY_ARRAY;
   const intent = useConversationStore((s) => s.intentStates[activeChat.id]);
   const composerMode = useConversationStore((s) => s.composerModes[activeChat.id]);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -267,13 +274,39 @@ export function ConversationPanel({
 
   const secondaryActions = (
     <div className="flex items-center gap-1.5">
+      {onNotesClick && (
+        <button
+          type="button"
+          onClick={onNotesClick}
+          className="flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[10px] font-bold border-slate-200 bg-slate-100 text-slate-705 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+        >
+          <FileText className="h-3.5 w-3.5 text-purple-600 animate-pulse" />
+          <span>{lang === 'ar' ? 'ملاحظات التعاون' : 'Notes'}</span>
+        </button>
+      )}
+      {onConsultClick && (
+        <button
+          type="button"
+          onClick={onConsultClick}
+          disabled={!canManage}
+          className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[10px] font-bold transition-all ${
+            !canManage
+              ? 'bg-slate-105 border-slate-205 text-slate-450 dark:bg-slate-900 dark:border-slate-850 dark:text-slate-600 cursor-not-allowed opacity-60'
+              : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer'
+          }`}
+          title={!canManage ? "Requires Manage Permission" : undefined}
+        >
+          <MessageSquare className="h-3.5 w-3.5 text-blue-600" />
+          <span>{lang === 'ar' ? 'استشارة' : 'Consult'}</span>
+        </button>
+      )}
       <button
         type="button"
         onClick={onConferenceClick}
         disabled={!canManage}
         className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[10px] font-bold transition-all ${
           !canManage
-            ? 'bg-slate-105 border-slate-200 text-slate-400 dark:bg-slate-900 dark:border-slate-850 dark:text-slate-600 cursor-not-allowed opacity-60'
+            ? 'bg-slate-105 border-slate-202 text-slate-400 dark:bg-slate-900 dark:border-slate-850 dark:text-slate-600 cursor-not-allowed opacity-60'
             : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer'
         }`}
         title={!canManage ? "Requires Manage Permission" : undefined}
@@ -287,7 +320,7 @@ export function ConversationPanel({
         disabled={!canManage}
         className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[10px] font-bold transition-all ${
           !canManage
-            ? 'bg-slate-105 border-slate-200 text-slate-400 dark:bg-slate-900 dark:border-slate-850 dark:text-slate-600 cursor-not-allowed opacity-60'
+            ? 'bg-slate-105 border-slate-202 text-slate-400 dark:bg-slate-900 dark:border-slate-850 dark:text-slate-600 cursor-not-allowed opacity-60'
             : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer'
         }`}
         title={!canManage ? "Requires Manage Permission" : undefined}
@@ -313,6 +346,38 @@ export function ConversationPanel({
         <>
           <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
           <div className="absolute end-0 mt-1.5 w-36 rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-880 dark:bg-slate-900 z-40 p-1.5 space-y-1">
+            {onNotesClick && (
+              <button
+                type="button"
+                onClick={() => {
+                  onNotesClick();
+                  setMenuOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-bold text-slate-705 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <FileText className="h-3.5 w-3.5 text-purple-600" />
+                <span>{lang === 'ar' ? 'ملاحظات التعاون' : 'Notes'}</span>
+              </button>
+            )}
+            {onConsultClick && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!canManage) return;
+                  onConsultClick();
+                  setMenuOpen(false);
+                }}
+                disabled={!canManage}
+                className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-bold ${
+                  !canManage
+                    ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
+                    : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                }`}
+              >
+                <MessageSquare className="h-3.5 w-3.5 text-blue-600" />
+                <span>{lang === 'ar' ? 'استشارة' : 'Consult'}</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -328,7 +393,7 @@ export function ConversationPanel({
               }`}
               title={!canManage ? "Requires Manage Permission" : undefined}
             >
-              <Users className="h-3.5 w-3.5 text-slate-500" />
+              <Users className="h-3.5 w-3.5 text-slate-505" />
               <span>{t.agentWorkspace.conversation.conference}</span>
             </button>
             <button
@@ -342,11 +407,11 @@ export function ConversationPanel({
               className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[10px] font-bold ${
                 !canManage
                   ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
-                  : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  : 'text-slate-700 hover:bg-slate-100 dark:text-slate-305 dark:hover:bg-slate-800'
               }`}
               title={!canManage ? "Requires Manage Permission" : undefined}
             >
-              <ArrowRightLeft className="h-3.5 w-3.5 text-slate-500" />
+              <ArrowRightLeft className="h-3.5 w-3.5 text-slate-505" />
               <span>{t.agentWorkspace.conversation.transfer}</span>
             </button>
           </div>
@@ -743,9 +808,7 @@ export function ConversationPanel({
           )}
 
           {isHold && (
-            <div className="animate-pulse rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-center font-mono text-xs font-bold text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
-              {t.agentWorkspace.conversation.sessionOnHold}
-            </div>
+            <HoldMusicSelector sentiment={activeChat.sentiment} lang={lang} isHold={isHold} />
           )}
 
           {whisper && !isSupportAgent && (

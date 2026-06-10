@@ -94,10 +94,24 @@ export function SipTrunkConfigTab() {
   const [diagnosticsLogs, setDiagnosticsLogs] = useState<string[]>([]);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
 
+  // Ref for diagnostics timeouts
+  const sipDiagnosticsTimeoutsRef = React.useRef<NodeJS.Timeout[]>([]);
+
+  React.useEffect(() => {
+    return () => {
+      sipDiagnosticsTimeoutsRef.current.forEach(clearTimeout);
+      sipDiagnosticsTimeoutsRef.current = [];
+    };
+  }, []);
+
   const runSipDiagnostics = (trunk: SipTrunk) => {
     setSelectedTrunkForDiagnostics(trunk);
     setIsDiagnosing(true);
     setDiagnosticsLogs([isRtl ? `[INFO] بدء تشخيص الاتصال بالبوابة: ${trunk.id}` : `[INFO] Starting SIP Diagnostics for trunk: ${trunk.id}`]);
+
+    // Clear previous runs
+    sipDiagnosticsTimeoutsRef.current.forEach(clearTimeout);
+    sipDiagnosticsTimeoutsRef.current = [];
 
     const steps = [
       { msg: isRtl ? `[INFO] تحليل عنوان بوابة IP: ${trunk.ipGateway}` : `[INFO] Resolving IP Gateway address: ${trunk.ipGateway}`, time: 500 },
@@ -113,12 +127,16 @@ export function SipTrunkConfigTab() {
     ];
 
     steps.forEach(step => {
-      setTimeout(() => {
-        setDiagnosticsLogs(prev => [...prev, step.msg]);
-        if (step.time === 3000) {
-          setIsDiagnosing(false);
-        }
-      }, step.time);
+      const delay = step.time;
+      if (delay > 0) {
+        const timeout = setTimeout(() => {
+          setDiagnosticsLogs(prev => [...prev, step.msg]);
+          if (step.time === 3000) {
+            setIsDiagnosing(false);
+          }
+        }, delay);
+        sipDiagnosticsTimeoutsRef.current.push(timeout);
+      }
     });
   };
 

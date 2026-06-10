@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { NotificationAction } from '@/stores/notifications/notificationTypes';
-import { useAcknowledgeAlert, useResolveAlert } from '@/stores/notifications/notificationSelectors';
+import { useAcknowledgeAlert, useResolveAlert, getAllowedNotificationActions } from '@/stores/notifications/notificationSelectors';
+import { useAuthStore } from '@/stores/authStore';
 
 interface ToastActionsProps {
   alertId: string;
@@ -14,8 +15,19 @@ interface ToastActionsProps {
 export function ToastActions({ alertId, actions, onActionTriggered, isLightBg = false }: ToastActionsProps) {
   const acknowledgeAlert = useAcknowledgeAlert();
   const resolveAlert = useResolveAlert();
+  const role = useAuthStore((s) => s.role);
 
   if (!actions || actions.length === 0) return null;
+
+  const allowedActions = getAllowedNotificationActions({ id: alertId, actions } as any, role);
+
+  if (allowedActions.length === 0) {
+    return (
+      <span className="text-[10px] italic text-slate-400 dark:text-slate-500 mt-1 block">
+        No longer available
+      </span>
+    );
+  }
 
   const handleActionClick = (action: NotificationAction) => {
     if (action.actionType === 'acknowledge') {
@@ -44,7 +56,7 @@ export function ToastActions({ alertId, actions, onActionTriggered, isLightBg = 
 
   return (
     <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-      {actions.map((act, index) => (
+      {allowedActions.map((act, index) => (
         <button
           key={index}
           type="button"

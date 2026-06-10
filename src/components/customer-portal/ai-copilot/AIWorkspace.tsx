@@ -114,6 +114,7 @@ export function AIWorkspace() {
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const activeConv = conversations.find(c => c.id === activeConvId) || conversations[0];
 
@@ -123,6 +124,9 @@ export function AIWorkspace() {
     if (!hasConsented) {
       setShowPrivacyModal(true);
     }
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
   }, []);
 
   // Voice waveform simulation loop
@@ -151,7 +155,10 @@ export function AIWorkspace() {
   // Helper: Trigger custom toast
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
   };
 
   // Auto-resize composer textarea
