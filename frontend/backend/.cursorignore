@@ -1,0 +1,21 @@
+# Exclude compiled files
+dist/
+build/
+out/
+tsconfig.tsbuildinfo
+
+# Exclude package folders
+node_modules/
+
+# Exclude local configuration and logs
+.env
+.env.*
+logs/
+*.log
+*.log.*
+
+# Exclude local scratch scripts
+scratch/
+tmp/
+temp/
+tests/coverage/

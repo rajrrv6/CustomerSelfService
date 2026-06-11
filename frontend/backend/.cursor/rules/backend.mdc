@@ -1,0 +1,35 @@
+---
+description: Coding standards and architecture rules for CustomerSelfService Backend
+globs: backend/src/**/*, backend/package.json
+---
+# CustomerSelfService Backend Cursor Rules
+
+You must strictly adhere to the following rules when writing or modifying code in the backend of this repository.
+
+## 1. Documentation-First & Small Diffs
+- Write or update design and architecture files in `docs/` before implementing code changes.
+- Never write monolithic chunks of code. Break modifications down into small, logical, reviewable diffs.
+- Avoid leaving "TODO" comments. If code is incomplete, do not write it.
+
+## 2. Strict Layered Architecture (CSR)
+- **Controllers** (`*.controller.ts`) handle serialization, response enveloping, and request schema verification. They must *never* perform business calculations or touch database query engines.
+- **Services** (`*.service.ts`) execute pure business workflows, orchestration, telemetry notifications, and raise domain events.
+- **Repositories** (`*.repository.ts`) isolate all Mongoose / DB driver commands (`.find()`, `.aggregate()`, `.save()`).
+- Direct call graph must strictly be: **Router → Controller → Service → Repository**.
+- Do not bypass layers. Do not reference raw Models outside Repositories.
+
+## 3. Strict Type Safety
+- All structures must be strongly typed. Enable strict compiler modes.
+- `any` is forbidden. Use `unknown` or custom TypeScript interfaces.
+- Custom route parameters, query filters, and response DTOs must be modeled.
+
+## 4. Multi-Tenant Protection
+- Every query to a tenant-scoped database table must filter by `{ tenantId }`.
+- Extract the active `tenantId` in the middleware layer using request context storage (e.g., Node's `AsyncLocalStorage`).
+- Never perform operations without validating that the actor role matches the tenant context scope.
+
+## 5. Security & Request Validation
+- Every route handler must validate incoming request objects using Zod schemas at the controller boundary.
+- Strip unknown body parameters before passing them down to service layers.
+- Check authentication states on all endpoints under `/api/v1/` unless explicitly declared public.
+- Strip/mask credit card details, passwords, and other PII parameters before logging.

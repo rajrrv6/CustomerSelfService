@@ -1,0 +1,1020 @@
+--- PAGE 1 ---
+ Module-specific screens ONLY. Auth/RBAC/settings/co-pilot/bot scaffolding lives in 01_Common_Per_App.
+ ID
+Persona
+Category
+Screen / Modal Name
+Type
+Description / Notes
+1
+Super Admin
+Master Data
+LLM model registry
+Page
+Approved foundation + fine-tuned.
+2
+Super Admin
+Master Data
+ASR / TTS provider registry
+Page
+Speech providers.
+3
+Super Admin
+Master Data
+Channel catalog
+Page
+Web/WhatsApp/SMS/Voice/Email/iOS/Android.
+4
+Super Admin
+Master Data
+Channel provider credentials
+Page
+Twilio/Meta/Plivo.
+5
+Super Admin
+Master Data
+Industry intent libraries
+Page
+Pre-built intents.
+6
+Super Admin
+Master Data
+Industry response templates
+Page
+Pre-built answers.
+7
+Super Admin
+Master Data
+Profanity / safety blocklist
+Page
+Global lists.
+8
+Super Admin
+Master Data
+PII redaction policy
+Page
+Default rules.
+9
+Super Admin
+Master Data
+Tenant onboarding template
+Page
+Default flow scaffold.
+10
+Super Admin
+Analytics
+Cross-tenant analytics
+Page
+Containment + cost benchmarks.
+11
+Super Admin
+Analytics
+Model cost benchmarks
+Page
+Per-model $/conversation.
+12
+Super Admin
+Infra
+Vector DB cluster status
+Page
+RAG storage health.
+13
+Super Admin
+Infra
+Knowledge connector registry
+Page
+Available source types.
+14
+Super Admin
+Telephony
+Number pool
+Page
+Available DIDs.
+15
+Super Admin
+Telephony
+SIP trunk config
+Page
+Trunk credentials + capacity.
+16
+Client Admin
+Bots
+Bot list
+Page
+Multiple bots per tenant.
+17
+Client Admin
+Bots
+Bot create — basics
+Wizard Step
+Name, language, channels.
+18
+Client Admin
+Bots
+Bot create — persona
+Wizard Step
+Tone, identity, refusals.
+19
+Client Admin
+Bots
+Bot create — channels
+Wizard Step
+Pick channels.
+20
+Client Admin
+Bots
+Bot create — knowledge
+Wizard Step
+Attach sources.
+21
+Client Admin
+Bots
+Bot create — test
+Wizard Step
+Sample conversations.
+22
+Client Admin
+Bots
+Bot create — publish
+Wizard Step
+Promote to prod.
+23
+Client Admin
+Bots
+Bot detail / overview
+Page
+KPI summary.
+24
+Client Admin
+Bots
+Persona editor
+Page
+System prompt + style.
+25
+Client Admin
+Bots
+Welcome / fallback messages
+Page
+Per-channel copy.
+26
+Client Admin
+NLU
+Intents list
+Page
+All intents.
+27
+Client Admin
+NLU
+Intent detail
+Page
+Training phrases + slots.
+28
+Client Admin
+NLU
+Entity types
+Page
+Custom + system entities.
+29
+Client Admin
+NLU
+Slot filling editor
+Page
+Slot prompts + validation.
+30
+Client Admin
+Flows
+Dialog flow builder
+Page
+Visual node graph.
+31
+Client Admin
+Flows
+Decision tree node
+Modal
+Branch logic.
+32
+Client Admin
+Flows
+API call node
+Modal
+HTTP call + auth.
+33
+Client Admin
+Flows
+DB query node
+Modal
+Parametrised SQL/NoSQL.
+                                            
+--- PAGE 2 ---
+ Module-specific screens ONLY. Auth/RBAC/settings/co-pilot/bot scaffolding lives in 01_Common_Per_App.
+   ID
+ Persona
+ Category
+Screen / Modal Name
+  Type
+ Description / Notes
+34
+Client Admin
+Flows
+RAG retrieval node
+Modal
+Source + reranker.
+35
+Client Admin
+Flows
+Agent (tool-use) node
+Modal
+LLM agent + tools.
+36
+Client Admin
+Flows
+Form node
+Modal
+Multi-field collection.
+37
+Client Admin
+Flows
+Card / carousel node
+Modal
+Rich content.
+38
+Client Admin
+Flows
+Branch / condition node
+Modal
+Expression-based.
+39
+Client Admin
+Flows
+Human handoff node
+Modal
+Queue + routing.
+40
+Client Admin
+Flows
+Variables / context inspector
+Drawer / Side Panel
+Live trace.
+41
+Client Admin
+Flows
+Flow simulator
+Page
+Live test runner.
+42
+Client Admin
+Flows
+Regression suite
+Page
+Saved tests.
+43
+Client Admin
+Knowledge
+Sources list
+Page
+All RAG sources.
+44
+Client Admin
+Knowledge
+Source — file upload
+Modal
+PDF/DOCX/MD.
+45
+Client Admin
+Knowledge
+Source — URL crawl
+Modal
+Sitemap / domain.
+46
+Client Admin
+Knowledge
+Source — connector
+Modal
+Notion/Confluence/Drive.
+47
+Client Admin
+Knowledge
+Source — DB / SQL
+Modal
+DB read connector.
+48
+Client Admin
+Knowledge
+Ingestion logs
+Page
+Per-doc status.
+49
+Client Admin
+Knowledge
+Reindex
+Confirmation
+Trigger reindex.
+50
+Client Admin
+Knowledge
+Chunking & embedding config
+Page
+Chunk size + model.
+51
+Client Admin
+Knowledge
+Citation display config
+Page
+Show/hide citations.
+52
+Client Admin
+Safety
+Guardrails — topics
+Page
+Allowed / blocked topics.
+53
+Client Admin
+Safety
+Guardrails — PII redaction
+Page
+Custom rules.
+54
+Client Admin
+Safety
+Guardrails — jailbreak detection
+Page
+Sensitivity.
+55
+Client Admin
+Safety
+Guardrails — escalation triggers
+Page
+Trigger → handoff.
+56
+Client Admin
+Channels
+Web widget config
+Page
+Per-bot overrides.
+57
+Client Admin
+Channels
+WhatsApp Business config
+Page
+Numbers + templates.
+58
+Client Admin
+Channels
+SMS config
+Page
+Sender IDs.
+59
+Client Admin
+Channels
+Email helpdesk inbox
+Page
+Email-to-conversation.
+60
+Client Admin
+Channels
+Voice IVR designer
+Page
+SSML-aware.
+61
+Client Admin
+Channels
+Mobile SDK keys
+Page
+iOS/Android SDK.
+62
+Client Admin
+Channels
+Social (FB/IG/X)
+Page
+Social channel auth.
+63
+Client Admin
+Channels
+Slack / Teams
+Page
+Internal chat ops.
+64
+Client Admin
+Operations
+Business hours
+Page
+Per-channel hours.
+                                          
+--- PAGE 3 ---
+ Module-specific screens ONLY. Auth/RBAC/settings/co-pilot/bot scaffolding lives in 01_Common_Per_App.
+   ID
+ Persona
+ Category
+Screen / Modal Name
+  Type
+ Description / Notes
+65
+Client Admin
+Operations
+Routing rules
+Page
+Skill / language / VIP.
+66
+Client Admin
+Operations
+Queue management
+Page
+Per-queue settings.
+67
+Client Admin
+Operations
+Agent roster
+Page
+Agent assignment.
+68
+Client Admin
+Operations
+Agent skills profile
+Page
+Skill ↔ agent.
+69
+Client Admin
+Operations
+Agent live status board
+Page
+Live presence.
+70
+Client Admin
+Agent
+Agent workspace (unified inbox)
+Page
+Multi-channel inbox.
+71
+Client Admin
+Agent
+Conversation detail
+Page
+Transcript + 360.
+72
+Client Admin
+Agent
+Customer 360 merged identity
+Drawer / Side Panel
+Identity stitching.
+73
+Client Admin
+Agent
+Macros / canned responses
+Page
+Reusable replies.
+74
+Client Admin
+Agent
+Co-browse / screen share
+Modal
+Invite + control.
+75
+Client Admin
+Agent
+Agent co-pilot reply suggestions
+Drawer / Side Panel
+AI suggested.
+76
+Client Admin
+Agent
+Sentiment indicator
+Widget
+Per-conversation.
+77
+Client Admin
+Agent
+Tag / label editor
+Modal
+Tags + auto-tags.
+78
+Client Admin
+Agent
+Disposition codes
+Page
+Wrap-up codes.
+79
+Client Admin
+Tickets
+Tickets list
+Page
+All tickets.
+80
+Client Admin
+Tickets
+Ticket detail
+Page
+Full thread.
+81
+Client Admin
+Tickets
+SLA policies
+Page
+Response/resolution.
+82
+Client Admin
+Tickets
+SLA breach dashboard
+Page
+Real-time.
+83
+Client Admin
+Tickets
+Escalation matrix
+Page
+Auto-escalation.
+84
+Client Admin
+CX
+CSAT survey config
+Page
+Per-channel CSAT.
+85
+Client Admin
+CX
+NPS survey config
+Page
+Periodic NPS.
+86
+Client Admin
+CX
+Post-chat survey
+Page
+Immediate post-conv.
+87
+Client Admin
+CX
+Voice of customer dashboard
+Page
+Themes + sentiment.
+88
+Client Admin
+QA
+Scorecard builder
+Page
+QA criteria.
+89
+Client Admin
+QA
+QA review queue
+Page
+Sampled conversations.
+90
+Client Admin
+QA
+QA dispute / appeal
+Modal
+Agent appeal.
+91
+Client Admin
+QA
+Coaching plan
+Page
+Per-agent.
+92
+Client Admin
+WFM
+Forecast & schedule
+Page
+Volume forecasting.
+93
+Client Admin
+WFM
+Shrinkage & adherence
+Page
+Real-time adherence.
+94
+Client Admin
+Analytics
+Deflection rate
+Page
+Bot containment.
+95
+Client Admin
+Analytics
+Containment by intent
+Page
+Per-intent.
+                                          
+--- PAGE 4 ---
+ Module-specific screens ONLY. Auth/RBAC/settings/co-pilot/bot scaffolding lives in 01_Common_Per_App.
+   ID
+ Persona
+ Category
+Screen / Modal Name
+  Type
+ Description / Notes
+96
+Client Admin
+Analytics
+Top intents
+Page
+Frequency + trend.
+97
+Client Admin
+Analytics
+Drop-off / abandonment
+Page
+Funnel.
+98
+Client Admin
+Analytics
+Cost saved
+Page
+$ saved estimate.
+99
+Client Admin
+Analytics
+LLM cost & latency
+Page
+Per-model.
+100
+Client Admin
+Analytics
+Conversation explorer
+Page
+Search transcripts.
+101
+Client Admin
+Training
+Unanswered queries queue
+Page
+Train from misses.
+102
+Client Admin
+Training
+Suggested intents (cluster)
+Page
+AI-clustered.
+103
+Client Admin
+Lifecycle
+Version & environment
+Page
+Dev/stage/prod.
+104
+Client Admin
+Lifecycle
+Release / deploy pipeline
+Page
+Promote w/ approvals.
+105
+Client Admin
+Lifecycle
+A/B test config
+Page
+Traffic split + winner.
+106
+Client Admin
+Lifecycle
+Rollback
+Confirmation
+Roll back to version.
+107
+Client Admin
+Integration
+Per-bot webhooks
+Page
+Outbound events.
+108
+Client Admin
+Integration
+CRM connector
+Page
+CRM data + writes.
+109
+Client Admin
+Integration
+Order / billing connector
+Page
+Commerce backend.
+110
+Client Admin
+Auth
+In-bot OTP auth
+Page
+Step-up auth in chat.
+111
+End User
+Customer Portal
+Self-service home
+Page
+KB + chat + tickets.
+112
+End User
+Customer Portal
+KB article view
+Page
+Article + helpful?
+113
+End User
+Customer Portal
+KB search results
+Page
+Search results.
+114
+End User
+Customer Portal
+Submit ticket
+Modal
+Form-based.
+115
+End User
+Customer Portal
+Ticket list
+Page
+Personal tickets.
+116
+End User
+Customer Portal
+Ticket detail / reply
+Page
+Continue thread.
+117
+End User
+Customer Portal
+Schedule callback
+Modal
+Callback request.
+118
+End User
+Customer Portal
+Callback queue position
+Intermediate
+Wait estimate.
+119
+End User
+Customer Portal
+Live chat overlay
+Widget
+Logged-in chat.
+120
+End User
+Customer Portal
+Voice call request
+Modal
+Request voice.
+121
+End User
+Customer Portal
+Co-browse join
+Modal
+Accept screen share.
+122
+End User
+Customer Portal
+CSAT survey
+Page
+Post-resolution.
+123
+End User
+Customer Portal
+NPS survey
+Page
+Periodic NPS.
+124
+End User
+Customer Portal
+Transcript email
+Modal
+Email transcript.
+125
+End User
+Customer Portal
+Chat history
+Page
+Returning user history.
+126
+End User
+Customer Portal
+Order lookup
+Page
+Lookup + status.
+127
+End User
+Customer Portal
+Return / refund initiate
+Modal
+Self-service return.
+                                            
+--- PAGE 5 ---
+ Module-specific screens ONLY. Auth/RBAC/settings/co-pilot/bot scaffolding lives in 01_Common_Per_App.
+   ID
+ Persona
+ Category
+Screen / Modal Name
+  Type
+ Description / Notes
+128
+End User
+Customer Portal
+OTP authenticate
+OTP
+Step-up auth.
+129
+End User
+Customer Portal
+Multilingual switch in chat
+Modal
+Per-conversation.
+130
+End User
+Customer Portal
+Accessibility chat
+Widget
+High contrast / large font.
+131
+End User
+Agent Workspace
+Agent dashboard
+Page
+KPIs + queue.
+132
+End User
+Agent Workspace
+Unified inbox
+Page
+All channels.
+133
+End User
+Agent Workspace
+Active conversation panel
+Page
+Single conversation.
+134
+End User
+Agent Workspace
+Customer 360 side panel
+Drawer / Side Panel
+Profile + history.
+135
+End User
+Agent Workspace
+Reply composer with co-pilot
+Modal
+AI-assisted reply.
+136
+End User
+Agent Workspace
+Internal note
+Modal
+Not visible to customer.
+137
+End User
+Agent Workspace
+Transfer / consult
+Modal
+Hand to another agent.
+138
+End User
+Agent Workspace
+Conference call
+Modal
+Add party.
+139
+End User
+Agent Workspace
+Hold music selector
+Modal
+On-hold media.
+140
+End User
+Agent Workspace
+Wrap-up / disposition
+Modal
+Post-conv codes.
+141
+End User
+Agent Workspace
+Break / aux status
+Modal
+Status change.
+142
+End User
+Agent Workspace
+Coaching whisper view
+Widget
+Live coaching.
+143
+End User
+Agent Workspace
+Supervisor live monitoring
+Page
+Listen/view.
+144
+End User
+Agent Workspace
+Supervisor barge-in
+Confirmation
+Join the call.
+145
+End User
+Agent Workspace
+Personal scorecard
+Page
+Self performance.
+146
+End User
+Agent Workspace
+Schedule / shifts
+Page
+Personal roster.
+147
+Client Admin
+Module Popups
+Bot publish — safety check
+Confirmation
+Pre-publish scan.
+148
+Client Admin
+Module Popups
+Knowledge ingest failed
+Modal
+Per-doc error.
+149
+Client Admin
+Module Popups
+PII detected — redacted
+Toast / Banner
+Live redaction.
+150
+Client Admin
+Module Popups
+Jailbreak attempt logged
+Toast / Banner
+Safety event.
+151
+Client Admin
+Module Popups
+Handoff queued
+Intermediate
+Customer queue.
+152
+End User
+Module Popups
+Co-pilot consent prompt
+Modal
+Agent AI consent.
+153
+End User
+Module Popups
+Transcript privacy notice
+Toast / Banner
+Recording disclosure.
+154
+End User
+Module Popups
+Recording disclosure
+Toast / Banner
+Voice recording.
+155
+Client Admin
+Module Popups
+Channel verification (Meta)
+Page
+WABA verification.
+156
+Client Admin
+Module Popups
+WhatsApp template rejected
+Modal
+Meta rejection.
+157
+Client Admin
+Module Popups
+Voice number porting
+Page
+Porting status.
+158
+Public / Bot
+Module Bot
+Public site bot greeting
+Widget
+Pre-auth landing chat.
+                                              
+--- PAGE 6 ---
+ Module-specific screens ONLY. Auth/RBAC/settings/co-pilot/bot scaffolding lives in 01_Common_Per_App.
+   ID
+ Persona
+ Category
+Screen / Modal Name
+  Type
+ Description / Notes
+159
+Public / Bot
+Module Bot
+Pre-auth product Q&A
+Widget
+RAG over catalog.
+160
+Public / Bot
+Module Bot
+Pre-auth order lookup (OTP)
+Widget
+OTP-gated lookup.
+161
+Public / Bot
+Module Bot
+Pre-auth callback request
+Widget
+Capture + call back.
+              
